@@ -2,5 +2,20 @@
   "name": "@stacks-capital/fixtures",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test --experimental-strip-types src/*.test.ts"
+  },
+  "dependencies": {
+    "@stacks-capital/adapters": "workspace:*",
+    "@stacks-capital/config": "workspace:*",
+    "@stacks-capital/core": "workspace:*"
+  }
 }
