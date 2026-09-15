@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>I02 wallet feasibility</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 70rem; padding-inline: 1rem; }
+      .wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+      section { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; }
+      section button { display: block; width: 100%; margin: 0.35rem 0; padding: 0.5rem; text-align: left; }
+      pre { background: #111; color: #eee; padding: 1rem; overflow: auto; max-height: 60vh; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>I02 wallet feasibility, Stacks testnet</h1>
+    <p>Test accounts only. Every request and response is logged below. Reject a prompt when you want to record the real rejection error.</p>
+
+    <div class="wallets">
+      <section>
+        <h2>Leather</h2>
+        <button data-wallet="leather" data-test="providerInfo">0. Provider info</button>
+        <button data-wallet="leather" data-test="connect">1. Connect (getAddresses)</button>
+        <button data-wallet="leather" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
+        <button data-wallet="leather" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
+        <button data-wallet="leather" data-test="connectNoNetwork">1e. Connect without network param</button>
+        <button data-wallet="leather" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
+        <button data-wallet="leather" data-test="network">2. Read network (wallet_getNetwork)</button>
+        <button data-wallet="leather" data-test="supportedMethods">2b. List supported methods</button>
+        <button data-wallet="leather" data-test="signMessage">3. Sign message</button>
+        <button data-wallet="leather" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
+        <button data-wallet="leather" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
+        <button data-wallet="leather" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
+        <button data-wallet="leather" data-test="checkTx">6. Check last transaction on Hiro</button>
+        <button data-wallet="leather" data-test="psbt">7. Sign PSBT (never broadcast)</button>
+      </section>
+      <section>
+        <h2>Xverse</h2>
+        <button data-wallet="xverse" data-test="providerInfo">0. Provider info</button>
+        <button data-wallet="xverse" data-test="connect">1. Connect (getAddresses)</button>
+        <button data-wallet="xverse" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
+        <button data-wallet="xverse" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
+        <button data-wallet="xverse" data-test="connectNoNetwork">1e. Connect without network param</button>
+        <button data-wallet="xverse" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
+        <button data-wallet="xverse" data-test="network">2. Read network (wallet_getNetwork)</button>
+        <button data-wallet="xverse" data-test="supportedMethods">2b. List supported methods</button>
+        <button data-wallet="xverse" data-test="signMessage">3. Sign message</button>
+        <button data-wallet="xverse" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
+        <button data-wallet="xverse" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
+        <button data-wallet="xverse" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
+        <button data-wallet="xverse" data-test="checkTx">6. Check last transaction on Hiro</button>
+        <button data-wallet="xverse" data-test="psbt">7. Sign PSBT (never broadcast)</button>
+      </section>
+    </div>
+
+    <p>
+      <button id="copy">Copy log as JSON</button>
+      <button id="clear">Clear log</button>
+    </p>
+    <pre id="log"></pre>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
