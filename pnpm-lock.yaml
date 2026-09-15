@@ -184,13 +184,34 @@ importers:
 
   apps/worker: {}
 
-  packages/adapters: {}
+  packages/adapters:
+    dependencies:
+      '@stacks-capital/config':
+        specifier: workspace:*
+        version: link:../config
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
 
-  packages/config: {}
+  packages/config:
+    dependencies:
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/core: {}
 
-  packages/fixtures: {}
+  packages/fixtures:
+    dependencies:
+      '@stacks-capital/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@stacks-capital/config':
+        specifier: workspace:*
+        version: link:../config
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/observability: {}
 
@@ -202,7 +223,11 @@ importers:
 
   packages/ui: {}
 
-  packages/wallets: {}
+  packages/wallets:
+    dependencies:
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 
