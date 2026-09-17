@@ -43,6 +43,7 @@ All three database commands read `DATABASE_URL` from the environment or `.env.lo
 | `0004_chain_evidence.sql` | `chain_blocks`, `raw_events`, `ingestion_checkpoints`, `canonical_activities` |
 | `0005_snapshots.sql` | `market_snapshots`, `position_snapshots`, `wallet_balance_snapshots` |
 | `0006_identity.sql` (I05) | `partners`, `partner_apps`, `allowed_origins`, `api_keys`, `auth_nonces`, `user_sessions`, plus `app_id` and `owner_address` on `workflows` |
+| `0007_projections.sql` (I06) | `price_snapshots`, `reconciliation_runs` |
 
 Values that core restricts (networks, chains, actions, capability states, workflow states, next actions, position kinds) are Postgres domains, so the database rejects anything core does not know.
 
@@ -104,7 +105,7 @@ The fixtures use the verified onchain names for assets. The quote and plan rows 
 ## Unsupported and deferred
 
 - Partners, apps, origins, API keys and sessions landed with I05. Webhooks, usage and the audit log are not created yet; they belong to later tasks.
-- `reconciliation_runs`, `price_snapshots`, `rate_snapshots`, `liquidity_snapshots`, `reward_events` and `cash_flows` are not created yet; ingestion and projections (I06, I11) will define what they need.
+- `price_snapshots` and `reconciliation_runs` landed with I06 (see docs/engineering/ingestion.md). `rate_snapshots`, `liquidity_snapshots`, `reward_events` and `cash_flows` are not created yet; I11 will define what they need.
 - The database does not enforce which workflow state transitions are allowed; that stays in core's `transition`.
 - There is no plan hash column because core's `Plan` has no hash yet (page 03 asks for one).
 - `pnpm services:up` and `pnpm services:down` need Linux or macOS.
