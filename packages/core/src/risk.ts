@@ -92,16 +92,17 @@ export function computeHealth(input: {
   const collateralUsd = usdNotional(input.collateral, "down");
   const debtUsd = usdNotional(input.debt, "up");
   const currentLtvBps = collateralUsd === 0n ? BPS * 10n : mulDiv(debtUsd, BPS, collateralUsd, "up");
-  const healthFactorBps = debtUsd === 0n
-    ? BPS * 10n
-    : mulDiv(collateralUsd * input.params.ltvLiqBps, 1n, debtUsd, "down");
-  const bufferLimit = input.params.ltvBorrowBps > input.params.bufferBps ? input.params.ltvBorrowBps - input.params.bufferBps : 0n;
+  const healthFactorBps =
+    debtUsd === 0n ? BPS * 10n : mulDiv(collateralUsd * input.params.ltvLiqBps, 1n, debtUsd, "down");
+  const bufferLimit =
+    input.params.ltvBorrowBps > input.params.bufferBps ? input.params.ltvBorrowBps - input.params.bufferBps : 0n;
   const maxDebtUsd = mulDiv(collateralUsd, bufferLimit, BPS, "down");
   const maxBorrow = mulDiv(maxDebtUsd, pow10(input.debt.decimals), input.debt.oracle.price, "down");
   const healthy = healthFactorBps >= BPS && currentLtvBps <= input.params.ltvBorrowBps;
   const withinBuffer = debtUsd === 0n || currentLtvBps <= bufferLimit;
   if (!withinBuffer && healthy) warnings.push("projected LTV is inside the buffer to liquidation");
-  if (input.params.ltvLiqBps <= input.params.ltvBorrowBps) warnings.push("liquidation threshold must be above borrow LTV");
+  if (input.params.ltvLiqBps <= input.params.ltvBorrowBps)
+    warnings.push("liquidation threshold must be above borrow LTV");
   return {
     collateralUsd,
     debtUsd,
@@ -141,6 +142,9 @@ export function minOutFromSpot(amountOut: bigint, slippageBps: bigint): bigint {
   return mulDiv(amountOut, BPS - slippageBps, BPS, "down");
 }
 
-export function marketsComparable(left: { protocol: string; action: string }, right: { protocol: string; action: string }): boolean {
+export function marketsComparable(
+  left: { protocol: string; action: string },
+  right: { protocol: string; action: string },
+): boolean {
   return left.action === right.action && left.protocol === right.protocol;
 }

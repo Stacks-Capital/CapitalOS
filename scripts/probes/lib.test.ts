@@ -19,7 +19,10 @@ describe("parseNetworks", () => {
 describe("identifyBitcoinNetwork", () => {
   it("recognizes known genesis hashes", () => {
     assert.equal(identifyBitcoinNetwork("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"), "regtest");
-    assert.equal(identifyBitcoinNetwork(" 000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F\n"), "mainnet");
+    assert.equal(
+      identifyBitcoinNetwork(" 000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F\n"),
+      "mainnet",
+    );
   });
 
   it("returns unknown for anything else", () => {

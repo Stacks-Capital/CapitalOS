@@ -73,7 +73,11 @@ describe("K14 risk arithmetic", () => {
 
   it("fail-closes health when the oracle is older than 3 minutes", () => {
     const stale = computeHealth({
-      collateral: { amount: 100_000_000n, decimals: 8n, oracle: oracle(10_000_000_000_000n, { observedAt: "2026-09-15T11:56:00.000Z" }) },
+      collateral: {
+        amount: 100_000_000n,
+        decimals: 8n,
+        oracle: oracle(10_000_000_000_000n, { observedAt: "2026-09-15T11:56:00.000Z" }),
+      },
       debt: { amount: 1n, ...usdcx },
       params,
       now,
@@ -85,8 +89,14 @@ describe("K14 risk arithmetic", () => {
 
   it("applies min-out slippage rounding down and refuses to compare Zest supply with Granite collateral", () => {
     assert.equal(minOutFromSpot(1000n, 50n), 995n);
-    assert.equal(marketsComparable({ protocol: "zest", action: "supply" }, { protocol: "granite", action: "supply" }), false);
-    assert.equal(marketsComparable({ protocol: "granite", action: "borrow" }, { protocol: "granite", action: "borrow" }), true);
+    assert.equal(
+      marketsComparable({ protocol: "zest", action: "supply" }, { protocol: "granite", action: "supply" }),
+      false,
+    );
+    assert.equal(
+      marketsComparable({ protocol: "granite", action: "borrow" }, { protocol: "granite", action: "borrow" }),
+      true,
+    );
     assert.equal(BPS, 10_000n);
   });
 });

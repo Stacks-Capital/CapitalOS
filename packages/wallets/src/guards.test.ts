@@ -4,8 +4,20 @@ import { classifyWalletError, networkGuard } from "./guards.ts";
 
 describe("wallet guards", () => {
   it("requires Bitcoin regtest addresses on Stacks testnet", () => {
-    assert.equal(networkGuard("testnet", { stx: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0", btc: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"] })?.code, "NETWORK_MISMATCH");
-    assert.equal(networkGuard("testnet", { stx: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0", btc: ["bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080"] }), null);
+    assert.equal(
+      networkGuard("testnet", {
+        stx: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0",
+        btc: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"],
+      })?.code,
+      "NETWORK_MISMATCH",
+    );
+    assert.equal(
+      networkGuard("testnet", {
+        stx: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0",
+        btc: ["bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080"],
+      }),
+      null,
+    );
   });
 
   it("maps Leather 4001 and Xverse -32000 to USER_REJECTED", () => {

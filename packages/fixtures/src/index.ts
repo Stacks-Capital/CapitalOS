@@ -47,8 +47,22 @@ export const MAINNET_READS: AdapterReads = {
     shareRateDenominator: "1",
   },
   oracle: {
-    sbtc: { price: oracle.price.sbtc, scale: oracle.scale, observedAt: oracle.observedAt, source: oracle.source, stale: oracle.stale, maxAgeMs: oracle.maxAgeMs },
-    usdcx: { price: oracle.price.usdcx, scale: oracle.scale, observedAt: oracle.observedAt, source: oracle.source, stale: oracle.stale, maxAgeMs: oracle.maxAgeMs },
+    sbtc: {
+      price: oracle.price.sbtc,
+      scale: oracle.scale,
+      observedAt: oracle.observedAt,
+      source: oracle.source,
+      stale: oracle.stale,
+      maxAgeMs: oracle.maxAgeMs,
+    },
+    usdcx: {
+      price: oracle.price.usdcx,
+      scale: oracle.scale,
+      observedAt: oracle.observedAt,
+      source: oracle.source,
+      stale: oracle.stale,
+      maxAgeMs: oracle.maxAgeMs,
+    },
   },
   swap: {
     poolId: FIXTURE_BITFLOW_POOL,

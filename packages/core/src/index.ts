@@ -26,7 +26,16 @@ export {
 } from "./ids.ts";
 
 export type { AssetAmount, Rounding } from "./amounts.ts";
-export { addAmounts, amount, assertFinancialInt, assertPositive, formatQuantity, jsonAmount, mulDiv, parseQuantity } from "./amounts.ts";
+export {
+  addAmounts,
+  amount,
+  assertFinancialInt,
+  assertPositive,
+  formatQuantity,
+  jsonAmount,
+  mulDiv,
+  parseQuantity,
+} from "./amounts.ts";
 
 export type { DataPoint } from "./datapoint.ts";
 export { dataPoint, requireFresh, unknownPoint } from "./datapoint.ts";
