@@ -49,10 +49,16 @@ export type PositionSnapshot = {
 
 export type AdapterReads = {
   emilyLimits: EmilyLimits;
+  source?: string;
   vault?: VaultSnapshot;
   debtVault?: VaultSnapshot;
   oracle?: { sbtc: OracleSnapshot; usdcx: OracleSnapshot };
   swap?: SwapSnapshot;
   position?: PositionSnapshot;
   riskParams?: RiskParamSnapshot;
+  balances?: {
+    sbtc?: string;
+    zsbtc?: string;
+    usdcx?: string;
+  };
 };
