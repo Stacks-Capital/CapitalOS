@@ -4,7 +4,6 @@ import { appendFile, cp, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
-import { fileURLToPath } from "node:url";
 import type postgres from "postgres";
 import {
   countRows,
@@ -14,9 +13,8 @@ import {
   seedFixtures,
   TABLES,
 } from "./fixtures.ts";
-import { connect, loadMigrations, migrate, type Sql } from "./lib.ts";
+import { connect, loadMigrations, MIGRATIONS_DIR as MIGRATIONS, migrate, type Sql } from "./lib.ts";
 
-const MIGRATIONS = fileURLToPath(new URL("../../db/migrations", import.meta.url));
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
 
 const UNIQUE = "23505";

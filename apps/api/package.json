@@ -2,5 +2,13 @@
   "name": "@stacks-capital/api",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@hono/zod-openapi": "1.6.3",
+    "@stacks-capital/core": "workspace:*",
+    "@stacks-capital/database": "workspace:*",
+    "hono": "4.13.8",
+    "zod": "4.6.5"
+  }
 }

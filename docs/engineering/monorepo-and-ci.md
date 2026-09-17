@@ -88,7 +88,7 @@ CI scans the whole git history with the gitleaks CLI before installing dependenc
 | Unit | `pnpm test:unit` |
 | Affected adapter fixtures | `pnpm test:e2e` (runs all fixtures) |
 | Package build | `pnpm build` |
-| Schema compatibility | Not yet, see below |
+| Schema compatibility | `pnpm openapi:check` fails when the committed OpenAPI document drifts from the route schemas |
 
 It also runs the package boundary check, the gate tests, changeset status, and starts PostgreSQL and Redis to confirm both become healthy.
 
@@ -107,8 +107,8 @@ This task applied Biome formatting once to the existing code. The changes are wh
 
 ## Unsupported and deferred
 
-- `test:integration` and `openapi:check` (page 01) are not added yet: there are no integration tests before I04 and no API or OpenAPI document before I05. A placeholder that always passes would count as mocked evidence.
-- The page 03 schema compatibility gate waits for API schemas (I05).
+- `test:integration` (added in I04) and `openapi:check` (added in I05) now exist; see `database.md` and `api.md`.
+- The schema compatibility gate does not yet tell breaking API changes from additive ones.
 - Packages ship TypeScript source (K03 design), so `pnpm build` builds only the wallet prototype.
 - Merge, release and production gates from page 03 belong to later tasks.
 - Branch protection and required checks cannot be enforced on a private repository under GitHub Free.

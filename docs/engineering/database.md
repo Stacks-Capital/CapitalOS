@@ -13,11 +13,11 @@ Deliverable from the task page: implement event, market, position, quote and wor
 
 | Path | What |
 |---|---|
-| `db/migrations/*.sql` | Versioned SQL, applied in file name order |
-| `scripts/db/lib.ts` | Connection and migration runner (`postgres` 3.4.9) |
-| `scripts/db/migrate.ts` | `pnpm db:migrate` |
-| `scripts/db/fixtures.ts`, `seed.ts` | Deterministic fixtures, `pnpm fixtures:seed` |
-| `scripts/db/db.test.ts` | Integration tests, `pnpm test:integration` |
+| `packages/database/migrations/*.sql` | Versioned SQL, applied in file name order |
+| `packages/database/src/lib.ts` | Connection and migration runner (`postgres` 3.4.9), exported as `@stacks-capital/database` |
+| `packages/database/src/migrate.ts` | `pnpm db:migrate` |
+| `packages/database/src/fixtures.ts`, `seed.ts` | Deterministic fixtures (`@stacks-capital/database/fixtures`), `pnpm fixtures:seed` |
+| `packages/database/src/db.test.ts` | Integration tests, `pnpm test:integration` |
 
 ## Commands
 
@@ -102,5 +102,4 @@ The fixtures use the verified onchain names for assets. The quote and plan rows 
 - `reconciliation_runs`, `price_snapshots`, `rate_snapshots`, `liquidity_snapshots`, `reward_events` and `cash_flows` are not created yet; ingestion and projections (I06, I11) will define what they need.
 - The database does not enforce which workflow state transitions are allowed; that stays in core's `transition`.
 - There is no plan hash column because core's `Plan` has no hash yet (page 03 asks for one).
-- The database code lives in `db/` and `scripts/db/` because page 01 lists no database package. I05 and I06 will need to import it, so a package may be worth deciding then.
 - `pnpm services:up` and `pnpm services:down` need Linux or macOS.

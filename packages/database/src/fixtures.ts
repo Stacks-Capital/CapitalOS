@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type postgres from "postgres";
-import { CONTRACTS, contract } from "../../packages/config/src/index.ts";
+import { CONTRACTS, contract } from "@stacks-capital/config";
 import {
   type AssetAmount,
   type AssetId,
@@ -14,14 +14,8 @@ import {
   stacksNative,
   transition,
   type Workflow,
-} from "../../packages/core/src/index.ts";
-import {
-  adapterContext,
-  FIXTURE_NOW,
-  MAINNET_OWNER,
-  MAINNET_READS,
-  sandboxAdapters,
-} from "../../packages/fixtures/src/index.ts";
+} from "@stacks-capital/core";
+import { adapterContext, FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS, sandboxAdapters } from "@stacks-capital/fixtures";
 import type { Sql } from "./lib.ts";
 
 export const TABLES = [

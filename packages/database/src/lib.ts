@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import postgres from "postgres";
+
+export const MIGRATIONS_DIR = fileURLToPath(new URL("../migrations", import.meta.url));
 
 export type Sql = postgres.Sql;
 export type Migration = { version: string; checksum: string; text: string };
