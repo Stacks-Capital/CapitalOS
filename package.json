@@ -5,11 +5,13 @@
   "type": "module",
   "packageManager": "pnpm@12.4.1",
   "scripts": {
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes",
-    "test:unit": "node --test --experimental-strip-types packages/core/src/*.test.ts packages/config/src/*.test.ts packages/wallets/src/*.test.ts packages/adapters/src/*.test.ts",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p packages/sdk && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/sdk",
+    "test:unit": "node --test --experimental-strip-types packages/core/src/*.test.ts packages/config/src/*.test.ts packages/wallets/src/*.test.ts packages/adapters/src/*.test.ts packages/sdk/src/*.test.ts",
     "test:e2e": "node --test --experimental-strip-types packages/fixtures/src/*.test.ts",
     "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e",
-    "probe:contracts": "node --experimental-strip-types scripts/contracts/probe.ts"
+    "probe:contracts": "node --experimental-strip-types scripts/contracts/probe.ts",
+    "sdk:check": "node --experimental-strip-types scripts/sdk/check.ts",
+    "sdk:check:live": "node --experimental-strip-types scripts/sdk/check.ts --live"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.2",
