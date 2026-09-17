@@ -73,7 +73,10 @@ export function createSbtcDepositAdapter(reads: AdapterReads): ProtocolAdapter {
         .map((event) => ({ id: event.id, kind: "sbtc_mint", blockHash: event.blockHash, canonical: true }));
     },
     reconcile(_ctx, expected, observed) {
-      return { matched: expected === observed, warnings: expected === observed ? [] : ["sBTC balance delta does not match the deposit"] };
+      return {
+        matched: expected === observed,
+        warnings: expected === observed ? [] : ["sBTC balance delta does not match the deposit"],
+      };
     },
     explainRisk(ctx) {
       const capability = capabilityFor("deposit_sbtc", ctx.network, "sbtc");
@@ -108,9 +111,16 @@ function quoteDeposit(ctx: AdapterContext, intent: Intent, reads: AdapterReads):
     network: ctx.network,
     input: [btc],
     expectedOutput: [sbtcOut],
-    fees: maxSigner > 0n
-      ? [{ kind: "signer", amount: amount(bitcoinNative(ctx.network), maxSigner), max: amount(bitcoinNative(ctx.network), maxSigner) }]
-      : [],
+    fees:
+      maxSigner > 0n
+        ? [
+            {
+              kind: "signer",
+              amount: amount(bitcoinNative(ctx.network), maxSigner),
+              max: amount(bitcoinNative(ctx.network), maxSigner),
+            },
+          ]
+        : [],
     snapshots: [`emily:${reads.emilyLimits.perDepositMinimum}`],
     expiresAt: new Date(ctx.now.getTime() + 10 * 60_000).toISOString(),
     executable,
@@ -123,7 +133,8 @@ function quoteDeposit(ctx: AdapterContext, intent: Intent, reads: AdapterReads):
 }
 
 function buildDepositPlan(ctx: AdapterContext, quote: Quote, intent: Intent, reads: AdapterReads): Plan {
-  if (!quote.executable) throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "deposit is not executable");
+  if (!quote.executable)
+    throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "deposit is not executable");
   const recipient = intent.recipient;
   if (recipient === undefined) throw capitalError("PLAN_INVALID", "Stacks recipient is required");
   const maxSigner = intent.maxFee ?? "0";

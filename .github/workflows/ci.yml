@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+
+jobs:
+  checks:
+    name: Secrets, lint, boundaries, types, tests, build, services
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable the pinned pnpm
+        run: corepack enable
+
+      - name: Install gitleaks with checksum check
+        run: |
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo install gitleaks /usr/local/bin/gitleaks
+          rm gitleaks gitleaks.tar.gz
+
+      - name: Secret scan of the full history
+        run: pnpm secrets:scan
+
+      - name: Install from a clean checkout
+        run: pnpm install --frozen-lockfile
+
+      - name: Format and lint
+        run: pnpm lint
+
+      - name: Package boundaries
+        run: pnpm boundaries
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Public SDK smoke
+        run: pnpm sdk:check
+
+      - name: Sandbox end to end fixtures
+        run: pnpm test:e2e
+
+      - name: Gate tests
+        run: pnpm test:checks
+
+      - name: Build
+        run: pnpm build
+
+      - name: Changeset status
+        run: pnpm changeset:status
+
+      - name: Local services start healthy
+        run: docker compose up -d --wait postgres redis
+
+      - name: Stop local services
+        if: always()
+        run: docker compose down -v

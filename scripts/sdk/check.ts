@@ -43,9 +43,21 @@ const reads: AdapterReads = live
   : MAINNET_READS;
 
 if (live) {
-  record("live Emily limits", Number(reads.emilyLimits.perDepositMinimum) > 0, `min ${reads.emilyLimits.perDepositMinimum}`);
-  record("live Zest vault", reads.vault !== undefined && reads.vault.pausedDeposit === false, `assets ${reads.vault?.totalAssets ?? "none"}`);
-  record("live Granite LTV", reads.riskParams?.ltvBorrowBps === "8000" && reads.riskParams.ltvLiqBps === "8500", `borrow ${reads.riskParams?.ltvBorrowBps} liq ${reads.riskParams?.ltvLiqBps}`);
+  record(
+    "live Emily limits",
+    Number(reads.emilyLimits.perDepositMinimum) > 0,
+    `min ${reads.emilyLimits.perDepositMinimum}`,
+  );
+  record(
+    "live Zest vault",
+    reads.vault !== undefined && reads.vault.pausedDeposit === false,
+    `assets ${reads.vault?.totalAssets ?? "none"}`,
+  );
+  record(
+    "live Granite LTV",
+    reads.riskParams?.ltvBorrowBps === "8000" && reads.riskParams.ltvLiqBps === "8500",
+    `borrow ${reads.riskParams?.ltvBorrowBps} liq ${reads.riskParams?.ltvLiqBps}`,
+  );
   record("Pyth left fail-closed", reads.oracle?.sbtc.stale === true, reads.oracle?.sbtc.source ?? "missing");
   record("no sBTC-USDCx Bitflow pool pinned", reads.swap?.stale === true, reads.swap?.source ?? "missing");
 }
@@ -62,7 +74,11 @@ try {
   requireNetwork(undefined);
   record("network is required", false, "accepted a missing network");
 } catch (error) {
-  record("network is required", error instanceof Error && /no default network/.test(error.message), "no default network");
+  record(
+    "network is required",
+    error instanceof Error && /no default network/.test(error.message),
+    "no default network",
+  );
 }
 
 mustThrowCode("SDK does not broadcast", () => os.submit(), "UNSUPPORTED_ACTION");
@@ -76,7 +92,9 @@ const deposit = os.quoteAndPlan({
 });
 record(
   "BTC → sBTC quote/plan",
-  deposit.quote.executable && deposit.plan.steps[0]?.payload.kind === "bitcoin_deposit" && os.validate(deposit.plan, deposit.quote, signing).ok,
+  deposit.quote.executable &&
+    deposit.plan.steps[0]?.payload.kind === "bitcoin_deposit" &&
+    os.validate(deposit.plan, deposit.quote, signing).ok,
   `plan ${deposit.plan.steps[0]?.payload.kind}, source ${reads.source ?? "fixture"}`,
 );
 
@@ -88,11 +106,23 @@ record(
 );
 
 if (live) {
-  mustThrowCode("Granite borrow fail-closed without Pyth", () => os.quote({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }), "ORACLE_STALE");
-  mustThrowCode("Bitflow swap fail-closed without sBTC-USDCx pool", () => os.quote({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" }), "ORACLE_STALE");
+  mustThrowCode(
+    "Granite borrow fail-closed without Pyth",
+    () => os.quote({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }),
+    "ORACLE_STALE",
+  );
+  mustThrowCode(
+    "Bitflow swap fail-closed without sBTC-USDCx pool",
+    () => os.quote({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" }),
+    "ORACLE_STALE",
+  );
 } else {
   const borrow = os.quoteAndPlan({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-  record("Granite USDCx borrow (fixture oracle)", os.validate(borrow.plan, borrow.quote, signing).ok, borrow.plan.steps.map((step) => step.id).join(",") || "no steps");
+  record(
+    "Granite USDCx borrow (fixture oracle)",
+    os.validate(borrow.plan, borrow.quote, signing).ok,
+    borrow.plan.steps.map((step) => step.id).join(",") || "no steps",
+  );
   const swap = os.quoteAndPlan({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" });
   record(
     "Bitflow swap (fixture route)",
@@ -122,7 +152,11 @@ const testnetDeposit = testnet.quote({
   amount: "10000",
   recipient: TESTNET_OWNER,
 });
-record("testnet sBTC deposit is not executable", testnetDeposit.executable === false, testnetDeposit.warnings.join(" ") || "disabled");
+record(
+  "testnet sBTC deposit is not executable",
+  testnetDeposit.executable === false,
+  testnetDeposit.warnings.join(" ") || "disabled",
+);
 record("staking is disabled", executable("stake", "mainnet") === false, "stake capability disabled");
 
 console.log(`| Check | Result | Detail |`);
@@ -136,5 +170,7 @@ if (failed.length > 0) {
   console.error(`\n${failed.length} of ${checks.length} SDK checks failed.`);
   process.exitCode = 1;
 } else {
-  console.log(`\n${checks.length} SDK checks passed. Mode: ${live ? "live Hiro/Emily reads" : "fixtures"}. Unsigned plans only.`);
+  console.log(
+    `\n${checks.length} SDK checks passed. Mode: ${live ? "live Hiro/Emily reads" : "fixtures"}. Unsigned plans only.`,
+  );
 }

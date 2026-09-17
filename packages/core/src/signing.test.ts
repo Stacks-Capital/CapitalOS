@@ -37,20 +37,28 @@ function plan(): Plan {
     adapterVersion: "zest-earn@0.1.0",
     expiresAt: "2026-09-15T12:10:00.000Z",
     reviewSummary: "supply",
-    steps: [{
-      id: "deposit",
-      dependsOn: [],
-      expectedAssetEffects: [makeAmount(sbtc, "1000")],
-      payload: {
-        kind: "stacks_contract_call",
-        contractId: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc",
-        functionName: "deposit",
-        functionArgs: [{ type: "uint", value: "1000" }],
-        postConditions: [{ principal: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR", mode: "send_lte", amount: makeAmount(sbtc, "1000") }],
-        postConditionMode: "deny",
-        network: "mainnet",
+    steps: [
+      {
+        id: "deposit",
+        dependsOn: [],
+        expectedAssetEffects: [makeAmount(sbtc, "1000")],
+        payload: {
+          kind: "stacks_contract_call",
+          contractId: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc",
+          functionName: "deposit",
+          functionArgs: [{ type: "uint", value: "1000" }],
+          postConditions: [
+            {
+              principal: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+              mode: "send_lte",
+              amount: makeAmount(sbtc, "1000"),
+            },
+          ],
+          postConditionMode: "deny",
+          network: "mainnet",
+        },
       },
-    }],
+    ],
   };
 }
 
@@ -78,7 +86,10 @@ describe("signing boundary", () => {
     assert.equal(expired.ok, false);
     assert.match(expired.reasons.join(" "), /expired/);
 
-    const mismatch = validatePlan(plan(), quote(), { ...ctx, bitcoinAddresses: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"] });
+    const mismatch = validatePlan(plan(), quote(), {
+      ...ctx,
+      bitcoinAddresses: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"],
+    });
     assert.equal(mismatch.ok, false);
   });
 
@@ -87,20 +98,22 @@ describe("signing boundary", () => {
       ...plan(),
       quoteId: "q2",
       adapterVersion: "sbtc-deposit@0.1.0",
-      steps: [{
-        id: "btc",
-        dependsOn: [],
-        expectedAssetEffects: [],
-        payload: {
-          kind: "bitcoin_deposit",
-          amountSats: "10000",
-          stacksRecipient: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
-          bitcoinNetwork: "mainnet",
-          reclaimLockTime: 144,
-          maxSignerFeeSats: "0",
-          emilyNotifyPath: "/deposit",
+      steps: [
+        {
+          id: "btc",
+          dependsOn: [],
+          expectedAssetEffects: [],
+          payload: {
+            kind: "bitcoin_deposit",
+            amountSats: "10000",
+            stacksRecipient: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+            bitcoinNetwork: "mainnet",
+            reclaimLockTime: 144,
+            maxSignerFeeSats: "0",
+            emilyNotifyPath: "/deposit",
+          },
         },
-      }],
+      ],
     };
     const depositQuote: Quote = { ...quote(), id: "q2", action: "deposit_sbtc", adapterVersion: "sbtc-deposit@0.1.0" };
     assert.equal(validatePlan(depositPlan, depositQuote, ctx).ok, true);

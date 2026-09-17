@@ -55,7 +55,11 @@ export type CapitalOS = {
   quote(intent: Intent): Quote;
   plan(quote: Quote, intent: Intent): Plan;
   quoteAndPlan(intent: Intent): QuotedPlan;
-  validate(plan: Plan, quote: Quote, signing?: Omit<SigningContext, "network" | "registryVersion" | "now"> & { now?: Date }): PlanValidation;
+  validate(
+    plan: Plan,
+    quote: Quote,
+    signing?: Omit<SigningContext, "network" | "registryVersion" | "now"> & { now?: Date },
+  ): PlanValidation;
   markets(): Market[];
   capabilities(): CapabilityRecord[];
   risk(marketId: string): RiskExplanation;
@@ -198,7 +202,10 @@ export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
       return networkGuard(network, addresses);
     },
     submit(): never {
-      throw capitalError("UNSUPPORTED_ACTION", "The SDK does not broadcast. The host wallet submits the unsigned plan.");
+      throw capitalError(
+        "UNSUPPORTED_ACTION",
+        "The SDK does not broadcast. The host wallet submits the unsigned plan.",
+      );
     },
   };
 }

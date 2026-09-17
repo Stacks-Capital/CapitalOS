@@ -32,16 +32,18 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
     },
     listMarkets(ctx) {
       const capability = capabilityFor("withdraw_sbtc", ctx.network, "sbtc");
-      return [{
-        id: SBTC_MARKET_WITHDRAW,
-        protocol: "sbtc",
-        action: "withdraw_sbtc",
-        network: ctx.network,
-        suppliedAsset: "sbtc-token",
-        receiptAsset: "bitcoin native btc",
-        state: capability?.state ?? "disabled",
-        warnings: capability?.state === "enabled" ? [] : [capability?.reason ?? "withdrawal is not available"],
-      }];
+      return [
+        {
+          id: SBTC_MARKET_WITHDRAW,
+          protocol: "sbtc",
+          action: "withdraw_sbtc",
+          network: ctx.network,
+          suppliedAsset: "sbtc-token",
+          receiptAsset: "bitcoin native btc",
+          state: capability?.state ?? "disabled",
+          warnings: capability?.state === "enabled" ? [] : [capability?.reason ?? "withdrawal is not available"],
+        },
+      ];
     },
     getMarket(ctx, marketId) {
       const [first] = this.listMarkets(ctx);
@@ -68,7 +70,9 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
     },
     decodeEvents(_ctx, raw) {
       return raw
-        .filter((event) => event.payload.includes("accept-withdrawal-request") || event.payload.includes("bitcoin payout"))
+        .filter(
+          (event) => event.payload.includes("accept-withdrawal-request") || event.payload.includes("bitcoin payout"),
+        )
         .map((event) => ({ id: event.id, kind: "sbtc_payout", blockHash: event.blockHash, canonical: true }));
     },
     reconcile(_ctx, expected, observed) {
@@ -95,11 +99,14 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
 function decodeRecipient(recipient: string): { version: string; hashbytes: string } {
   if (!recipient.includes(":")) throw capitalError("PLAN_INVALID", "recipient must be version:hashbytes");
   const [version, hashbytes] = recipient.split(":");
-  if (version === undefined || hashbytes === undefined) throw capitalError("PLAN_INVALID", "invalid Bitcoin recipient encoding");
+  if (version === undefined || hashbytes === undefined)
+    throw capitalError("PLAN_INVALID", "invalid Bitcoin recipient encoding");
   const versionInt = Number.parseInt(version, 16);
   const bytes = hashbytes.length / 2;
-  if (versionInt <= 4 && bytes !== 20) throw capitalError("PLAN_INVALID", "hashbytes must be 20 bytes for version <= 4");
-  if (versionInt >= 5 && bytes !== 32) throw capitalError("PLAN_INVALID", "hashbytes must be 32 bytes for version 5 or 6");
+  if (versionInt <= 4 && bytes !== 20)
+    throw capitalError("PLAN_INVALID", "hashbytes must be 20 bytes for version <= 4");
+  if (versionInt >= 5 && bytes !== 32)
+    throw capitalError("PLAN_INVALID", "hashbytes must be 32 bytes for version 5 or 6");
   return { version, hashbytes };
 }
 
@@ -108,7 +115,8 @@ function quoteWithdraw(ctx: AdapterContext, intent: Intent, reads: AdapterReads)
   const capability = capabilityFor("withdraw_sbtc", ctx.network, "sbtc");
   const sbtc = amount(token(ctx.network), intent.amount);
   assertPositive(sbtc, "withdrawal amount");
-  if (sbtc.quantity <= WITHDRAWAL_DUST) throw capitalError("CAP_REACHED", `amount must be above dust ${WITHDRAWAL_DUST}`);
+  if (sbtc.quantity <= WITHDRAWAL_DUST)
+    throw capitalError("CAP_REACHED", `amount must be above dust ${WITHDRAWAL_DUST}`);
   const cap = parseQuantity(reads.emilyLimits.perWithdrawalCap);
   if (sbtc.quantity > cap) throw capitalError("CAP_REACHED", `above perWithdrawalCap ${cap}`);
   const maxFee = parseQuantity(intent.maxFee ?? "0");
@@ -122,7 +130,10 @@ function quoteWithdraw(ctx: AdapterContext, intent: Intent, reads: AdapterReads)
     network: ctx.network,
     input: [amount(token(ctx.network), locked)],
     expectedOutput: [btcOut],
-    fees: maxFee > 0n ? [{ kind: "signer", amount: amount(token(ctx.network), maxFee), max: amount(token(ctx.network), maxFee) }] : [],
+    fees:
+      maxFee > 0n
+        ? [{ kind: "signer", amount: amount(token(ctx.network), maxFee), max: amount(token(ctx.network), maxFee) }]
+        : [],
     snapshots: [`emily:${reads.emilyLimits.perWithdrawalCap}`],
     expiresAt: new Date(ctx.now.getTime() + 10 * 60_000).toISOString(),
     executable,
@@ -137,7 +148,8 @@ function quoteWithdraw(ctx: AdapterContext, intent: Intent, reads: AdapterReads)
 }
 
 function buildWithdrawPlan(ctx: AdapterContext, quote: Quote, intent: Intent): Plan {
-  if (!quote.executable) throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "withdrawal is not executable");
+  if (!quote.executable)
+    throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "withdrawal is not executable");
   if (intent.recipient === undefined) throw capitalError("PLAN_INVALID", "Bitcoin recipient is required");
   const recipient = decodeRecipient(intent.recipient);
   const maxFee = intent.maxFee ?? "0";

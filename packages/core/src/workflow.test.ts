@@ -30,7 +30,15 @@ describe("workflow state machine", () => {
 
   it("moves a completed workflow to REORGED", () => {
     let flow = createWorkflow({ id: "wf_3", network: "mainnet", idempotencyKey: "r1" });
-    for (const state of ["QUOTED", "AWAITING_SIGNATURE", "SUBMITTED", "CONFIRMING", "STEP_CONFIRMED", "RECONCILING", "COMPLETED"] as const) {
+    for (const state of [
+      "QUOTED",
+      "AWAITING_SIGNATURE",
+      "SUBMITTED",
+      "CONFIRMING",
+      "STEP_CONFIRMED",
+      "RECONCILING",
+      "COMPLETED",
+    ] as const) {
       flow = transition(flow, state, { reason: state, actor: "test", evidence: state });
     }
     flow = transition(flow, "REORGED", { reason: "rewind", actor: "ingestion", evidence: "parent" });
@@ -41,35 +49,45 @@ describe("workflow state machine", () => {
 describe("reorg-aware ingestion", () => {
   it("rewinds the checkpoint and marks orphaned events noncanonical without deleting them", () => {
     let state = emptyIngestion();
-    state = applyBlock(state, {
-      chain: "stacks",
-      network: "mainnet",
-      height: 1,
-      hash: "0xa",
-      parentHash: "0x0",
-      canonical: true,
-      observedAt: "2026-09-15T00:00:00.000Z",
-      source: "hiro",
-    }, []);
-    state = applyBlock(state, {
-      chain: "stacks",
-      network: "mainnet",
-      height: 2,
-      hash: "0xb",
-      parentHash: "0xa",
-      canonical: true,
-      observedAt: "2026-09-15T00:00:01.000Z",
-      source: "hiro",
-    }, [{
-      id: "evt_1",
-      chain: "stacks",
-      network: "mainnet",
-      blockHash: "0xb",
-      payload: "mint",
-      canonical: true,
-      observedAt: "2026-09-15T00:00:01.000Z",
-      source: "hiro",
-    }]);
+    state = applyBlock(
+      state,
+      {
+        chain: "stacks",
+        network: "mainnet",
+        height: 1,
+        hash: "0xa",
+        parentHash: "0x0",
+        canonical: true,
+        observedAt: "2026-09-15T00:00:00.000Z",
+        source: "hiro",
+      },
+      [],
+    );
+    state = applyBlock(
+      state,
+      {
+        chain: "stacks",
+        network: "mainnet",
+        height: 2,
+        hash: "0xb",
+        parentHash: "0xa",
+        canonical: true,
+        observedAt: "2026-09-15T00:00:01.000Z",
+        source: "hiro",
+      },
+      [
+        {
+          id: "evt_1",
+          chain: "stacks",
+          network: "mainnet",
+          blockHash: "0xb",
+          payload: "mint",
+          canonical: true,
+          observedAt: "2026-09-15T00:00:01.000Z",
+          source: "hiro",
+        },
+      ],
+    );
     state = applyReorg(state, "0xa");
     assert.equal(state.checkpoint?.hash, "0xa");
     assert.equal(state.events[0]?.canonical, false);

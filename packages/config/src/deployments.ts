@@ -332,7 +332,8 @@ export const CAPABILITIES: readonly CapabilityRecord[] = [
     contractId: "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-swap-router-v-1-2",
     adapterVersion: "bitflow-swap@0.1.0",
     state: "enabled",
-    reason: "Allowlisted sBTC↔USDCx on dlmm-swap-router-v-1-2. Live pool principal is not pinned; fixture routes only until verified.",
+    reason:
+      "Allowlisted sBTC↔USDCx on dlmm-swap-router-v-1-2. Live pool principal is not pinned; fixture routes only until verified.",
     wallet: ["leather", "xverse"],
   },
   {
@@ -352,7 +353,8 @@ export const CAPABILITIES: readonly CapabilityRecord[] = [
     contractId: "SP000000000000000000002Q6VF78.pox-5",
     adapterVersion: "pox-5@0.1.0",
     state: "disabled",
-    reason: "K02: pox-5 exists (stake/unstake/unstake-sbtc) but BTC lockup signing path is unverified. Default disabled.",
+    reason:
+      "K02: pox-5 exists (stake/unstake/unstake-sbtc) but BTC lockup signing path is unverified. Default disabled.",
     wallet: [],
   },
   {
@@ -370,14 +372,17 @@ export const CAPABILITIES: readonly CapabilityRecord[] = [
 export const BITFLOW_ALLOWED_POOLS: readonly string[] = [];
 
 export function contract(protocol: string, label: string, network: StacksNetwork): ContractRef {
-  const found = CONTRACTS.find((item) => item.protocol === protocol && item.label === label && item.network === network);
+  const found = CONTRACTS.find(
+    (item) => item.protocol === protocol && item.label === label && item.network === network,
+  );
   if (found === undefined) throw new Error(`No contract ${protocol}/${label} on ${network}`);
   return found;
 }
 
 export function capabilityFor(action: Action, network: StacksNetwork, protocol?: string): CapabilityRecord | undefined {
   return CAPABILITIES.find(
-    (item) => item.action === action && item.network === network && (protocol === undefined || item.protocol === protocol),
+    (item) =>
+      item.action === action && item.network === network && (protocol === undefined || item.protocol === protocol),
   );
 }
 
@@ -385,7 +390,9 @@ export function assertExecutable(action: Action, network: StacksNetwork, protoco
   const found = capabilityFor(action, network, protocol);
   if (found === undefined || found.state !== "enabled") {
     const reason = found?.reason ?? "no capability record";
-    throw Object.assign(new Error(`${action} is not executable on ${network}: ${reason}`), { code: "CAPABILITY_DISABLED" });
+    throw Object.assign(new Error(`${action} is not executable on ${network}: ${reason}`), {
+      code: "CAPABILITY_DISABLED",
+    });
   }
   return found;
 }

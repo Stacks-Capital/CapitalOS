@@ -7,15 +7,24 @@ const NETWORK = "testnet";
 const HIRO = "https://api.testnet.hiro.so";
 const SBTC_TOKEN = "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token";
 const TRANSFER_RECIPIENT = "ST000000000000000000002AMW42H";
-const REGTEST: typeof TEST_NETWORK ={ bech32: "bcrt", pubKeyHash: 0x6f, scriptHash: 0xc4, wif: 0xef };
+const REGTEST: typeof TEST_NETWORK = { bech32: "bcrt", pubKeyHash: 0x6f, scriptHash: 0xc4, wif: 0xef };
 
-const fromHex = (value: string): Uint8Array => Uint8Array.from(value.match(/../g) ?? [], (pair) => Number.parseInt(pair, 16));
+const fromHex = (value: string): Uint8Array =>
+  Uint8Array.from(value.match(/../g) ?? [], (pair) => Number.parseInt(pair, 16));
 const fromBase64 = (value: string): Uint8Array => Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
 const toBase64 = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes));
 
 type RawProvider = { request(method: string, params?: unknown): Promise<unknown> };
 type Result = { summary: string; raw: unknown };
-type LogEntry = { at: string; finishedAt?: string; wallet: WalletId; test: string; ok: boolean; summary: string; raw: unknown };
+type LogEntry = {
+  at: string;
+  finishedAt?: string;
+  wallet: WalletId;
+  test: string;
+  ok: boolean;
+  summary: string;
+  raw: unknown;
+};
 
 const NO_RESPONSE_NOTE_MS = 60_000;
 
@@ -58,9 +67,15 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
   // @stacks/connect only applies its Xverse rewrites when the provider has both of these methods and is not Leather.
   async providerInfo(wallet) {
     const found = provider(wallet) as unknown as Record<string, unknown>;
-    const keys = [...new Set([...Object.keys(found), ...Object.getOwnPropertyNames(Object.getPrototypeOf(found) ?? {})])].sort();
-    const detectedAsXverse = "signMultipleTransactions" in found && "createRepeatInscriptions" in found && !found.isLeather;
-    return { summary: `@stacks/connect treats it as Xverse: ${detectedAsXverse}`, raw: { keys, isLeather: found.isLeather ?? null } };
+    const keys = [
+      ...new Set([...Object.keys(found), ...Object.getOwnPropertyNames(Object.getPrototypeOf(found) ?? {})]),
+    ].sort();
+    const detectedAsXverse =
+      "signMultipleTransactions" in found && "createRepeatInscriptions" in found && !found.isLeather;
+    return {
+      summary: `@stacks/connect treats it as Xverse: ${detectedAsXverse}`,
+      raw: { keys, isLeather: found.isLeather ?? null },
+    };
   },
 
   async rawWalletConnect(wallet) {
@@ -112,7 +127,10 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const payment = result.addresses.find((entry) => /^(tb|bcrt)1q/i.test(entry.address))?.address;
     if (payment) state[wallet].payment = payment;
     const guard = networkGuard(NETWORK, stx ? { stx, btc } : { btc });
-    return { summary: `stx ${stx ?? "missing"}, ${btc.length} btc addresses, network guard ${guard ?? "passed"}`, raw: result };
+    return {
+      summary: `stx ${stx ?? "missing"}, ${btc.length} btc addresses, network guard ${guard ?? "passed"}`,
+      raw: result,
+    };
   },
 
   async network(wallet) {
@@ -194,8 +212,14 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     });
     // Wallets differ in field name and encoding, so keep the raw response even when it cannot be decoded.
     const returned: unknown = result;
-    const field = typeof returned === "object" && returned !== null ? (["psbt", "hex"] as const).find((key) => key in returned) : undefined;
-    const value = field && typeof returned === "object" && returned !== null ? (returned as Record<string, unknown>)[field] : undefined;
+    const field =
+      typeof returned === "object" && returned !== null
+        ? (["psbt", "hex"] as const).find((key) => key in returned)
+        : undefined;
+    const value =
+      field && typeof returned === "object" && returned !== null
+        ? (returned as Record<string, unknown>)[field]
+        : undefined;
     if (typeof value !== "string" || value.length === 0) {
       return { summary: `outcome ${walletOutcome(result)}, no psbt or hex string in the response`, raw: result };
     }
@@ -203,7 +227,10 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     try {
       const input = Transaction.fromPSBT(encoding === "hex" ? fromHex(value) : fromBase64(value)).getInput(0);
       const hasSignature = Boolean(input.partialSig?.length || input.finalScriptWitness?.length);
-      return { summary: `outcome ${walletOutcome(result)}, field ${field}, ${encoding}, input 0 signed ${hasSignature ? "yes" : "no"}`, raw: result };
+      return {
+        summary: `outcome ${walletOutcome(result)}, field ${field}, ${encoding}, input 0 signed ${hasSignature ? "yes" : "no"}`,
+        raw: result,
+      };
     } catch (error) {
       return { summary: `returned field ${field} could not be decoded as ${encoding}: ${String(error)}`, raw: result };
     }
@@ -214,7 +241,11 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     if (!txid) throw new Error("No transaction from this wallet yet");
     const id = txid.startsWith("0x") ? txid : `0x${txid}`;
     const res = await fetch(`${HIRO}/extended/v1/tx/${id}`);
-    const body = (await res.json()) as { tx_status?: string; post_condition_mode?: string; post_conditions?: unknown[] };
+    const body = (await res.json()) as {
+      tx_status?: string;
+      post_condition_mode?: string;
+      post_conditions?: unknown[];
+    };
     return {
       summary: `http ${res.status}, status ${body.tx_status ?? "?"}, post_condition_mode ${body.post_condition_mode ?? "?"}, post_conditions ${body.post_conditions?.length ?? "?"}`,
       raw: body,
@@ -235,7 +266,14 @@ function render(): void {
 
 // The entry is logged before the wallet answers, because some wallet failures never resolve the request at all.
 async function run(wallet: WalletId, name: string, test: (wallet: WalletId) => Promise<Result>): Promise<void> {
-  const entry: LogEntry = { at: new Date().toISOString(), wallet, test: name, ok: false, summary: "waiting for the wallet", raw: null };
+  const entry: LogEntry = {
+    at: new Date().toISOString(),
+    wallet,
+    test: name,
+    ok: false,
+    summary: "waiting for the wallet",
+    raw: null,
+  };
   log.unshift(entry);
   render();
   const timer = setTimeout(() => {
@@ -246,7 +284,11 @@ async function run(wallet: WalletId, name: string, test: (wallet: WalletId) => P
     const { summary, raw } = await test(wallet);
     Object.assign(entry, { ok: true, summary, raw });
   } catch (error) {
-    Object.assign(entry, { ok: false, summary: `product error ${classifyWalletError(wallet, error)}`, raw: describeError(error) });
+    Object.assign(entry, {
+      ok: false,
+      summary: `product error ${classifyWalletError(wallet, error)}`,
+      raw: describeError(error),
+    });
   } finally {
     clearTimeout(timer);
     entry.finishedAt = new Date().toISOString();

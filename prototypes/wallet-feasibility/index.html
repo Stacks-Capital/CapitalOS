@@ -19,43 +19,43 @@
     <div class="wallets">
       <section>
         <h2>Leather</h2>
-        <button data-wallet="leather" data-test="providerInfo">0. Provider info</button>
-        <button data-wallet="leather" data-test="connect">1. Connect (getAddresses)</button>
-        <button data-wallet="leather" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
-        <button data-wallet="leather" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
-        <button data-wallet="leather" data-test="connectNoNetwork">1e. Connect without network param</button>
-        <button data-wallet="leather" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
-        <button data-wallet="leather" data-test="network">2. Read network (wallet_getNetwork)</button>
-        <button data-wallet="leather" data-test="supportedMethods">2b. List supported methods</button>
-        <button data-wallet="leather" data-test="signMessage">3. Sign message</button>
-        <button data-wallet="leather" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
-        <button data-wallet="leather" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
-        <button data-wallet="leather" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
-        <button data-wallet="leather" data-test="checkTx">6. Check last transaction on Hiro</button>
-        <button data-wallet="leather" data-test="psbt">7. Sign PSBT (never broadcast)</button>
+        <button type="button" data-wallet="leather" data-test="providerInfo">0. Provider info</button>
+        <button type="button" data-wallet="leather" data-test="connect">1. Connect (getAddresses)</button>
+        <button type="button" data-wallet="leather" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
+        <button type="button" data-wallet="leather" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
+        <button type="button" data-wallet="leather" data-test="connectNoNetwork">1e. Connect without network param</button>
+        <button type="button" data-wallet="leather" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
+        <button type="button" data-wallet="leather" data-test="network">2. Read network (wallet_getNetwork)</button>
+        <button type="button" data-wallet="leather" data-test="supportedMethods">2b. List supported methods</button>
+        <button type="button" data-wallet="leather" data-test="signMessage">3. Sign message</button>
+        <button type="button" data-wallet="leather" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
+        <button type="button" data-wallet="leather" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
+        <button type="button" data-wallet="leather" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
+        <button type="button" data-wallet="leather" data-test="checkTx">6. Check last transaction on Hiro</button>
+        <button type="button" data-wallet="leather" data-test="psbt">7. Sign PSBT (never broadcast)</button>
       </section>
       <section>
         <h2>Xverse</h2>
-        <button data-wallet="xverse" data-test="providerInfo">0. Provider info</button>
-        <button data-wallet="xverse" data-test="connect">1. Connect (getAddresses)</button>
-        <button data-wallet="xverse" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
-        <button data-wallet="xverse" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
-        <button data-wallet="xverse" data-test="connectNoNetwork">1e. Connect without network param</button>
-        <button data-wallet="xverse" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
-        <button data-wallet="xverse" data-test="network">2. Read network (wallet_getNetwork)</button>
-        <button data-wallet="xverse" data-test="supportedMethods">2b. List supported methods</button>
-        <button data-wallet="xverse" data-test="signMessage">3. Sign message</button>
-        <button data-wallet="xverse" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
-        <button data-wallet="xverse" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
-        <button data-wallet="xverse" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
-        <button data-wallet="xverse" data-test="checkTx">6. Check last transaction on Hiro</button>
-        <button data-wallet="xverse" data-test="psbt">7. Sign PSBT (never broadcast)</button>
+        <button type="button" data-wallet="xverse" data-test="providerInfo">0. Provider info</button>
+        <button type="button" data-wallet="xverse" data-test="connect">1. Connect (getAddresses)</button>
+        <button type="button" data-wallet="xverse" data-test="rawWalletConnect">1c. Raw wallet_connect (Xverse style)</button>
+        <button type="button" data-wallet="xverse" data-test="rawGetAddresses">1d. Raw getAddresses with purposes</button>
+        <button type="button" data-wallet="xverse" data-test="connectNoNetwork">1e. Connect without network param</button>
+        <button type="button" data-wallet="xverse" data-test="rawWalletConnectLowercase">1f. Raw wallet_connect with network "testnet"</button>
+        <button type="button" data-wallet="xverse" data-test="network">2. Read network (wallet_getNetwork)</button>
+        <button type="button" data-wallet="xverse" data-test="supportedMethods">2b. List supported methods</button>
+        <button type="button" data-wallet="xverse" data-test="signMessage">3. Sign message</button>
+        <button type="button" data-wallet="xverse" data-test="transferStx">4. Send 1 micro STX to the testnet boot address</button>
+        <button type="button" data-wallet="xverse" data-test="selfTransfer">4b. Send to self (expected broadcast rejection)</button>
+        <button type="button" data-wallet="xverse" data-test="contractCall">5. sBTC transfer with deny post-condition</button>
+        <button type="button" data-wallet="xverse" data-test="checkTx">6. Check last transaction on Hiro</button>
+        <button type="button" data-wallet="xverse" data-test="psbt">7. Sign PSBT (never broadcast)</button>
       </section>
     </div>
 
     <p>
-      <button id="copy">Copy log as JSON</button>
-      <button id="clear">Clear log</button>
+      <button type="button" id="copy">Copy log as JSON</button>
+      <button type="button" id="clear">Clear log</button>
     </p>
     <pre id="log"></pre>
 

@@ -25,23 +25,50 @@ describe("K11-K14 credit, swap and risk", () => {
     assert.match(granite.explainRisk(ctx, "granite.sbtc.isolated").disclosures.join(" "), /locked sBTC/);
 
     const supply = granite.quote(ctx, { action: "supply", marketId: "granite.sbtc.isolated", amount: "100000000" });
-    const supplyPlan = granite.buildPlan(ctx, supply, { action: "supply", marketId: "granite.sbtc.isolated", amount: "100000000" });
-    assertValidPlan(supplyPlan, supply, { now: ctx.now, network: "mainnet", registryVersion: ctx.registryVersion, sender: MAINNET_OWNER });
+    const supplyPlan = granite.buildPlan(ctx, supply, {
+      action: "supply",
+      marketId: "granite.sbtc.isolated",
+      amount: "100000000",
+    });
+    assertValidPlan(supplyPlan, supply, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      sender: MAINNET_OWNER,
+    });
     const add = supplyPlan.steps[0]?.payload;
     assert.ok(add?.kind === "stacks_contract_call" && add.functionName === "collateral-add");
     assert.equal(add.postConditionMode, "deny");
     assert.equal(add.functionArgs[2]?.type, "none");
 
     const borrow = granite.quote(ctx, { action: "borrow", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-    const borrowPlan = granite.buildPlan(ctx, borrow, { action: "borrow", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-    assertValidPlan(borrowPlan, borrow, { now: ctx.now, network: "mainnet", registryVersion: ctx.registryVersion, sender: MAINNET_OWNER });
+    const borrowPlan = granite.buildPlan(ctx, borrow, {
+      action: "borrow",
+      marketId: "granite.sbtc.isolated",
+      amount: "50000000000",
+    });
+    assertValidPlan(borrowPlan, borrow, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      sender: MAINNET_OWNER,
+    });
     const borrowCall = borrowPlan.steps[0]?.payload;
     assert.ok(borrowCall?.kind === "stacks_contract_call" && borrowCall.functionName === "borrow");
     assert.equal(borrowCall.postConditions[0]?.mode, "receive_gte");
 
     const repay = granite.quote(ctx, { action: "repay", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-    const repayPlan = granite.buildPlan(ctx, repay, { action: "repay", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-    assertValidPlan(repayPlan, repay, { now: ctx.now, network: "mainnet", registryVersion: ctx.registryVersion, sender: MAINNET_OWNER });
+    const repayPlan = granite.buildPlan(ctx, repay, {
+      action: "repay",
+      marketId: "granite.sbtc.isolated",
+      amount: "50000000000",
+    });
+    assertValidPlan(repayPlan, repay, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      sender: MAINNET_OWNER,
+    });
     const repayCall = repayPlan.steps[0]?.payload;
     assert.ok(repayCall?.kind === "stacks_contract_call" && repayCall.functionName === "repay");
   });
@@ -49,22 +76,35 @@ describe("K11-K14 credit, swap and risk", () => {
   it("opens a two-step loan when borrow includes a collateral amount", () => {
     const ctx = adapterContext("mainnet");
     const { granite } = sandboxAdapters("mainnet");
-    const intent = { action: "borrow" as const, marketId: "granite.sbtc.isolated", amount: "40000000000", collateralAmount: "50000000" };
+    const intent = {
+      action: "borrow" as const,
+      marketId: "granite.sbtc.isolated",
+      amount: "40000000000",
+      collateralAmount: "50000000",
+    };
     const quote = granite.quote(ctx, intent);
     const plan = granite.buildPlan(ctx, quote, intent);
     assert.equal(plan.steps.map((step) => step.id).join(","), "collateral-add,borrow");
     assert.deepEqual(plan.steps[1]?.dependsOn, ["collateral-add"]);
-    assertValidPlan(plan, quote, { now: ctx.now, network: "mainnet", registryVersion: ctx.registryVersion, sender: MAINNET_OWNER });
+    assertValidPlan(plan, quote, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      sender: MAINNET_OWNER,
+    });
   });
 
   it("fail-closes Granite quotes on a stale oracle and refuses an over-LTV borrow", () => {
     const ctx = adapterContext("mainnet");
     const oracle = MAINNET_READS.oracle;
     assert.ok(oracle);
-    const { granite: stale } = sandboxAdapters("mainnet", withReads((base) => ({
-      ...base,
-      oracle: { sbtc: { ...oracle.sbtc, stale: true }, usdcx: oracle.usdcx },
-    })));
+    const { granite: stale } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({
+        ...base,
+        oracle: { sbtc: { ...oracle.sbtc, stale: true }, usdcx: oracle.usdcx },
+      })),
+    );
     assert.throws(
       () => stale.quote(ctx, { action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }),
       (error: unknown) => codeOf(error) === "ORACLE_STALE",
@@ -80,11 +120,21 @@ describe("K11-K14 credit, swap and risk", () => {
   it("plans an allowlisted Bitflow sBTC to USDCx swap with onchain min-out", () => {
     const ctx = adapterContext("mainnet");
     const { bitflow } = sandboxAdapters("mainnet");
-    const intent = { action: "swap" as const, marketId: "bitflow.sbtc-usdcx", amount: "100000000", routePool: FIXTURE_BITFLOW_POOL };
+    const intent = {
+      action: "swap" as const,
+      marketId: "bitflow.sbtc-usdcx",
+      amount: "100000000",
+      routePool: FIXTURE_BITFLOW_POOL,
+    };
     const quote = bitflow.quote(ctx, intent);
     assert.equal(quote.minimumOutput?.quantity, 99002500000n);
     const plan = bitflow.buildPlan(ctx, quote, intent);
-    assertValidPlan(plan, quote, { now: ctx.now, network: "mainnet", registryVersion: ctx.registryVersion, sender: MAINNET_OWNER });
+    assertValidPlan(plan, quote, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      sender: MAINNET_OWNER,
+    });
     const call = plan.steps[0]?.payload;
     assert.ok(call?.kind === "stacks_contract_call");
     assert.equal(call.functionName, "swap-x-for-y-simple-range-multi");
@@ -99,7 +149,10 @@ describe("K11-K14 credit, swap and risk", () => {
     const ctx = adapterContext("mainnet");
     const swap = MAINNET_READS.swap;
     assert.ok(swap);
-    const { bitflow } = sandboxAdapters("mainnet", withReads((base) => ({ ...base, swap: { ...swap, stale: true } })));
+    const { bitflow } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({ ...base, swap: { ...swap, stale: true } })),
+    );
     assert.throws(
       () => bitflow.quote(ctx, { action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" }),
       (error: unknown) => codeOf(error) === "ORACLE_STALE",

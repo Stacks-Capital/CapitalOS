@@ -43,9 +43,10 @@ function marketFor(ctx: AdapterContext, action: Action): Market {
     network: ctx.network,
     suppliedAsset: "sbtc-token",
     state: capability?.state ?? "disabled",
-    warnings: capability?.state === "enabled"
-      ? ["Isolated sBTC collateral is not a Zest zsBTC receipt and is not lent out."]
-      : [capability?.reason ?? "Granite credit is not available"],
+    warnings:
+      capability?.state === "enabled"
+        ? ["Isolated sBTC collateral is not a Zest zsBTC receipt and is not lent out."]
+        : [capability?.reason ?? "Granite credit is not available"],
   };
 }
 
@@ -65,7 +66,10 @@ function asOracle(snapshot: OracleSnapshot): OracleQuote {
   };
 }
 
-function requireReads(ctx: AdapterContext, reads: AdapterReads): {
+function requireReads(
+  ctx: AdapterContext,
+  reads: AdapterReads,
+): {
   collateral: Omit<AssetRiskSide, "amount">;
   debt: Omit<AssetRiskSide, "amount">;
   params: RiskParams;
@@ -95,18 +99,20 @@ function requireReads(ctx: AdapterContext, reads: AdapterReads): {
 function healthFor(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Health {
   const loaded = requireReads(ctx, reads);
   const bufferBps = intent.bufferBps !== undefined ? parseQuantity(intent.bufferBps) : loaded.params.bufferBps;
-  const collateralDelta = intent.action === "supply"
-    ? parseQuantity(intent.amount)
-    : intent.action === "withdraw_supply"
-      ? -parseQuantity(intent.amount)
-      : intent.collateralAmount !== undefined
-        ? parseQuantity(intent.collateralAmount)
+  const collateralDelta =
+    intent.action === "supply"
+      ? parseQuantity(intent.amount)
+      : intent.action === "withdraw_supply"
+        ? -parseQuantity(intent.amount)
+        : intent.collateralAmount !== undefined
+          ? parseQuantity(intent.collateralAmount)
+          : 0n;
+  const debtDelta =
+    intent.action === "borrow"
+      ? parseQuantity(intent.amount)
+      : intent.action === "repay"
+        ? -parseQuantity(intent.amount)
         : 0n;
-  const debtDelta = intent.action === "borrow"
-    ? parseQuantity(intent.amount)
-    : intent.action === "repay"
-      ? -parseQuantity(intent.amount)
-      : 0n;
   return projectedHealth({
     collateralBefore: loaded.collateralBefore,
     debtBefore: loaded.debtBefore,
@@ -124,9 +130,9 @@ export function createGraniteCreditAdapter(reads: AdapterReads): ProtocolAdapter
     protocol: "granite",
     version: GRANITE_CREDIT_VERSION,
     describeCapabilities(ctx) {
-      return ACTIONS
-        .map((action) => capabilityFor(action, ctx.network, "granite"))
-        .filter((item): item is NonNullable<typeof item> => item !== undefined);
+      return ACTIONS.map((action) => capabilityFor(action, ctx.network, "granite")).filter(
+        (item): item is NonNullable<typeof item> => item !== undefined,
+      );
     },
     listMarkets(ctx) {
       return ACTIONS.map((action) => marketFor(ctx, action));
@@ -218,10 +224,14 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
   if (intent.marketId !== GRANITE_MARKET_ISOLATED) throw capitalError("UNSUPPORTED_ACTION", intent.marketId);
   const capability = capabilityFor(intent.action, ctx.network, "granite");
   if (ctx.network !== "mainnet") {
-    throw capitalError("CAPABILITY_DISABLED", capability?.reason ?? "Granite v0-8-market is not deployed on public Stacks testnet");
+    throw capitalError(
+      "CAPABILITY_DISABLED",
+      capability?.reason ?? "Granite v0-8-market is not deployed on public Stacks testnet",
+    );
   }
   const qty = parseQuantity(intent.amount);
-  const inputAsset = intent.action === "supply" || intent.action === "withdraw_supply" ? sbtc(ctx.network) : usdcx(ctx.network);
+  const inputAsset =
+    intent.action === "supply" || intent.action === "withdraw_supply" ? sbtc(ctx.network) : usdcx(ctx.network);
   assertPositive(amount(inputAsset, qty), "granite amount");
 
   const health = healthFor(ctx, intent, reads);
@@ -232,33 +242,35 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
   if (intent.action === "borrow") {
     const loaded = requireReads(ctx, reads);
     const extraCollateral = intent.collateralAmount !== undefined ? parseQuantity(intent.collateralAmount) : 0n;
-    if (loaded.collateralBefore + extraCollateral <= 0n) throw capitalError("INSUFFICIENT_BALANCE", "isolated collateral is required before borrow");
-    if (loaded.debtBefore + qty > health.maxBorrow) throw capitalError("CAP_REACHED", `borrow exceeds max ${health.maxBorrow.toString(10)}`);
+    if (loaded.collateralBefore + extraCollateral <= 0n)
+      throw capitalError("INSUFFICIENT_BALANCE", "isolated collateral is required before borrow");
+    if (loaded.debtBefore + qty > health.maxBorrow)
+      throw capitalError("CAP_REACHED", `borrow exceeds max ${health.maxBorrow.toString(10)}`);
     const available = reads.debtVault !== undefined ? parseQuantity(reads.debtVault.totalAssets) : undefined;
-    if (available !== undefined && qty > available) throw capitalError("CAP_REACHED", "USDCx vault liquidity is insufficient");
+    if (available !== undefined && qty > available)
+      throw capitalError("CAP_REACHED", "USDCx vault liquidity is insufficient");
   }
 
   const collateralIn = intent.collateralAmount !== undefined ? parseQuantity(intent.collateralAmount) : 0n;
-  const sending = intent.action === "supply"
-    ? [amount(sbtc(ctx.network), qty)]
-    : intent.action === "repay"
-      ? [amount(usdcx(ctx.network), qty)]
-      : intent.action === "borrow" && collateralIn > 0n
-        ? [amount(sbtc(ctx.network), collateralIn)]
-        : [];
-  const receiving = intent.action === "borrow"
-    ? [amount(usdcx(ctx.network), qty)]
-    : intent.action === "withdraw_supply"
+  const sending =
+    intent.action === "supply"
       ? [amount(sbtc(ctx.network), qty)]
-      : intent.action === "supply"
+      : intent.action === "repay"
+        ? [amount(usdcx(ctx.network), qty)]
+        : intent.action === "borrow" && collateralIn > 0n
+          ? [amount(sbtc(ctx.network), collateralIn)]
+          : [];
+  const receiving =
+    intent.action === "borrow"
+      ? [amount(usdcx(ctx.network), qty)]
+      : intent.action === "withdraw_supply"
         ? [amount(sbtc(ctx.network), qty)]
-        : [];
+        : intent.action === "supply"
+          ? [amount(sbtc(ctx.network), qty)]
+          : [];
 
   const executable = capability?.state === "enabled";
-  const warnings = [
-    ...(executable ? [] : [capability?.reason ?? "disabled"]),
-    ...health.warnings,
-  ];
+  const warnings = [...(executable ? [] : [capability?.reason ?? "disabled"]), ...health.warnings];
   const quote: Quote = {
     id: `q_granite_${intent.action}_${ctx.now.getTime()}`,
     action: intent.action,
@@ -283,7 +295,8 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
 }
 
 function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _reads: AdapterReads): Plan {
-  if (!quote.executable) throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "granite is not executable");
+  if (!quote.executable)
+    throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "granite is not executable");
   const sender = ctx.owner;
   if (sender === undefined) throw capitalError("PLAN_INVALID", "owner is required to set post conditions");
   const market = contract("zest", "v0-8-market", ctx.network);

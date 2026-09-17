@@ -18,7 +18,14 @@ export type DeploymentId = {
 };
 
 export type MarketId = string;
-export type PositionKind = "wallet" | "supplied" | "debt" | "collateral" | "pending_deposit" | "pending_withdrawal" | "staked";
+export type PositionKind =
+  | "wallet"
+  | "supplied"
+  | "debt"
+  | "collateral"
+  | "pending_deposit"
+  | "pending_withdrawal"
+  | "staked";
 
 export type PositionId = {
   owner: string;

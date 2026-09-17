@@ -1,7 +1,13 @@
 import { contract, PROVIDERS, type ProviderEndpoints } from "@stacks-capital/config";
 import { ORACLE_MAX_AGE_MS, capitalError, requireNetwork, type StacksNetwork } from "@stacks-capital/core";
 import type { AdapterReads, VaultSnapshot } from "@stacks-capital/adapters";
-import { clarityBoolAfter, clarityIntAfter, decodeClarityUint, encodeStandardPrincipal, encodeUint } from "./clarity.ts";
+import {
+  clarityBoolAfter,
+  clarityIntAfter,
+  decodeClarityUint,
+  encodeStandardPrincipal,
+  encodeUint,
+} from "./clarity.ts";
 
 const SBTC_ASSET_MASK = 4n;
 const SHARE_SAMPLE = 100_000_000n;
@@ -81,7 +87,11 @@ export async function loadLiveReads(options: LiveReadOptions): Promise<AdapterRe
   const now = options.now ?? new Date();
 
   const [limits, vault, debtVault, egroupHex] = await Promise.all([
-    getJson(fetchImpl, `${providers.emily}/limits`) as Promise<{ perDepositMinimum?: number; perWithdrawalCap?: number; pegCap?: number }>,
+    getJson(fetchImpl, `${providers.emily}/limits`) as Promise<{
+      perDepositMinimum?: number;
+      perWithdrawalCap?: number;
+      pegCap?: number;
+    }>,
     vaultSnapshot(fetchImpl, providers.stacksApi, sbtcVault, sender),
     vaultSnapshot(fetchImpl, providers.stacksApi, usdcVault, sender),
     callRead(fetchImpl, providers.stacksApi, egroup, "resolve", [encodeUint(SBTC_ASSET_MASK)], sender),

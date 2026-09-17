@@ -38,9 +38,12 @@ function swapMarket(ctx: AdapterContext): Market {
     suppliedAsset: "sbtc-token",
     receiptAsset: "usdcx",
     state: capability?.state ?? "disabled",
-    warnings: capability?.state === "enabled"
-      ? ["Allowlisted sBTC↔USDCx only. Live pool principal is not pinned; fixture routes only until a pool is verified."]
-      : [capability?.reason ?? "Bitflow swap is not available"],
+    warnings:
+      capability?.state === "enabled"
+        ? [
+            "Allowlisted sBTC↔USDCx only. Live pool principal is not pinned; fixture routes only until a pool is verified.",
+          ]
+        : [capability?.reason ?? "Bitflow swap is not available"],
   };
 }
 
@@ -52,7 +55,11 @@ function routerId(network: StacksNetwork): string {
   return contract("bitflow", "dlmm-swap-router-v-1-2", network).contractId;
 }
 
-function assertRoute(ctx: AdapterContext, intent: Intent, reads: AdapterReads): { poolId: string; amountOut: bigint; minOut: bigint } {
+function assertRoute(
+  ctx: AdapterContext,
+  intent: Intent,
+  reads: AdapterReads,
+): { poolId: string; amountOut: bigint; minOut: bigint } {
   const swap = reads.swap;
   if (swap === undefined) throw capitalError("ORACLE_STALE", "Bitflow route snapshot is missing");
   const age = ctx.now.getTime() - Date.parse(swap.observedAt);
@@ -177,7 +184,8 @@ function quoteSwap(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Qu
 }
 
 function buildSwapPlan(ctx: AdapterContext, quote: Quote, intent: Intent, reads: AdapterReads): Plan {
-  if (!quote.executable) throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "swap is not executable");
+  if (!quote.executable)
+    throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "swap is not executable");
   const sender = ctx.owner;
   if (sender === undefined) throw capitalError("PLAN_INVALID", "owner is required to set post conditions");
   const route = assertRoute(ctx, intent, reads);
@@ -185,8 +193,12 @@ function buildSwapPlan(ctx: AdapterContext, quote: Quote, intent: Intent, reads:
   const xIsSbtc = reads.swap?.xAsset !== "usdcx";
   const xForY = (paySbtc && xIsSbtc) || (!paySbtc && !xIsSbtc);
   const functionName = xForY ? "swap-x-for-y-simple-range-multi" : "swap-y-for-x-simple-range-multi";
-  const xToken = xIsSbtc ? contract("sbtc", "sbtc-token", ctx.network).contractId : contract("usdcx", "usdcx", ctx.network).contractId;
-  const yToken = xIsSbtc ? contract("usdcx", "usdcx", ctx.network).contractId : contract("sbtc", "sbtc-token", ctx.network).contractId;
+  const xToken = xIsSbtc
+    ? contract("sbtc", "sbtc-token", ctx.network).contractId
+    : contract("usdcx", "usdcx", ctx.network).contractId;
+  const yToken = xIsSbtc
+    ? contract("usdcx", "usdcx", ctx.network).contractId
+    : contract("sbtc", "sbtc-token", ctx.network).contractId;
   const input = quote.input[0];
   const output = quote.minimumOutput ?? quote.expectedOutput[0];
   if (input === undefined || output === undefined) throw capitalError("PLAN_INVALID", "swap quote is missing amounts");

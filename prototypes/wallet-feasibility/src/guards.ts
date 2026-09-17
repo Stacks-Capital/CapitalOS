@@ -24,7 +24,8 @@ const BASE58_BODY = "[1-9A-HJ-NP-Za-km-z]{25,34}";
 export function bitcoinAddressKind(address: string): BitcoinAddressKind | null {
   const lower = address.toLowerCase();
   if (new RegExp(`^bcrt1${BECH32_BODY}$`).test(lower)) return "regtest";
-  if (new RegExp(`^bc1${BECH32_BODY}$`).test(lower) || new RegExp(`^[13]${BASE58_BODY}$`).test(address)) return "mainnet";
+  if (new RegExp(`^bc1${BECH32_BODY}$`).test(lower) || new RegExp(`^[13]${BASE58_BODY}$`).test(address))
+    return "mainnet";
   if (new RegExp(`^tb1${BECH32_BODY}$`).test(lower) || new RegExp(`^[mn2]${BASE58_BODY}$`).test(address)) return "test";
   return null;
 }
@@ -35,7 +36,10 @@ export const BITCOIN_FOR_STACKS: Readonly<Record<StacksNetwork, BitcoinAddressKi
   testnet: "regtest",
 };
 
-export function networkGuard(expected: StacksNetwork, addresses: { stx?: string; btc?: string[] }): ProductError | null {
+export function networkGuard(
+  expected: StacksNetwork,
+  addresses: { stx?: string; btc?: string[] },
+): ProductError | null {
   if (addresses.stx !== undefined && stacksAddressNetwork(addresses.stx) !== expected) return "NETWORK_MISMATCH";
   for (const btc of addresses.btc ?? []) {
     if (bitcoinAddressKind(btc) !== BITCOIN_FOR_STACKS[expected]) return "NETWORK_MISMATCH";
