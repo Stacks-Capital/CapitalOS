@@ -59,9 +59,9 @@ export function createZestEarnAdapter(reads: AdapterReads): ProtocolAdapter {
     },
     readPositions(ctx, owner) {
       return {
-        value: [{ owner, marketId: ZEST_MARKET_SBTC, kind: "supplied", quantity: "0" }],
+        value: [{ owner, marketId: ZEST_MARKET_SBTC, kind: "supplied", quantity: reads.balances?.zsbtc ?? "0" }],
         observedAt: ctx.now.toISOString(),
-        source: reads.vault ? "vault-snapshot" : "fixture",
+        source: reads.source ?? (reads.vault ? "vault-snapshot" : "fixture"),
         stale: false,
         warnings: [],
       };
