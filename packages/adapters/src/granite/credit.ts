@@ -142,7 +142,7 @@ export function createGraniteCreditAdapter(reads: AdapterReads): ProtocolAdapter
           { owner, marketId: GRANITE_MARKET_ISOLATED, kind: "debt", quantity: reads.position?.debt ?? "0" },
         ],
         observedAt: ctx.now.toISOString(),
-        source: reads.oracle?.sbtc.source ?? "fixture",
+        source: reads.source ?? reads.oracle?.sbtc.source ?? "fixture",
         stale: reads.oracle?.sbtc.stale ?? true,
         warnings: [],
       };
