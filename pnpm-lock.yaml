@@ -223,7 +223,24 @@ importers:
 
   packages/react: {}
 
-  packages/sdk: {}
+  packages/sdk:
+    dependencies:
+      '@stacks-capital/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@stacks-capital/config':
+        specifier: workspace:*
+        version: link:../config
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stacks-capital/wallets':
+        specifier: workspace:*
+        version: link:../wallets
+    devDependencies:
+      '@stacks-capital/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
 
   packages/server-sdk: {}
 

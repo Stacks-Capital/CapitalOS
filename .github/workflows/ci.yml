@@ -60,6 +60,9 @@ jobs:
       - name: Unit tests
         run: pnpm test:unit
 
+      - name: Public SDK smoke
+        run: pnpm sdk:check
+
       - name: Sandbox end to end fixtures
         run: pnpm test:e2e
 

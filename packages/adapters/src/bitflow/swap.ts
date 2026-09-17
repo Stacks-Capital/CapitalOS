@@ -103,7 +103,7 @@ export function createBitflowSwapAdapter(reads: AdapterReads): ProtocolAdapter {
     },
     readPositions(ctx, owner) {
       return {
-        value: [{ owner, marketId: BITFLOW_MARKET_SBTC_USDCX, kind: "wallet", quantity: "0" }],
+        value: [{ owner, marketId: BITFLOW_MARKET_SBTC_USDCX, kind: "wallet", quantity: reads.balances?.sbtc ?? "0" }],
         observedAt: ctx.now.toISOString(),
         source: reads.swap?.source ?? "fixture",
         stale: reads.swap?.stale ?? true,
