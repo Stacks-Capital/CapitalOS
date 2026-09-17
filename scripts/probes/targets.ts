@@ -25,8 +25,16 @@ export const TARGETS: Record<Network, NetworkTargets> = {
     hermes: "https://hermes-beta.pyth.network",
     bitflowTicker: null,
     contracts: [
-      { target: "sBTC", label: "sbtc-token from docs.stacks.co", id: "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token" },
-      { target: "sBTC", label: "sbtc-token from sbtc npm testnet client", id: "SNGWPN3XDAQE673MXYXF81016M50NHF5X5PWWM70.sbtc-token" },
+      {
+        target: "sBTC",
+        label: "sbtc-token from docs.stacks.co",
+        id: "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token",
+      },
+      {
+        target: "sBTC",
+        label: "sbtc-token from sbtc npm testnet client",
+        id: "SNGWPN3XDAQE673MXYXF81016M50NHF5X5PWWM70.sbtc-token",
+      },
       { target: "USDCx", label: "usdcx", id: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx" },
     ],
   },

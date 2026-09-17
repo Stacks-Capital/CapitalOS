@@ -4,8 +4,14 @@ import { CAPABILITIES, CONTRACTS, assertExecutable, capabilityFor, contract } fr
 
 describe("capability registry", () => {
   it("pins the I01 sBTC and USDCx principals", () => {
-    assert.equal(contract("sbtc", "sbtc-token", "mainnet").contractId, "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token");
-    assert.equal(contract("sbtc", "sbtc-token", "testnet").contractId, "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token");
+    assert.equal(
+      contract("sbtc", "sbtc-token", "mainnet").contractId,
+      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+    );
+    assert.equal(
+      contract("sbtc", "sbtc-token", "testnet").contractId,
+      "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token",
+    );
     assert.equal(contract("usdcx", "usdcx", "mainnet").contractId, "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx");
   });
 

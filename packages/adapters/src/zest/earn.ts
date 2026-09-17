@@ -167,7 +167,8 @@ function quoteEarn(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Qu
 }
 
 function buildEarnPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _reads: AdapterReads): Plan {
-  if (!quote.executable) throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "earn is not executable");
+  if (!quote.executable)
+    throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "earn is not executable");
   const sender = ctx.owner;
   if (sender === undefined) throw capitalError("PLAN_INVALID", "owner is required to set post conditions");
   const recipient = intent.recipient ?? sender;

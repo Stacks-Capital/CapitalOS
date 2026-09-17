@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { bitcoinAddressKind, classifyWalletError, networkGuard, stacksAddressNetwork, walletOutcome } from "./guards.ts";
+import {
+  bitcoinAddressKind,
+  classifyWalletError,
+  networkGuard,
+  stacksAddressNetwork,
+  walletOutcome,
+} from "./guards.ts";
 
 const LEATHER_TESTNET_STX = "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0";
 const XVERSE_TESTNET_STX = "ST1D9X179MAJ9XA7KHSZJ48CN39DVB6TAQDYST34R";
@@ -36,11 +42,17 @@ describe("bitcoinAddressKind", () => {
 
 describe("networkGuard", () => {
   it("passes a testnet Stacks address with a regtest Bitcoin address", () => {
-    assert.equal(networkGuard("testnet", { stx: XVERSE_TESTNET_STX, btc: ["bcrt1qs758ursh4q9z627kt3pp5yysm78ddny6txaqgw"] }), null);
+    assert.equal(
+      networkGuard("testnet", { stx: XVERSE_TESTNET_STX, btc: ["bcrt1qs758ursh4q9z627kt3pp5yysm78ddny6txaqgw"] }),
+      null,
+    );
   });
 
   it("flags a public test network Bitcoin address on Stacks testnet", () => {
-    assert.equal(networkGuard("testnet", { stx: LEATHER_TESTNET_STX, btc: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"] }), "NETWORK_MISMATCH");
+    assert.equal(
+      networkGuard("testnet", { stx: LEATHER_TESTNET_STX, btc: ["tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"] }),
+      "NETWORK_MISMATCH",
+    );
   });
 
   it("flags a Stacks address from the wrong network", () => {

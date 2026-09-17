@@ -71,9 +71,7 @@ export function applyReorg(state: IngestionState, commonAncestorHash: string): I
   if (ancestor === undefined) throw new Error(`Unknown ancestor ${commonAncestorHash}`);
 
   return {
-    blocks: state.blocks.map((block) =>
-      block.height > ancestor.height ? { ...block, canonical: false } : block,
-    ),
+    blocks: state.blocks.map((block) => (block.height > ancestor.height ? { ...block, canonical: false } : block)),
     events: state.events.map((event) => {
       const block = state.blocks.find((candidate) => candidate.hash === event.blockHash);
       if (block !== undefined && block.height > ancestor.height) return { ...event, canonical: false };

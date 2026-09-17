@@ -24,7 +24,8 @@ const BASE58_BODY = "[1-9A-HJ-NP-Za-km-z]{25,34}";
 export function bitcoinAddressKind(address: string): BitcoinNetworkKind | null {
   const lower = address.toLowerCase();
   if (new RegExp(`^bcrt1${BECH32_DATA}$`).test(lower)) return "regtest";
-  if (new RegExp(`^bc1${BECH32_DATA}$`).test(lower) || new RegExp(`^[13]${BASE58_BODY}$`).test(address)) return "mainnet";
+  if (new RegExp(`^bc1${BECH32_DATA}$`).test(lower) || new RegExp(`^[13]${BASE58_BODY}$`).test(address))
+    return "mainnet";
   if (new RegExp(`^tb1${BECH32_DATA}$`).test(lower) || new RegExp(`^[mn2]${BASE58_BODY}$`).test(address)) return "test";
   return null;
 }

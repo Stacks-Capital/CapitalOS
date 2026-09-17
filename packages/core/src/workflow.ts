@@ -154,15 +154,20 @@ export function applyReorgToWorkflow(workflow: Workflow, evidence: string): Work
   if (workflow.state === "EXPIRED" || workflow.state === "USER_REJECTED" || workflow.state === "FAILED") {
     return workflow;
   }
-  const fromCompleted = workflow.state === "COMPLETED" ? transition(workflow, "REORGED", {
-    reason: "Canonical chain evidence was rewound",
-    actor: "ingestion",
-    evidence,
-  }) : workflow.state === "REORGED" ? workflow : transition(workflow, "REORGED", {
-    reason: "Canonical chain evidence was rewound",
-    actor: "ingestion",
-    evidence,
-  });
+  const fromCompleted =
+    workflow.state === "COMPLETED"
+      ? transition(workflow, "REORGED", {
+          reason: "Canonical chain evidence was rewound",
+          actor: "ingestion",
+          evidence,
+        })
+      : workflow.state === "REORGED"
+        ? workflow
+        : transition(workflow, "REORGED", {
+            reason: "Canonical chain evidence was rewound",
+            actor: "ingestion",
+            evidence,
+          });
   return fromCompleted;
 }
 

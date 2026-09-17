@@ -13,12 +13,14 @@ const REQUIRED: Record<string, string[]> = {
   "v0-8-market": ["borrow", "repay", "collateral-add", "collateral-remove"],
   "dlmm-swap-router-v-1-2": ["swap-x-for-y-simple-range-multi", "swap-y-for-x-simple-range-multi"],
   "pox-5": ["get-pox-info"],
-  "usdcx": ["transfer", "get-balance"],
+  usdcx: ["transfer", "get-balance"],
 };
 
 async function load(contract: ContractRef): Promise<{ ok: boolean; detail: string }> {
   const base = PROVIDERS[contract.network].stacksApi;
-  const res = await fetch(`${base}/extended/v1/contract/${contract.contractId}`, { signal: AbortSignal.timeout(30_000) });
+  const res = await fetch(`${base}/extended/v1/contract/${contract.contractId}`, {
+    signal: AbortSignal.timeout(30_000),
+  });
   const body = (await res.json()) as ContractBody;
   if (res.status !== 200) return { ok: false, detail: `${contract.contractId} HTTP ${res.status}` };
   const abi = typeof body.abi === "string" ? (JSON.parse(body.abi) as { functions?: AbiFn[] }) : body.abi;
@@ -26,9 +28,8 @@ async function load(contract: ContractRef): Promise<{ ok: boolean; detail: strin
   const missing = (REQUIRED[contract.label] ?? []).filter((name) => !names.has(name));
   return {
     ok: missing.length === 0,
-    detail: missing.length === 0
-      ? `height ${body.block_height}, ${names.size} functions`
-      : `missing ${missing.join(", ")}`,
+    detail:
+      missing.length === 0 ? `height ${body.block_height}, ${names.size} functions` : `missing ${missing.join(", ")}`,
   };
 }
 
