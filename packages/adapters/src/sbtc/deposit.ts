@@ -53,7 +53,7 @@ export function createSbtcDepositAdapter(reads: AdapterReads): ProtocolAdapter {
       return {
         value: [{ owner, marketId: SBTC_MARKET_DEPOSIT, kind: "pending_deposit", quantity: "0" }],
         observedAt: ctx.now.toISOString(),
-        source: "fixture",
+        source: reads.source ?? "fixture",
         stale: false,
         warnings: [],
       };
