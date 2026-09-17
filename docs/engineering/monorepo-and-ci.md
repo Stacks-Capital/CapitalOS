@@ -43,7 +43,8 @@ The workflow file was validated with actionlint 1.7.12, which is not added to th
 | `pnpm secrets:scan` | gitleaks over the full git history (needs gitleaks installed) |
 | `pnpm changeset:status` | Changeset status |
 | `pnpm ci` | lint, boundaries, test and build in one go |
-| `docker compose up -d --wait postgres redis` | Starts local PostgreSQL and Redis and waits until both are healthy |
+| `pnpm services:up` | Starts local PostgreSQL and Redis with `.env.local` and waits until both are healthy |
+| `pnpm services:down` | Stops them and keeps their data volumes |
 
 ## Package boundaries
 
@@ -93,7 +94,12 @@ It also runs the package boundary check, the gate tests, changeset status, and s
 
 ## Local services
 
-`compose.yaml` runs PostgreSQL and Redis for local development only. Ports bind to `127.0.0.1`, Redis requires a password (page 03), and the default passwords are local placeholders that can be overridden through `.env.local`. `.env.example` lists the variables.
+`compose.yaml` runs PostgreSQL 18.6 and Redis 8.10.1 for local development only. Ports bind to `127.0.0.1` and Redis requires a password (page 03). `.env.example` lists every variable.
+
+- Start with `pnpm services:up` and stop with `pnpm services:down`. Both pass `.env.local` to Docker Compose when it exists. Plain `docker compose` only reads a file named `.env`, so it ignores `.env.local`.
+- `POSTGRES_PORT` and `REDIS_PORT` change the host ports (defaults 5432 and 6379). Set them when something else already listens there, such as the Ubuntu `postgresql` service, and keep `DATABASE_URL` and `REDIS_URL` in sync.
+- The default passwords are local placeholders and can be overridden in `.env.local`.
+- Verified on 2026-09-17 in CI and on Ubuntu 24.04 with Docker 29.8.1: both services become healthy, PostgreSQL answers queries and Redis rejects commands without its password.
 
 ## Formatting change
 
@@ -106,5 +112,5 @@ This task applied Biome formatting once to the existing code. The changes are wh
 - Packages ship TypeScript source (K03 design), so `pnpm build` builds only the wallet prototype.
 - Merge, release and production gates from page 03 belong to later tasks.
 - Branch protection and required checks cannot be enforced on a private repository under GitHub Free.
-- Docker is not installed on the author's machine yet, so the Compose file was validated in CI only.
+- `pnpm services:up` and `pnpm services:down` use shell syntax, so they need Linux or macOS.
 - Three existing Biome warnings in `packages/adapters/src/sbtc` (unused import and parameters) are left to the package owner.

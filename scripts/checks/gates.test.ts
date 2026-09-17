@@ -111,4 +111,25 @@ describe("local services", {
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(result.stdout.trim().split("\n").sort(), ["postgres", "redis"]);
   });
+
+  it("publishes host ports from POSTGRES_PORT and REDIS_PORT on localhost only", () => {
+    const result = spawnSync("docker", ["compose", "-f", join(ROOT, "compose.yaml"), "config", "--format", "json"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      env: { ...process.env, POSTGRES_PORT: "15432", REDIS_PORT: "16379" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    type Port = { published?: string; host_ip?: string };
+    const config = JSON.parse(result.stdout) as { services: Record<string, { ports?: Port[] }> };
+    assert.deepEqual(config.services.postgres?.ports?.[0], {
+      ...config.services.postgres?.ports?.[0],
+      published: "15432",
+      host_ip: "127.0.0.1",
+    });
+    assert.deepEqual(config.services.redis?.ports?.[0], {
+      ...config.services.redis?.ports?.[0],
+      published: "16379",
+      host_ip: "127.0.0.1",
+    });
+  });
 });

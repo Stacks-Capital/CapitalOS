@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: capitalos
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-capitalos_local}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -24,7 +24,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-capitalos_local}
     command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:

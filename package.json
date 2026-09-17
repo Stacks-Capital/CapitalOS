@@ -15,6 +15,8 @@
     "test:checks": "node --test scripts/checks/*.test.ts",
     "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e && pnpm test:checks",
     "build": "pnpm --filter @stacks-capital/wallet-feasibility build",
+    "services:up": "docker compose $([ -f .env.local ] && echo --env-file .env.local) up -d --wait postgres redis",
+    "services:down": "docker compose $([ -f .env.local ] && echo --env-file .env.local) down",
     "secrets:scan": "gitleaks git --redact --no-banner .",
     "changeset:status": "changeset status --since=origin/main",
     "ci": "pnpm lint && pnpm boundaries && pnpm test && pnpm build",
