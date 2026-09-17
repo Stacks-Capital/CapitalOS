@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@12.4.1",
   "scripts": {
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/checks && tsc --noEmit -p prototypes/wallet-feasibility",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/checks && tsc --noEmit -p prototypes/wallet-feasibility && tsc --noEmit -p scripts/db",
     "lint": "biome ci .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
@@ -13,10 +13,13 @@
     "test:unit": "node --test --experimental-strip-types packages/core/src/*.test.ts packages/config/src/*.test.ts packages/wallets/src/*.test.ts packages/adapters/src/*.test.ts scripts/probes/lib.test.ts prototypes/wallet-feasibility/src/*.test.ts",
     "test:e2e": "node --test --experimental-strip-types packages/fixtures/src/*.test.ts",
     "test:checks": "node --test scripts/checks/*.test.ts",
+    "test:integration": "node --env-file-if-exists=.env.local --test scripts/db/*.test.ts",
     "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e && pnpm test:checks",
     "build": "pnpm --filter @stacks-capital/wallet-feasibility build",
     "services:up": "docker compose $([ -f .env.local ] && echo --env-file .env.local) up -d --wait postgres redis",
     "services:down": "docker compose $([ -f .env.local ] && echo --env-file .env.local) down",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/db/migrate.ts",
+    "fixtures:seed": "node --env-file-if-exists=.env.local scripts/db/seed.ts",
     "secrets:scan": "gitleaks git --redact --no-banner .",
     "changeset:status": "changeset status --since=origin/main",
     "ci": "pnpm lint && pnpm boundaries && pnpm test && pnpm build",
@@ -27,6 +30,7 @@
     "@changesets/cli": "3.0.2",
     "@types/node": "^24.13.4",
     "dependency-cruiser": "18.3.1",
+    "postgres": "3.4.9",
     "typescript": "6.0.3"
   }
 }

@@ -15,6 +15,7 @@ concurrency:
 env:
   GITLEAKS_VERSION: 8.30.1
   GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  DATABASE_URL: postgres://capitalos:capitalos_local@127.0.0.1:5432/capitalos
 
 jobs:
   checks:
@@ -74,6 +75,15 @@ jobs:
 
       - name: Local services start healthy
         run: docker compose up -d --wait postgres redis
+
+      - name: Database migrations
+        run: pnpm db:migrate
+
+      - name: Deterministic fixtures (seeded twice)
+        run: pnpm fixtures:seed && pnpm fixtures:seed
+
+      - name: Database integration tests
+        run: pnpm test:integration
 
       - name: Stop local services
         if: always()
