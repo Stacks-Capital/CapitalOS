@@ -5,15 +5,26 @@
   "type": "module",
   "packageManager": "pnpm@12.4.1",
   "scripts": {
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes",
-    "test:unit": "node --test --experimental-strip-types packages/core/src/*.test.ts packages/config/src/*.test.ts packages/wallets/src/*.test.ts packages/adapters/src/*.test.ts",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/fixtures && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/checks && tsc --noEmit -p prototypes/wallet-feasibility",
+    "lint": "biome ci .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "boundaries": "depcruise --config .dependency-cruiser.cjs packages apps scripts prototypes",
+    "test:unit": "node --test --experimental-strip-types packages/core/src/*.test.ts packages/config/src/*.test.ts packages/wallets/src/*.test.ts packages/adapters/src/*.test.ts scripts/probes/lib.test.ts prototypes/wallet-feasibility/src/*.test.ts",
     "test:e2e": "node --test --experimental-strip-types packages/fixtures/src/*.test.ts",
-    "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e",
+    "test:checks": "node --test scripts/checks/*.test.ts",
+    "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e && pnpm test:checks",
+    "build": "pnpm --filter @stacks-capital/wallet-feasibility build",
+    "secrets:scan": "gitleaks git --redact --no-banner .",
+    "changeset:status": "changeset status",
+    "ci": "pnpm lint && pnpm boundaries && pnpm test && pnpm build",
     "probe:contracts": "node --experimental-strip-types scripts/contracts/probe.ts"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@changesets/cli": "3.0.2",
     "@types/node": "^24.13.4",
+    "dependency-cruiser": "18.3.1",
     "typescript": "6.0.3"
   }
 }

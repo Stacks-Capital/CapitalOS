@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test src/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "vite build"
   },
   "dependencies": {
     "@scure/btc-signer": "2.4.1",

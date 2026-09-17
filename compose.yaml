@@ -1,0 +1,38 @@
+name: capitalos
+
+# Local development only. Ports bind to 127.0.0.1 and the default passwords are for this machine, never shared environments.
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: capitalos
+      POSTGRES_USER: capitalos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-capitalos_local}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capitalos -d capitalos"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:8.10.1-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-capitalos_local}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres-data:
+  redis-data:
