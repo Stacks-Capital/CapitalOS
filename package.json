@@ -16,7 +16,7 @@
     "test": "pnpm typecheck && pnpm test:unit && pnpm test:e2e && pnpm test:checks",
     "build": "pnpm --filter @stacks-capital/wallet-feasibility build",
     "secrets:scan": "gitleaks git --redact --no-banner .",
-    "changeset:status": "changeset status",
+    "changeset:status": "changeset status --since=origin/main",
     "ci": "pnpm lint && pnpm boundaries && pnpm test && pnpm build",
     "probe:contracts": "node --experimental-strip-types scripts/contracts/probe.ts"
   },
