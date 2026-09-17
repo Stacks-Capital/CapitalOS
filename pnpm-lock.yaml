@@ -216,7 +216,20 @@ importers:
 
   apps/web: {}
 
-  apps/worker: {}
+  apps/worker:
+    dependencies:
+      '@stacks-capital/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stacks-capital/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@stacks/transactions':
+        specifier: 7.6.0
+        version: 7.6.0
 
   packages/adapters:
     dependencies:
