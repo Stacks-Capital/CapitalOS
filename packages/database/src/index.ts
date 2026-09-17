@@ -9,6 +9,24 @@ export {
   type Sql,
 } from "./lib.ts";
 export {
+  API_SCOPES,
+  type ApiScope,
+  type ClientApp,
+  createApiKey,
+  createNonce,
+  exchangeNonceForSession,
+  findApiKey,
+  findClientApp,
+  findSession,
+  findWorkflowForTenant,
+  isAllowedOrigin,
+  type KeyPrincipal,
+  type PendingNonce,
+  revokeApiKey,
+  type SessionPrincipal,
+  type WorkflowRecord,
+} from "./identity.ts";
+export {
   type CapabilityRecord,
   type CapabilityState,
   listCapabilities,

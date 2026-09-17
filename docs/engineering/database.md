@@ -42,6 +42,7 @@ All three database commands read `DATABASE_URL` from the environment or `.env.lo
 | `0003_workflows.sql` | `workflows`, `workflow_steps`, `transaction_attempts`, `state_transitions` |
 | `0004_chain_evidence.sql` | `chain_blocks`, `raw_events`, `ingestion_checkpoints`, `canonical_activities` |
 | `0005_snapshots.sql` | `market_snapshots`, `position_snapshots`, `wallet_balance_snapshots` |
+| `0006_identity.sql` (I05) | `partners`, `partner_apps`, `allowed_origins`, `api_keys`, `auth_nonces`, `user_sessions`, plus `app_id` and `owner_address` on `workflows` |
 
 Values that core restricts (networks, chains, actions, capability states, workflow states, next actions, position kinds) are Postgres domains, so the database rejects anything core does not know.
 
@@ -65,6 +66,8 @@ Values that core restricts (networks, chains, actions, capability states, workfl
 
 Money columns use `numeric(78, 0)`, which holds any uint128. Rates are fixed decimals with an explicit scale.
 
+Identity tables (I05) store only SHA256 hashes of API key and session secrets. A sign in nonce must name an origin its app allows (composite foreign key), and a nonce can back at most one session (unique `nonce_id`). API key scopes are a domain, so an unknown scope is rejected.
+
 ## Fixtures
 
 `pnpm fixtures:seed` builds rows from the real registry (`packages/config`) and the sandbox adapters (`packages/fixtures`) at `FIXTURE_NOW`:
@@ -73,6 +76,7 @@ Money columns use `numeric(78, 0)`, which holds any uint128. Rates are fixed dec
 - One Zest supply quote and plan produced by the Zest adapter, a workflow moved through `DRAFT`, `QUOTED`, `AWAITING_SIGNATURE`, `SUBMITTED` and `CONFIRMING` with core's `transition`, its step, a broadcast attempt and 4 transitions.
 - Three canonical Stacks blocks, one raw event, a checkpoint and a canonical activity linked to the workflow.
 - A market snapshot, a known supplied position, an unknown debt position and two wallet balances, one known and one unknown.
+- Two partner apps for tenant tests: `app_fixture` (client id `pk_fixture_sandbox`, origin `http://localhost:5173`), which owns the workflow, and `app_other` (client id `pk_other_sandbox`, origin `http://localhost:5174`). No keys or sessions are seeded, because their secrets must not be fixed values.
 
 Ids, hashes and timestamps are fixed, so two fresh databases get identical rows and running the seed again inserts nothing. The integration tests check both.
 
@@ -83,6 +87,7 @@ Ids, hashes and timestamps are fixed, so two fresh databases get identical rows 
 - Migrations: apply once then do nothing; stop when an applied file was edited; stop when one is missing.
 - Fixtures: identical rows in two fresh databases; a second run adds nothing.
 - Constraints: each rule in the table above has a test that the bad row is rejected, and where relevant that the good row is accepted.
+- Identity (`identity.test.ts`): client id lookup and disabled apps; API keys by scope, wrong secret, revoked and expired; the sign in message binding; a nonce used once and burned by a failed signature; expired nonces and sessions; workflows hidden from another app and another owner.
 
 CI runs migrations, seeds twice and runs these tests against the Compose PostgreSQL.
 
@@ -98,7 +103,7 @@ The fixtures use the verified onchain names for assets. The quote and plan rows 
 
 ## Unsupported and deferred
 
-- Identity and commercial tables (partners, API keys, sessions, webhooks, usage, audit log) belong with tenant access in I05.
+- Partners, apps, origins, API keys and sessions landed with I05. Webhooks, usage and the audit log are not created yet; they belong to later tasks.
 - `reconciliation_runs`, `price_snapshots`, `rate_snapshots`, `liquidity_snapshots`, `reward_events` and `cash_flows` are not created yet; ingestion and projections (I06, I11) will define what they need.
 - The database does not enforce which workflow state transitions are allowed; that stays in core's `transition`.
 - There is no plan hash column because core's `Plan` has no hash yet (page 03 asks for one).

@@ -19,6 +19,9 @@ import { adapterContext, FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS, sandboxAdapt
 import type { Sql } from "./lib.ts";
 
 export const TABLES = [
+  "partners",
+  "partner_apps",
+  "allowed_origins",
   "protocols",
   "deployments",
   "assets",
@@ -48,6 +51,14 @@ const SOURCE = "fixture";
 export const FIXTURE_WORKFLOW_ID = "wf_fixture_zest_supply";
 export const FIXTURE_IDEMPOTENCY_KEY = "fixture:zest-supply";
 export const FIXTURE_ZEST_SUPPLY = { action: "supply", marketId: "zest.sbtc.vault", amount: "99999000" } as const;
+
+// Two tenants: the fixture workflow belongs to the first, so the second proves cross tenant reads are refused.
+export const FIXTURE_APP = {
+  id: "app_fixture",
+  clientId: "pk_fixture_sandbox",
+  origin: "http://localhost:5173",
+} as const;
+export const OTHER_APP = { id: "app_other", clientId: "pk_other_sandbox", origin: "http://localhost:5174" } as const;
 
 type Row = Record<string, unknown>;
 
@@ -247,6 +258,8 @@ function workflowRows() {
         id: workflow.id,
         network: workflow.network,
         idempotency_key: workflow.idempotencyKey,
+        app_id: FIXTURE_APP.id,
+        owner_address: MAINNET_OWNER,
         quote_id: quote.id,
         plan_id: plan.id,
         state: workflow.state,
@@ -443,9 +456,30 @@ function snapshotRows() {
   };
 }
 
+// API keys, nonces and sessions are never seeded: keys are shown once at creation and sessions need a signature.
+function identityRows() {
+  const apps = [
+    { ...FIXTURE_APP, partner: "partner_fixture", name: "Fixture sandbox app" },
+    { ...OTHER_APP, partner: "partner_other", name: "Other sandbox app" },
+  ];
+  return {
+    partners: apps.map((app) => ({ id: app.partner, name: `${app.name} partner`, created_at: at(0) })),
+    partner_apps: apps.map((app) => ({
+      id: app.id,
+      partner_id: app.partner,
+      name: app.name,
+      environment: "sandbox",
+      client_id: app.clientId,
+      created_at: at(0),
+    })),
+    allowed_origins: apps.map((app) => ({ app_id: app.id, origin: app.origin })),
+  };
+}
+
 // Deterministic: fixed ids, hashes and timestamps from FIXTURE_NOW. Running it again inserts nothing.
 export async function seedFixtures(sql: Sql): Promise<TableCounts> {
   const rows: Record<(typeof TABLES)[number], Row[]> = {
+    ...identityRows(),
     ...registryRows(),
     ...workflowRows(),
     ...chainRows(),
