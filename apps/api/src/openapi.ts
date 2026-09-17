@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { Sql } from "@stacks-capital/database";
 import { createApp, OPENAPI_CONFIG } from "./app.ts";
+import { memoryLimiter } from "./rateLimit.ts";
 
 const target = fileURLToPath(new URL("../openapi.json", import.meta.url));
 
@@ -11,7 +12,7 @@ const unusedDatabase = (() => {
 }) as unknown as Sql;
 
 export function openApiDocument(): string {
-  return `${JSON.stringify(createApp({ sql: unusedDatabase }).getOpenAPI31Document(OPENAPI_CONFIG), null, 2)}\n`;
+  return `${JSON.stringify(createApp({ sql: unusedDatabase, limiter: memoryLimiter() }).getOpenAPI31Document(OPENAPI_CONFIG), null, 2)}\n`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -3,16 +3,18 @@ import { describe, it } from "node:test";
 import type { Sql } from "@stacks-capital/database";
 import { createApp } from "./app.ts";
 import { decodeCursor, encodeCursor } from "./cursor.ts";
+import { memoryLimiter } from "./rateLimit.ts";
 import { ErrorBody } from "./schemas.ts";
 
 // Any request that reaches the database fails, so these tests prove validation happens first.
 const noDatabase = (() => {
   throw new Error("the database must not be reached");
 }) as unknown as Sql;
-const app = createApp({ sql: noDatabase });
+const app = createApp({ sql: noDatabase, limiter: memoryLimiter() });
+const KEY = { authorization: `Bearer key_0123456789abcdef.${"A".repeat(43)}` };
 
-async function expectError(path: string, status: number) {
-  const response = await app.request(path);
+async function expectError(path: string, status: number, init?: RequestInit) {
+  const response = await app.request(path, init);
   assert.equal(response.status, status);
   const body = ErrorBody.parse(await response.json());
   assert.equal(body.requestId, response.headers.get("x-request-id"));
@@ -43,13 +45,37 @@ describe("request validation", () => {
   });
 });
 
+describe("credentials", () => {
+  it("are required on every data route", async () => {
+    assert.equal((await expectError("/v1/markets?network=mainnet", 401)).code, "UNAUTHORIZED");
+    assert.equal((await expectError("/v1/workflows/wf_1?network=mainnet", 401)).code, "UNAUTHORIZED");
+  });
+
+  it("reject a bearer token that is neither a key nor a session", async () => {
+    const headers = { authorization: "Bearer something_else" };
+    assert.equal((await expectError("/v1/capabilities?network=mainnet", 401, { headers })).code, "UNAUTHORIZED");
+  });
+
+  it("reject a client id sent without an Origin header", async () => {
+    const headers = { "x-capital-client-id": "pk_fixture_sandbox" };
+    assert.equal((await expectError("/v1/markets?network=mainnet", 401, { headers })).code, "UNAUTHORIZED");
+  });
+
+  it("are checked after the request is validated", async () => {
+    assert.equal((await expectError("/v1/markets", 400)).code, "INVALID_REQUEST");
+    const body = JSON.stringify({ network: "mainnet", nonceId: "non_1", publicKey: "00", signature: "00" });
+    const init = { method: "POST", body, headers: { "content-type": "application/json" } };
+    assert.equal((await expectError("/v1/auth/verify", 400, init)).code, "INVALID_REQUEST");
+  });
+});
+
 describe("errors", () => {
   it("answer unknown routes with the error body", async () => {
     assert.equal((await expectError("/v1/unknown", 404)).code, "NOT_FOUND");
   });
 
   it("hide unexpected failures behind INTERNAL", async () => {
-    const error = await expectError("/v1/markets?network=mainnet", 500);
+    const error = await expectError("/v1/markets?network=mainnet", 500, { headers: KEY });
     assert.equal(error.code, "INTERNAL");
     assert.doesNotMatch(error.message, /database/);
   });
@@ -71,6 +97,12 @@ describe("OpenAPI document", () => {
     assert.equal(response.status, 200);
     const document = (await response.json()) as { openapi: string; paths: Record<string, unknown> };
     assert.equal(document.openapi, "3.1.0");
-    assert.deepEqual(Object.keys(document.paths).sort(), ["/v1/capabilities", "/v1/markets"]);
+    assert.deepEqual(Object.keys(document.paths).sort(), [
+      "/v1/auth/challenge",
+      "/v1/auth/verify",
+      "/v1/capabilities",
+      "/v1/markets",
+      "/v1/workflows/{id}",
+    ]);
   });
 });

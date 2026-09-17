@@ -80,3 +80,78 @@ export const ErrorBody = z
 
 export const MarketsResponse = envelope("MarketsResponse", pageOf(Market));
 export const CapabilitiesResponse = envelope("CapabilitiesResponse", pageOf(MarketCapability));
+
+export const NetworkQuery = z.object({ network: Network });
+
+export const ChallengeRequest = z
+  .object({
+    network: Network,
+    address: z
+      .string()
+      .max(64)
+      .openapi({ description: "Stacks address that will sign. It must belong to the network." }),
+  })
+  .openapi("ChallengeRequest");
+
+export const Challenge = z
+  .object({
+    nonceId: z.string(),
+    message: z.string().openapi({ description: "Sign this exact text with the wallet's message signing request." }),
+    expiresAt: z.iso.datetime(),
+  })
+  .openapi("Challenge");
+
+export const VerifyRequest = z
+  .object({
+    network: Network,
+    nonceId: z.string().regex(/^non_[a-f0-9]{32}$/),
+    publicKey: z.string().regex(/^[0-9a-f]{66}$/),
+    signature: z.string().regex(/^[0-9a-f]{130}$/),
+  })
+  .openapi("VerifyRequest");
+
+export const Session = z
+  .object({
+    token: z.string().openapi({ description: "Bearer token for this wallet session. It is returned only once." }),
+    sessionId: z.string(),
+    address: z.string(),
+    expiresAt: z.iso.datetime(),
+  })
+  .openapi("Session");
+
+export const WorkflowParams = z.object({
+  id: z
+    .string()
+    .min(1)
+    .max(128)
+    .openapi({ param: { name: "id", in: "path" } }),
+});
+
+export const Workflow = z
+  .object({
+    id: z.string(),
+    network: Network,
+    state: z.string(),
+    nextAction: z.string(),
+    quoteId: z.string().nullable(),
+    planId: z.string().nullable(),
+    ownerAddress: z.string().nullable(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    transitions: z.array(
+      z.object({
+        sequence: z.number().int(),
+        from: z.string(),
+        to: z.string(),
+        reason: z.string(),
+        actor: z.string(),
+        evidence: z.string(),
+        at: z.iso.datetime(),
+      }),
+    ),
+  })
+  .openapi("Workflow");
+
+export const ChallengeResponse = envelope("ChallengeResponse", Challenge);
+export const SessionResponse = envelope("SessionResponse", Session);
+export const WorkflowResponse = envelope("WorkflowResponse", Workflow);

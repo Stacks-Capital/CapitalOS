@@ -3,7 +3,14 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { SCHEMA_VERSION } from "./schemas.ts";
 
 // Core's error contract plus the transport errors every HTTP API needs.
-export type ApiErrorCode = ErrorCode | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" | "FORBIDDEN" | "INTERNAL";
+export type ApiErrorCode =
+  | ErrorCode
+  | "INVALID_REQUEST"
+  | "NOT_FOUND"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "TEMPORARY_UNAVAILABLE"
+  | "INTERNAL";
 
 const STATUS: Partial<Record<ApiErrorCode, ContentfulStatusCode>> = {
   INVALID_REQUEST: 400,
@@ -13,6 +20,7 @@ const STATUS: Partial<Record<ApiErrorCode, ContentfulStatusCode>> = {
   NOT_FOUND: 404,
   RATE_LIMITED: 429,
   PROVIDER_TIMEOUT: 503,
+  TEMPORARY_UNAVAILABLE: 503,
 };
 
 export class ApiError extends Error {

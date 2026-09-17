@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { after, before, describe, it } from "node:test";
-import { connect, MIGRATIONS_DIR, migrate, type Sql } from "@stacks-capital/database";
-import { seedFixtures } from "@stacks-capital/database/fixtures";
+import { connect, createApiKey, MIGRATIONS_DIR, migrate, type Sql } from "@stacks-capital/database";
+import { FIXTURE_APP, seedFixtures } from "@stacks-capital/database/fixtures";
 import { createApp } from "../../src/app.ts";
+import { memoryLimiter } from "../../src/rateLimit.ts";
 import { CapabilitiesResponse, MarketsResponse } from "../../src/schemas.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
@@ -14,13 +15,17 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
   const schema = `test_${randomBytes(6).toString("hex")}`;
   let sql: Sql;
   let app: ReturnType<typeof createApp>;
+  let headers: Record<string, string>;
+  const get = (path: string) => app.request(path, { headers });
 
   before(async () => {
     await admin.unsafe(`CREATE SCHEMA ${schema}`);
     sql = connect(DATABASE_URL, schema);
     await migrate(sql, MIGRATIONS_DIR);
     await seedFixtures(sql);
-    app = createApp({ sql, now: () => new Date(NOW) });
+    app = createApp({ sql, limiter: memoryLimiter(), now: () => new Date(NOW) });
+    const { token } = await createApiKey(sql, { appId: FIXTURE_APP.id, scopes: ["markets:read"] });
+    headers = { authorization: `Bearer ${token}` };
   });
 
   after(async () => {
@@ -34,7 +39,7 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
     let cursor: string | null = null;
     let pages = 0;
     do {
-      const response = await app.request(cursor === null ? path : `${path}&cursor=${encodeURIComponent(cursor)}`);
+      const response = await get(cursor === null ? path : `${path}&cursor=${encodeURIComponent(cursor)}`);
       assert.equal(response.status, 200);
       const body = parse(await response.json());
       items.push(...body.data.items);
@@ -46,7 +51,7 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
   }
 
   it("returns mainnet markets in the response envelope", async () => {
-    const response = await app.request("/v1/markets?network=mainnet");
+    const response = await get("/v1/markets?network=mainnet");
     const body = MarketsResponse.parse(await response.json());
     assert.equal(body.schemaVersion, "1.0");
     assert.equal(body.network, "stacks:mainnet");
@@ -67,7 +72,7 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
   });
 
   it("walks every market page by page without gaps or repeats", async () => {
-    const whole = MarketsResponse.parse(await (await app.request("/v1/markets?network=mainnet&limit=100")).json());
+    const whole = MarketsResponse.parse(await (await get("/v1/markets?network=mainnet&limit=100")).json());
     const paged = await walk("/v1/markets?network=mainnet&limit=2", (body) => MarketsResponse.parse(body));
     assert.equal(paged.pages, 3);
     assert.deepEqual(
