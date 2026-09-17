@@ -54,7 +54,7 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
       return {
         value: [{ owner, marketId: SBTC_MARKET_WITHDRAW, kind: "pending_withdrawal", quantity: "0" }],
         observedAt: ctx.now.toISOString(),
-        source: "fixture",
+        source: reads.source ?? "fixture",
         stale: false,
         warnings: [],
       };
