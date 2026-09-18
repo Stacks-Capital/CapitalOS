@@ -1,9 +1,10 @@
-import { capabilityFor, contract } from "@stacks-capital/config";
+import { capabilityFor, contract, FUNGIBLE_ASSET_NAME } from "@stacks-capital/config";
 import {
   amount,
   assertOracleFresh,
   assertPositive,
   capitalError,
+  formatAssetId,
   parseQuantity,
   projectedHealth,
   sip10,
@@ -27,11 +28,11 @@ export const GRANITE_MARKET_ISOLATED = "granite.sbtc.isolated";
 const ACTIONS: Action[] = ["supply", "withdraw_supply", "borrow", "repay"];
 
 function sbtc(network: StacksNetwork) {
-  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 }
 
 function usdcx(network: StacksNetwork) {
-  return sip10(network, contract("usdcx", "usdcx", network).contractId, "usdcx");
+  return sip10(network, contract("usdcx", "usdcx", network).contractId, FUNGIBLE_ASSET_NAME.usdcx);
 }
 
 function marketFor(ctx: AdapterContext, action: Action): Market {
@@ -41,7 +42,7 @@ function marketFor(ctx: AdapterContext, action: Action): Market {
     protocol: "granite",
     action,
     network: ctx.network,
-    suppliedAsset: "sbtc-token",
+    suppliedAsset: formatAssetId(sbtc(ctx.network)),
     state: capability?.state ?? "disabled",
     warnings:
       capability?.state === "enabled"
@@ -280,7 +281,7 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
     expectedOutput: receiving,
     fees: [],
     snapshots: [
-      `market:${contract("zest", "v0-8-market", ctx.network).contractId}`,
+      `market:${contract("granite", "v0-8-market", ctx.network).contractId}`,
       `ltv:${health.currentLtvBps.toString(10)}`,
       `maxBorrow:${health.maxBorrow.toString(10)}`,
     ],
@@ -299,7 +300,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
     throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "granite is not executable");
   const sender = ctx.owner;
   if (sender === undefined) throw capitalError("PLAN_INVALID", "owner is required to set post conditions");
-  const market = contract("zest", "v0-8-market", ctx.network);
+  const market = contract("granite", "v0-8-market", ctx.network);
   const sbtcToken = contract("sbtc", "sbtc-token", ctx.network).contractId;
   const usdcxToken = contract("usdcx", "usdcx", ctx.network).contractId;
   const recipient = intent.recipient;
