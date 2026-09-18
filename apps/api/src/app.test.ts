@@ -49,6 +49,23 @@ describe("credentials", () => {
   it("are required on every data route", async () => {
     assert.equal((await expectError("/v1/markets?network=mainnet", 401)).code, "UNAUTHORIZED");
     assert.equal((await expectError("/v1/workflows/wf_1?network=mainnet", 401)).code, "UNAUTHORIZED");
+    const quoteBody = JSON.stringify({
+      network: "mainnet",
+      action: "supply",
+      marketId: "zest.sbtc.vault",
+      amount: "100000000",
+      owner: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+    });
+    assert.equal(
+      (
+        await expectError("/v1/quotes", 401, {
+          method: "POST",
+          body: quoteBody,
+          headers: { "content-type": "application/json" },
+        })
+      ).code,
+      "UNAUTHORIZED",
+    );
   });
 
   it("reject a bearer token that is neither a key nor a session", async () => {
@@ -102,6 +119,8 @@ describe("OpenAPI document", () => {
       "/v1/auth/verify",
       "/v1/capabilities",
       "/v1/markets",
+      "/v1/plans",
+      "/v1/quotes",
       "/v1/workflows/{id}",
     ]);
   });
