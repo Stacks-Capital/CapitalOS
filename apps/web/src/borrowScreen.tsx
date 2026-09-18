@@ -2,7 +2,14 @@ import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, useMarketRisk } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useState } from "react";
-import { type BorrowAction, projectBorrow, QUOTE_ACTION } from "./borrow.ts";
+import {
+  type BorrowAction,
+  nextBorrowStep,
+  oracleProvenance,
+  projectBorrow,
+  quoteSafety,
+  QUOTE_ACTION,
+} from "./borrow.ts";
 import { canSign, reviewQuote } from "./earn.ts";
 import type { ConnectedWallet } from "./session.ts";
 import { toWalletRequest } from "./signing.ts";
@@ -18,7 +25,12 @@ const ACTIONS: { id: BorrowAction; label: string }[] = [
   { id: "collateral_remove", label: "Withdraw collateral" },
 ];
 
-const bps = (value: bigint | undefined) => (value === undefined ? "unknown" : `${(Number(value) / 100).toFixed(2)}%`);
+const bps = (value: bigint | undefined) => {
+  if (value === undefined) return "unknown";
+  const whole = value / 100n;
+  const frac = value % 100n;
+  return `${whole.toString()}.${frac.toString().padStart(2, "0")}%`;
+};
 
 export function Borrow({ wallet, signedIn }: { wallet: ConnectedWallet | null; signedIn: boolean }) {
   const { client } = useCapital();
@@ -49,6 +61,8 @@ export function Borrow({ wallet, signedIn }: { wallet: ConnectedWallet | null; s
     try {
       const quote = await client.quote({ marketId: MARKET, action: QUOTE_ACTION[action], amount });
       setQuoted(quote.data);
+      const safety = quoteSafety(quote.data.quote);
+      if (safety.blockers.length > 0) throw new Error(safety.blockers.join(" "));
       const view = reviewQuote(quote.data.quote, new Date());
       if (!canSign(view)) throw new Error(view.warnings.join(" ") || "This quote cannot be signed.");
 
@@ -56,8 +70,13 @@ export function Borrow({ wallet, signedIn }: { wallet: ConnectedWallet | null; s
         quoteId: quote.data.quote.id,
         idempotencyKey: `idem_${crypto.randomUUID()}`,
       });
-      const step = started.data.plan.steps[0];
+      const step = nextBorrowStep(started.data.plan, []);
       if (step === undefined) throw new Error("The plan has no step to sign");
+      if (started.data.plan.steps.length > 1) {
+        setOutcome(
+          "This plan has two signatures. Collateral must confirm before borrow is signed. A confirmed collateral step is kept if borrow is later refused.",
+        );
+      }
 
       const provider = findProvider(wallet?.id as WalletId);
       if (provider === null) throw new Error("The wallet is no longer available");
@@ -78,6 +97,13 @@ export function Borrow({ wallet, signedIn }: { wallet: ConnectedWallet | null; s
   return (
     <Panel title="Borrow against collateral">
       <StateNote state={panelState(risk, risk.data?.context)} onRetry={() => void risk.refresh()} />
+      {risk.data === undefined
+        ? null
+        : oracleProvenance(risk.data.data).map((line) => (
+            <p key={line} className="muted">
+              {line}
+            </p>
+          ))}
 
       <div className="actions">
         {ACTIONS.map((entry) => (
