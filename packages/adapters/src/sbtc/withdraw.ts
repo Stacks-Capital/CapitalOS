@@ -1,9 +1,10 @@
-import { capabilityFor, contract } from "@stacks-capital/config";
+import { capabilityFor, contract, FUNGIBLE_ASSET_NAME } from "@stacks-capital/config";
 import {
   amount,
   assertPositive,
   bitcoinNative,
   capitalError,
+  formatAssetId,
   parseQuantity,
   sip10,
   validatePlan,
@@ -12,14 +13,14 @@ import {
   type StacksNetwork,
 } from "@stacks-capital/core";
 import type { AdapterReads } from "../reads.ts";
-import type { AdapterContext, Intent, Market, ProtocolAdapter } from "../types.ts";
+import type { AdapterContext, Intent, ProtocolAdapter } from "../types.ts";
 
 export const SBTC_WITHDRAW_VERSION = "sbtc-withdraw@0.1.0";
 export const SBTC_MARKET_WITHDRAW = "sbtc.withdraw";
 export const WITHDRAWAL_DUST = 546n;
 
 function token(network: StacksNetwork) {
-  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 }
 
 export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter {
@@ -38,8 +39,8 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
           protocol: "sbtc",
           action: "withdraw_sbtc",
           network: ctx.network,
-          suppliedAsset: "sbtc-token",
-          receiptAsset: "bitcoin native btc",
+          suppliedAsset: formatAssetId(token(ctx.network)),
+          receiptAsset: formatAssetId(bitcoinNative(ctx.network)),
           state: capability?.state ?? "disabled",
           warnings: capability?.state === "enabled" ? [] : [capability?.reason ?? "withdrawal is not available"],
         },
