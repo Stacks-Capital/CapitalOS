@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { stacksAddressNetwork } from "@stacks-capital/core";
+import { isCapitalError, stacksAddressNetwork } from "@stacks-capital/core";
 import {
   createNonce,
   exchangeNonceForSession,
@@ -22,10 +22,25 @@ import {
 import { decodeCursor, encodeCursor } from "./cursor.ts";
 import { ApiError, errorBody } from "./errors.ts";
 import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLimit.ts";
-import { capabilitiesRoute, challengeRoute, marketsRoute, verifyRoute, workflowRoute } from "./routes.ts";
+import {
+  capabilitiesRoute,
+  challengeRoute,
+  marketsRoute,
+  planRoute,
+  quoteRoute,
+  verifyRoute,
+  workflowRoute,
+} from "./routes.ts";
+import { intentFromBody, mintPlan, mintQuote, quoteOwner, toQuoteWire, type QuoteReads } from "./quote.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
 
-export type AppDependencies = { sql: Sql; limiter: RateLimiter; limits?: RateLimits; now?: () => Date };
+export type AppDependencies = {
+  sql: Sql;
+  limiter: RateLimiter;
+  limits?: RateLimits;
+  now?: () => Date;
+  reads?: QuoteReads;
+};
 type Env = { Variables: { requestId: string } };
 
 export const OPENAPI_CONFIG = {
@@ -94,6 +109,10 @@ export function createApp(deps: AppDependencies) {
   app.onError((error, c) => {
     if (error instanceof ApiError) {
       return c.json(errorBody(c.get("requestId"), error.code, error.message, error.retryAfter), error.status);
+    }
+    if (isCapitalError(error)) {
+      const mapped = new ApiError(error.code, error.message);
+      return c.json(errorBody(c.get("requestId"), mapped.code, mapped.message), mapped.status);
     }
     return c.json(errorBody(c.get("requestId"), "INTERNAL", "Unexpected error"), 500);
   });
@@ -234,6 +253,68 @@ export function createApp(deps: AppDependencies) {
           updatedAt: workflow.updatedAt.toISOString(),
           transitions: workflow.transitions.map((move) => ({ ...move, at: new Date(move.at).toISOString() })),
         },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(quoteRoute, async (c) => {
+    const body = c.req.valid("json");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Quotes need an API key or a wallet session");
+    requireScope(principal, "quotes:write");
+    if (principal.kind === "session" && principal.network !== body.network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+    const owner = quoteOwner(principal, body.owner);
+    const at = now();
+    const quote = await mintQuote({
+      network: body.network,
+      owner,
+      now: at,
+      intent: intentFromBody(body),
+      reads: deps.reads,
+    });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${body.network}` as const,
+        data: quote,
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(planRoute, async (c) => {
+    const body = c.req.valid("json");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Plans need an API key or a wallet session");
+    requireScope(principal, "quotes:write");
+    if (principal.kind === "session" && principal.network !== body.network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+    if (body.quote.network !== body.network || body.intent.action !== body.quote.action) {
+      throw new ApiError("INVALID_REQUEST", "plan quote does not match the request network or action");
+    }
+    const owner = quoteOwner(principal, body.owner);
+    const at = now();
+    const plan = await mintPlan({
+      network: body.network,
+      owner,
+      now: at,
+      intent: intentFromBody(body.intent),
+      quote: toQuoteWire(body.quote),
+      reads: deps.reads,
+    });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${body.network}` as const,
+        data: plan,
         context: context(),
       },
       200,
