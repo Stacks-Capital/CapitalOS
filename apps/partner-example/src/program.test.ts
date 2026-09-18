@@ -11,6 +11,10 @@ function isCode(error: unknown, code: string): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === code;
 }
 
+function isMnemonic(value: string): boolean {
+  return value.trim().split(/\s+/).length >= 12;
+}
+
 describe("partner example", () => {
   let demo: DemoServer;
 
@@ -36,7 +40,9 @@ describe("partner example", () => {
     assert.equal(stakingIsDisabled(), true);
   });
 
-  it("derives the disposable mnemonic, signs the unsigned plan, and does not broadcast", async () => {
+  it("derives the disposable mnemonic, signs the unsigned plan, and does not broadcast", {
+    skip: isMnemonic(DISPOSABLE_TEST_MNEMONIC) ? false : "no disposable mnemonic configured",
+  }, async () => {
     const os = createCapitalOS({ network: "mainnet" });
     const owner = ownerFromMnemonic(DISPOSABLE_TEST_MNEMONIC, "mainnet").address;
     assert.match(owner, /^SP/);

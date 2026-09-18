@@ -63,17 +63,12 @@ export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuc
   const os = createCapitalOS({ network: options.network });
   const intent = { action: "supply" as const, marketId: "zest.sbtc.vault", amount: "100000000" };
 
-  const quote = await postJson<QuoteWire>(options, "/v1/quotes", {
+  const minted = await postJson<{ quote: QuoteWire; plan: PlanWire }>(options, "/v1/quotes", {
     network: options.network,
     owner: options.owner,
     ...intent,
   });
-  const plan = await postJson<PlanWire>(options, "/v1/plans", {
-    network: options.network,
-    owner: options.owner,
-    intent,
-    quote,
-  });
+  const { quote, plan } = minted;
 
   const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender: options.owner });
   if (!checked.ok) throw new Error(`SDK rejected the plan: ${checked.reasons.join("; ")}`);

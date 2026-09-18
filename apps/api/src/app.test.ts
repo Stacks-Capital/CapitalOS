@@ -121,7 +121,9 @@ describe("OpenAPI document", () => {
       "/v1/markets",
       "/v1/plans",
       "/v1/quotes",
+      "/v1/workflows",
       "/v1/workflows/{id}",
+      "/v1/workflows/{id}/signature",
     ]);
   });
 });

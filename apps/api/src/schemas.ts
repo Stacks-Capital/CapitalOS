@@ -173,12 +173,12 @@ export const IntentBody = z
   .object({
     action: Action,
     marketId: z.string().min(1).max(128),
-    amount: IntegerString,
+    amount: IntegerString.max(39),
     recipient: z.string().max(128).optional(),
-    maxFee: IntegerString.optional(),
+    maxFee: IntegerString.max(39).optional(),
     minOut: IntegerString.optional(),
     collateralAmount: IntegerString.optional(),
-    slippageBps: IntegerString.optional(),
+    slippageBps: IntegerString.max(5).optional(),
     bufferBps: IntegerString.optional(),
     onBehalfOf: z.string().max(64).optional(),
     routePool: z.string().max(128).optional(),
@@ -192,7 +192,7 @@ export const QuoteRequest = IntentBody.extend({
     .string()
     .max(64)
     .optional()
-    .openapi({ description: "Required for API keys. Wallet sessions use the signed-in address." }),
+    .openapi({ description: "Required for API keys. Wallet sessions quote for the signed-in address." }),
 }).openapi("QuoteRequest");
 
 export const AmountWire = z.object({
@@ -200,7 +200,15 @@ export const AmountWire = z.object({
   quantity: z.string().regex(/^-?[0-9]+$/),
 });
 
-export const QuoteDocument = z
+export const AssetAmount = AmountWire;
+
+export const Fee = z.object({
+  kind: z.enum(["miner", "signer", "protocol", "network"]),
+  amount: AmountWire,
+  max: AmountWire.optional(),
+});
+
+export const Quote = z
   .object({
     id: z.string(),
     action: Action,
@@ -208,13 +216,7 @@ export const QuoteDocument = z
     network: Network,
     input: z.array(AmountWire),
     expectedOutput: z.array(AmountWire),
-    fees: z.array(
-      z.object({
-        kind: z.enum(["miner", "signer", "protocol", "network"]),
-        amount: AmountWire,
-        max: AmountWire.optional(),
-      }),
-    ),
+    fees: z.array(Fee),
     snapshots: z.array(z.string()),
     expiresAt: z.iso.datetime(),
     executable: z.boolean(),
@@ -251,7 +253,16 @@ const StacksPayload = z.object({
   network: Network,
 });
 
-export const PlanDocument = z
+export const PlanStep = z
+  .object({
+    id: z.string(),
+    dependsOn: z.array(z.string()),
+    expectedAssetEffects: z.array(AmountWire),
+    payload: z.discriminatedUnion("kind", [BitcoinPayload, StacksPayload]),
+  })
+  .openapi("PlanStep");
+
+export const Plan = z
   .object({
     id: z.string(),
     quoteId: z.string(),
@@ -260,14 +271,7 @@ export const PlanDocument = z
     adapterVersion: z.string(),
     expiresAt: z.iso.datetime(),
     reviewSummary: z.string(),
-    steps: z.array(
-      z.object({
-        id: z.string(),
-        dependsOn: z.array(z.string()),
-        expectedAssetEffects: z.array(AmountWire),
-        payload: z.discriminatedUnion("kind", [BitcoinPayload, StacksPayload]),
-      }),
-    ),
+    steps: z.array(PlanStep),
   })
   .openapi("Plan");
 
@@ -276,12 +280,47 @@ export const PlanRequest = z
     network: Network,
     owner: z.string().max(64).optional(),
     intent: IntentBody,
-    quote: QuoteDocument,
+    quote: Quote,
   })
   .openapi("PlanRequest");
 
-export const QuoteResponse = envelope("QuoteResponse", QuoteDocument);
-export const PlanResponse = envelope("PlanResponse", PlanDocument);
+export const StartWorkflowRequest = z
+  .object({
+    network: Network,
+    quoteId: z.string().max(128),
+    idempotencyKey: z.string().min(8).max(128).openapi({ description: "The same key always names the same workflow." }),
+    ownerAddress: z
+      .string()
+      .max(64)
+      .optional()
+      .openapi({ description: "Required for an API key, ignored for a session." }),
+  })
+  .openapi("StartWorkflowRequest");
+
+export const SignatureRequest = z
+  .object({
+    network: Network,
+    stepId: z.string().max(128),
+    walletResult: z.looseObject({}).openapi({ description: "Exactly what the wallet returned, unchanged." }),
+  })
+  .openapi("SignatureRequest");
+
+export const SignatureOutcome = z
+  .object({
+    state: z.string(),
+    nextAction: z.string(),
+    outcome: z.enum(["BROADCAST", "SIGNED", "UNKNOWN"]),
+    txid: z.string().nullable(),
+  })
+  .openapi("SignatureOutcome");
+
+export const QuoteResponse = envelope("QuoteResponse", z.object({ quote: Quote, plan: Plan }));
+export const PlanResponse = envelope("PlanResponse", Plan);
+export const StartedWorkflowResponse = envelope(
+  "StartedWorkflowResponse",
+  z.object({ workflowId: z.string(), state: z.string(), nextAction: z.string(), plan: Plan }),
+);
+export const SignatureResponse = envelope("SignatureResponse", SignatureOutcome);
 
 export type QuoteRequestBody = z.infer<typeof QuoteRequest>;
 export type PlanRequestBody = z.infer<typeof PlanRequest>;

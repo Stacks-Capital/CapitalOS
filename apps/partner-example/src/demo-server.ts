@@ -78,7 +78,8 @@ export async function startDemoCapitalApi(input: { live: boolean; now?: Date }):
             fail(400, "INVALID_REQUEST", "action, marketId and amount are required");
             return;
           }
-          data = serializeQuote(engine.quote(intent));
+          const minted = engine.quoteAndPlan(intent);
+          data = { quote: serializeQuote(minted.quote), plan: serializePlan(minted.plan) };
         } else if (req.url === "/v1/plans") {
           const intent = asIntent(payload.intent);
           if (intent === null || payload.quote === undefined) {

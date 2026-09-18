@@ -623,7 +623,19 @@
             ]
           },
           "data": {
-            "$ref": "#/components/schemas/Quote"
+            "type": "object",
+            "properties": {
+              "quote": {
+                "$ref": "#/components/schemas/Quote"
+              },
+              "plan": {
+                "$ref": "#/components/schemas/Plan"
+              }
+            },
+            "required": [
+              "quote",
+              "plan"
+            ]
           },
           "context": {
             "$ref": "#/components/schemas/Context"
@@ -821,6 +833,230 @@
           "adapterVersion"
         ]
       },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "quoteId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "mainnet",
+              "testnet"
+            ],
+            "description": "Required on every request. There is no default network."
+          },
+          "registryVersion": {
+            "type": "string"
+          },
+          "adapterVersion": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewSummary": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanStep"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "quoteId",
+          "network",
+          "registryVersion",
+          "adapterVersion",
+          "expiresAt",
+          "reviewSummary",
+          "steps"
+        ]
+      },
+      "PlanStep": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedAssetEffects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "description": "Canonical asset id from formatAssetId, never a ticker."
+                },
+                "quantity": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+$"
+                }
+              },
+              "required": [
+                "asset",
+                "quantity"
+              ]
+            }
+          },
+          "payload": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "bitcoin_deposit"
+                    ]
+                  },
+                  "amountSats": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  },
+                  "stacksRecipient": {
+                    "type": "string"
+                  },
+                  "bitcoinNetwork": {
+                    "type": "string",
+                    "enum": [
+                      "mainnet",
+                      "test",
+                      "regtest"
+                    ]
+                  },
+                  "reclaimLockTime": {
+                    "type": "integer"
+                  },
+                  "maxSignerFeeSats": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  },
+                  "emilyNotifyPath": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "amountSats",
+                  "stacksRecipient",
+                  "bitcoinNetwork",
+                  "reclaimLockTime",
+                  "maxSignerFeeSats",
+                  "emilyNotifyPath"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "stacks_contract_call"
+                    ]
+                  },
+                  "contractId": {
+                    "type": "string"
+                  },
+                  "functionName": {
+                    "type": "string"
+                  },
+                  "functionArgs": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "postConditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "principal": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "send_lte",
+                            "send_eq",
+                            "send_gte",
+                            "receive_gte"
+                          ]
+                        },
+                        "amount": {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "description": "Canonical asset id from formatAssetId, never a ticker."
+                            },
+                            "quantity": {
+                              "type": "string",
+                              "pattern": "^-?[0-9]+$"
+                            }
+                          },
+                          "required": [
+                            "asset",
+                            "quantity"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "principal",
+                        "mode",
+                        "amount"
+                      ]
+                    }
+                  },
+                  "postConditionMode": {
+                    "type": "string",
+                    "enum": [
+                      "deny",
+                      "allow"
+                    ]
+                  },
+                  "network": {
+                    "type": "string",
+                    "enum": [
+                      "mainnet",
+                      "testnet"
+                    ],
+                    "description": "Required on every request. There is no default network."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "contractId",
+                  "functionName",
+                  "functionArgs",
+                  "postConditions",
+                  "postConditionMode",
+                  "network"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dependsOn",
+          "expectedAssetEffects",
+          "payload"
+        ]
+      },
       "QuoteRequest": {
         "allOf": [
           {
@@ -840,7 +1076,7 @@
               "owner": {
                 "type": "string",
                 "maxLength": 64,
-                "description": "Required for API keys. Wallet sessions use the signed-in address."
+                "description": "Required for API keys. Wallet sessions quote for the signed-in address."
               }
             },
             "required": [
@@ -872,6 +1108,7 @@
           },
           "amount": {
             "type": "string",
+            "maxLength": 39,
             "pattern": "^[0-9]+$"
           },
           "recipient": {
@@ -880,6 +1117,7 @@
           },
           "maxFee": {
             "type": "string",
+            "maxLength": 39,
             "pattern": "^[0-9]+$"
           },
           "minOut": {
@@ -892,6 +1130,7 @@
           },
           "slippageBps": {
             "type": "string",
+            "maxLength": 5,
             "pattern": "^[0-9]+$"
           },
           "bufferBps": {
@@ -951,227 +1190,6 @@
           "context"
         ]
       },
-      "Plan": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "quoteId": {
-            "type": "string"
-          },
-          "network": {
-            "type": "string",
-            "enum": [
-              "mainnet",
-              "testnet"
-            ],
-            "description": "Required on every request. There is no default network."
-          },
-          "registryVersion": {
-            "type": "string"
-          },
-          "adapterVersion": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reviewSummary": {
-            "type": "string"
-          },
-          "steps": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "dependsOn": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "expectedAssetEffects": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "asset": {
-                        "type": "string",
-                        "description": "Canonical asset id from formatAssetId, never a ticker."
-                      },
-                      "quantity": {
-                        "type": "string",
-                        "pattern": "^-?[0-9]+$"
-                      }
-                    },
-                    "required": [
-                      "asset",
-                      "quantity"
-                    ]
-                  }
-                },
-                "payload": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "kind": {
-                          "type": "string",
-                          "enum": [
-                            "bitcoin_deposit"
-                          ]
-                        },
-                        "amountSats": {
-                          "type": "string",
-                          "pattern": "^[0-9]+$"
-                        },
-                        "stacksRecipient": {
-                          "type": "string"
-                        },
-                        "bitcoinNetwork": {
-                          "type": "string",
-                          "enum": [
-                            "mainnet",
-                            "test",
-                            "regtest"
-                          ]
-                        },
-                        "reclaimLockTime": {
-                          "type": "integer"
-                        },
-                        "maxSignerFeeSats": {
-                          "type": "string",
-                          "pattern": "^[0-9]+$"
-                        },
-                        "emilyNotifyPath": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "kind",
-                        "amountSats",
-                        "stacksRecipient",
-                        "bitcoinNetwork",
-                        "reclaimLockTime",
-                        "maxSignerFeeSats",
-                        "emilyNotifyPath"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "kind": {
-                          "type": "string",
-                          "enum": [
-                            "stacks_contract_call"
-                          ]
-                        },
-                        "contractId": {
-                          "type": "string"
-                        },
-                        "functionName": {
-                          "type": "string"
-                        },
-                        "functionArgs": {
-                          "type": "array",
-                          "items": {}
-                        },
-                        "postConditions": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "principal": {
-                                "type": "string"
-                              },
-                              "mode": {
-                                "type": "string",
-                                "enum": [
-                                  "send_lte",
-                                  "send_eq",
-                                  "send_gte",
-                                  "receive_gte"
-                                ]
-                              },
-                              "amount": {
-                                "type": "object",
-                                "properties": {
-                                  "asset": {
-                                    "type": "string",
-                                    "description": "Canonical asset id from formatAssetId, never a ticker."
-                                  },
-                                  "quantity": {
-                                    "type": "string",
-                                    "pattern": "^-?[0-9]+$"
-                                  }
-                                },
-                                "required": [
-                                  "asset",
-                                  "quantity"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "principal",
-                              "mode",
-                              "amount"
-                            ]
-                          }
-                        },
-                        "postConditionMode": {
-                          "type": "string",
-                          "enum": [
-                            "deny",
-                            "allow"
-                          ]
-                        },
-                        "network": {
-                          "type": "string",
-                          "enum": [
-                            "mainnet",
-                            "testnet"
-                          ],
-                          "description": "Required on every request. There is no default network."
-                        }
-                      },
-                      "required": [
-                        "kind",
-                        "contractId",
-                        "functionName",
-                        "functionArgs",
-                        "postConditions",
-                        "postConditionMode",
-                        "network"
-                      ]
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "id",
-                "dependsOn",
-                "expectedAssetEffects",
-                "payload"
-              ]
-            }
-          }
-        },
-        "required": [
-          "id",
-          "quoteId",
-          "network",
-          "registryVersion",
-          "adapterVersion",
-          "expiresAt",
-          "reviewSummary",
-          "steps"
-        ]
-      },
       "PlanRequest": {
         "type": "object",
         "properties": {
@@ -1198,6 +1216,186 @@
           "network",
           "intent",
           "quote"
+        ]
+      },
+      "StartedWorkflowResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "workflowId": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "nextAction": {
+                "type": "string"
+              },
+              "plan": {
+                "$ref": "#/components/schemas/Plan"
+              }
+            },
+            "required": [
+              "workflowId",
+              "state",
+              "nextAction",
+              "plan"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "StartWorkflowRequest": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "mainnet",
+              "testnet"
+            ],
+            "description": "Required on every request. There is no default network."
+          },
+          "quoteId": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "The same key always names the same workflow."
+          },
+          "ownerAddress": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Required for an API key, ignored for a session."
+          }
+        },
+        "required": [
+          "network",
+          "quoteId",
+          "idempotencyKey"
+        ]
+      },
+      "SignatureResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/SignatureOutcome"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "SignatureOutcome": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "BROADCAST",
+              "SIGNED",
+              "UNKNOWN"
+            ]
+          },
+          "txid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "nextAction",
+          "outcome",
+          "txid"
+        ]
+      },
+      "SignatureRequest": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "mainnet",
+              "testnet"
+            ],
+            "description": "Required on every request. There is no default network."
+          },
+          "stepId": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "walletResult": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+            "description": "Exactly what the wallet returned, unchanged."
+          }
+        },
+        "required": [
+          "network",
+          "stepId",
+          "walletResult"
         ]
       }
     },
@@ -1782,7 +1980,7 @@
         },
         "responses": {
           "200": {
-            "description": "Unsigned quote minted from live or injected reads",
+            "description": "A quote and the unsigned plan that executes it",
             "content": {
               "application/json": {
                 "schema": {
@@ -1876,7 +2074,7 @@
         },
         "responses": {
           "200": {
-            "description": "Unsigned plan bound to a quote",
+            "description": "Unsigned plan bound to a posted quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -1907,6 +2105,226 @@
           },
           "403": {
             "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows": {
+      "post": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The workflow and the plan to sign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartedWorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows/{id}/signature": {
+      "post": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What the wallet answered, and where the workflow stands",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignatureResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such workflow for the caller",
             "content": {
               "application/json": {
                 "schema": {

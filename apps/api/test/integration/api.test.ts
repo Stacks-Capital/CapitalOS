@@ -113,8 +113,10 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
     });
     assert.equal(quoteResponse.status, 200);
     const quoted = QuoteResponse.parse(await quoteResponse.json());
-    assert.equal(quoted.data.executable, true);
-    assert.match(quoted.data.expectedOutput[0]?.asset ?? "", /:zft$/);
+    assert.equal(quoted.data.quote.executable, true);
+    assert.match(quoted.data.quote.expectedOutput[0]?.asset ?? "", /:zft$/);
+    assert.equal(quoted.data.plan.quoteId, quoted.data.quote.id);
+    assert.equal(quoted.data.plan.steps[0]?.payload.kind, "stacks_contract_call");
 
     const planResponse = await app.request("/v1/plans", {
       method: "POST",
@@ -123,12 +125,12 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
         network: "mainnet",
         owner: MAINNET_OWNER,
         intent: { action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" },
-        quote: quoted.data,
+        quote: quoted.data.quote,
       }),
     });
     assert.equal(planResponse.status, 200);
     const planned = PlanResponse.parse(await planResponse.json());
-    assert.equal(planned.data.quoteId, quoted.data.id);
+    assert.equal(planned.data.quoteId, quoted.data.quote.id);
     assert.equal(planned.data.steps[0]?.payload.kind, "stacks_contract_call");
   });
 });

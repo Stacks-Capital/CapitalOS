@@ -10,11 +10,10 @@ import {
 } from "@stacks-capital/core";
 import { ApiError } from "./errors.ts";
 import type { Principal } from "./auth.ts";
+import { loadReads, type ReadsLoader } from "./execution.ts";
 import type { IntentBodyValue, PlanRequestBody, QuoteRequestBody } from "./schemas.ts";
 
-export type QuoteReads =
-  | AdapterReads
-  | ((input: { network: StacksNetwork; owner: string; now: Date }) => AdapterReads | Promise<AdapterReads>);
+export type QuoteReads = ReadsLoader;
 
 export function intentFromBody(body: QuoteRequestBody | IntentBodyValue): Intent {
   const intent: Intent = {
@@ -71,8 +70,7 @@ export async function resolveReads(
   if (reads === undefined) {
     return loadServerReads({ network: input.network, owner: input.owner, now: input.now });
   }
-  if (typeof reads === "function") return reads(input);
-  return reads;
+  return loadReads(reads, input.network, input.owner);
 }
 
 export async function mintQuote(input: {

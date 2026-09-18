@@ -1,4 +1,4 @@
-import type { ErrorCode } from "@stacks-capital/core";
+import { ERROR_CLASS, type ErrorClass, type ErrorCode } from "@stacks-capital/core";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { SCHEMA_VERSION } from "./schemas.ts";
 
@@ -15,7 +15,6 @@ export type ApiErrorCode =
 const STATUS: Partial<Record<ApiErrorCode, ContentfulStatusCode>> = {
   INVALID_REQUEST: 400,
   NETWORK_MISMATCH: 400,
-  QUOTE_EXPIRED: 400,
   PLAN_INVALID: 400,
   CAP_REACHED: 400,
   ORACLE_STALE: 400,
@@ -30,6 +29,14 @@ const STATUS: Partial<Record<ApiErrorCode, ContentfulStatusCode>> = {
   TEMPORARY_UNAVAILABLE: 503,
 };
 
+const BY_CLASS: Partial<Record<ErrorClass, ContentfulStatusCode>> = {
+  user_action: 400,
+  // The caller has to ask for a new quote before trying again.
+  requote: 409,
+  retryable_read: 503,
+  investigation: 500,
+};
+
 export class ApiError extends Error {
   readonly code: ApiErrorCode;
   readonly retryAfter: number | undefined;
@@ -41,7 +48,8 @@ export class ApiError extends Error {
   }
 
   get status(): ContentfulStatusCode {
-    return STATUS[this.code] ?? 500;
+    // Codes without their own status follow core's class: what the caller can do decides the status.
+    return STATUS[this.code] ?? BY_CLASS[ERROR_CLASS[this.code as ErrorCode]] ?? 500;
   }
 }
 
