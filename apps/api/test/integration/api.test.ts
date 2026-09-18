@@ -3,9 +3,10 @@ import { randomBytes } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 import { connect, createApiKey, MIGRATIONS_DIR, migrate, type Sql } from "@stacks-capital/database";
 import { FIXTURE_APP, seedFixtures } from "@stacks-capital/database/fixtures";
+import { MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import { createApp } from "../../src/app.ts";
 import { memoryLimiter } from "../../src/rateLimit.ts";
-import { CapabilitiesResponse, MarketsResponse } from "../../src/schemas.ts";
+import { CapabilitiesResponse, MarketsResponse, PlanResponse, QuoteResponse } from "../../src/schemas.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
 const NOW = "2026-09-15T12:00:00.000Z";
@@ -23,8 +24,8 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
     sql = connect(DATABASE_URL, schema);
     await migrate(sql, MIGRATIONS_DIR);
     await seedFixtures(sql);
-    app = createApp({ sql, limiter: memoryLimiter(), now: () => new Date(NOW) });
-    const { token } = await createApiKey(sql, { appId: FIXTURE_APP.id, scopes: ["markets:read"] });
+    app = createApp({ sql, limiter: memoryLimiter(), now: () => new Date(NOW), reads: MAINNET_READS });
+    const { token } = await createApiKey(sql, { appId: FIXTURE_APP.id, scopes: ["markets:read", "quotes:write"] });
     headers = { authorization: `Bearer ${token}` };
   });
 
@@ -96,5 +97,38 @@ describe("API against the seeded database", { skip: DATABASE_URL === "" ? "DATAB
     const keys = items.map((capability) => `${capability.marketId}/${capability.action}`);
     assert.equal(new Set(keys).size, keys.length);
     assert.deepEqual(keys, [...keys].sort());
+  });
+
+  it("quotes and plans Zest supply with onchain zft receipts", async () => {
+    const quoteResponse = await app.request("/v1/quotes", {
+      method: "POST",
+      headers: { ...headers, "content-type": "application/json" },
+      body: JSON.stringify({
+        network: "mainnet",
+        action: "supply",
+        marketId: "zest.sbtc.vault",
+        amount: "100000000",
+        owner: MAINNET_OWNER,
+      }),
+    });
+    assert.equal(quoteResponse.status, 200);
+    const quoted = QuoteResponse.parse(await quoteResponse.json());
+    assert.equal(quoted.data.executable, true);
+    assert.match(quoted.data.expectedOutput[0]?.asset ?? "", /:zft$/);
+
+    const planResponse = await app.request("/v1/plans", {
+      method: "POST",
+      headers: { ...headers, "content-type": "application/json" },
+      body: JSON.stringify({
+        network: "mainnet",
+        owner: MAINNET_OWNER,
+        intent: { action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" },
+        quote: quoted.data,
+      }),
+    });
+    assert.equal(planResponse.status, 200);
+    const planned = PlanResponse.parse(await planResponse.json());
+    assert.equal(planned.data.quoteId, quoted.data.id);
+    assert.equal(planned.data.steps[0]?.payload.kind, "stacks_contract_call");
   });
 });
