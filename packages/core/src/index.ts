@@ -34,17 +34,20 @@ export {
   formatQuantity,
   jsonAmount,
   mulDiv,
+  parseAmount,
   parseQuantity,
 } from "./amounts.ts";
+export type { QuoteWire, PlanWire } from "./wire.ts";
+export { parsePlan, parseQuote, serializePlan, serializeQuote } from "./wire.ts";
 
 export type { DataPoint } from "./datapoint.ts";
 export { dataPoint, requireFresh, unknownPoint } from "./datapoint.ts";
 
 export type { CapitalError, ErrorClass, ErrorCode } from "./errors.ts";
-export { allowsWriteRetry, capitalError, ERROR_CLASS, isRetryableRead } from "./errors.ts";
+export { allowsWriteRetry, capitalError, ERROR_CLASS, isCapitalError, isRetryableRead } from "./errors.ts";
 
-export type { Action, Fee, FeeKind, Quote } from "./quote.ts";
-export { quoteExpired } from "./quote.ts";
+export type { Action, Fee, FeeKind, Intent, Quote } from "./quote.ts";
+export { ACTIONS, quoteExpired } from "./quote.ts";
 
 export type {
   BitcoinDepositPayload,
