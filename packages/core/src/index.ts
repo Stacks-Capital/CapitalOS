@@ -71,6 +71,16 @@ export {
   transition,
 } from "./workflow.ts";
 
+export type { BorrowFollowUp, BorrowPartialLabel, BorrowPartialOutcome } from "./borrowSafety.ts";
+export {
+  borrowPartialOutcome,
+  continueAfterConfirmedStep,
+  hasConfirmedStep,
+  parkPartialCompletion,
+  settleRepayAmount,
+  unsignedSteps,
+} from "./borrowSafety.ts";
+
 export type {
   CanonicalActivity,
   ChainBlock,

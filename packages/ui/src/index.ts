@@ -8,7 +8,10 @@ export {
   type BorrowInputs,
   type BorrowProjection,
   deltasFor,
+  nextBorrowStep,
+  oracleProvenance,
   projectBorrow,
+  quoteSafety,
   QUOTE_ACTION,
 } from "./borrow.ts";
 export {
