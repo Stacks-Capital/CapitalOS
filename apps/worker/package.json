@@ -2,5 +2,11 @@
   "name": "@stacks-capital/worker",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@stacks-capital/config": "workspace:*",
+    "@stacks-capital/core": "workspace:*",
+    "@stacks-capital/database": "workspace:*",
+    "@stacks/transactions": "7.6.0"
+  }
 }
