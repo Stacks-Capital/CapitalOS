@@ -146,11 +146,22 @@ describe("states that block signing", () => {
     assert.equal(unknown.canProceed, true);
   });
 
-  it("blocks removing more than the position holds", () => {
-    const collateral = projectBorrow(risk(), { action: "collateral_remove", amount: "200000000" }, NOW);
-    assert.ok(collateral.blockers.some((blocker) => blocker.includes("more collateral than you have")));
+  it("blocks a paused market and a borrow above available liquidity", () => {
+    const paused = projectBorrow(risk(), { action: "borrow", amount: "1000000", paused: true }, NOW);
+    assert.equal(paused.canProceed, false);
+    assert.ok(paused.blockers.some((blocker) => blocker.includes("paused")));
 
-    const debt = projectBorrow(risk(), { action: "repay", amount: "20000000000", walletBalance: "99999999999" }, NOW);
-    assert.ok(debt.blockers.some((blocker) => blocker.includes("more than you owe")));
+    const dry = projectBorrow(risk(), { action: "borrow", amount: "5000000000", availableLiquidity: "1000" }, NOW);
+    assert.equal(dry.canProceed, false);
+    assert.ok(dry.blockers.some((blocker) => blocker.includes("liquidity")));
+  });
+
+  it("treats repay-all as the current debt and refuses an overpay", () => {
+    const all = projectBorrow(risk(), { action: "repay", amount: "max", walletBalance: "10000000000" }, NOW);
+    assert.equal(all.canProceed, true);
+    assert.equal(all.health?.debtUsd, 0n);
+
+    const over = projectBorrow(risk(), { action: "repay", amount: "20000000000", walletBalance: "99999999999" }, NOW);
+    assert.ok(over.blockers.some((blocker) => blocker.includes("more than you owe")));
   });
 });
