@@ -46,7 +46,7 @@ This endpoint did not exist and no task assigned it. It landed here because the 
 
 ## Tests
 
-`apps/web/src/exposure.test.ts` (10): shares by market, unavailable when a position is unknown with the market named, refusing to add different assets, nothing to compare, debt excluded from exposure, scenario values and assumptions, which scenarios liquidate, all five reasons a scenario is unavailable, custom price moves, and no liquidation claimed from an unavailable scenario.
+`packages/ui/src/exposure.test.ts` (10): shares by market, unavailable when a position is unknown with the market named, refusing to add different assets, nothing to compare, debt excluded from exposure, scenario values and assumptions, which scenarios liquidate, all five reasons a scenario is unavailable, custom price moves, and no liquidation claimed from an unavailable scenario.
 
 `apps/api/test/integration/execution.test.ts`: the list returns the caller's workflows with their step counts, and another tenant sees an empty list.
 

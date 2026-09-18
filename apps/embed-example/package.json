@@ -1,22 +1,18 @@
 {
-  "name": "@stacks-capital/web",
+  "name": "@stacks-capital/embed-example",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5174",
     "build": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --test --experimental-strip-types src/*.test.ts"
   },
   "dependencies": {
     "@stacks-capital/client": "workspace:*",
-    "@stacks-capital/core": "workspace:*",
     "@stacks-capital/react": "workspace:*",
     "@stacks-capital/ui": "workspace:*",
-    "@stacks-capital/wallets": "workspace:*",
-    "@stacks/connect": "8.2.7",
-    "@stacks/transactions": "7.6.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

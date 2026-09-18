@@ -1,8 +1,15 @@
 import { useCapabilities, useMarkets, usePositions, useWorkflow } from "@stacks-capital/react";
 import { useState } from "react";
-import { buildPortfolio, type Position } from "./holdings.ts";
-import { panelState, UNAVAILABLE } from "./state.ts";
-import { Amount, Panel, StateNote, Unavailable } from "./ui.tsx";
+import {
+  Amount,
+  buildPortfolio,
+  type HoldingPosition as Position,
+  Panel,
+  panelState,
+  StateNote,
+  UNAVAILABLE,
+  Unavailable,
+} from "@stacks-capital/ui";
 
 export function Portfolio({ address }: { address: string | null }) {
   const markets = useMarkets({ limit: 100 });

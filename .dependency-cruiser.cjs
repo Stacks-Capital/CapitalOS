@@ -62,6 +62,21 @@ module.exports = {
       to: { path: "^packages/(adapters|engine)/" },
     },
     {
+      name: "embed-example-uses-public-packages-only",
+      comment:
+        "I16: a partner app is built from the client, the hooks and the ui, and nothing that holds keys or mints plans.",
+      severity: "error",
+      from: { path: "^apps/embed-example/" },
+      to: { path: "^packages/", pathNot: "^packages/(client|react|ui|core)/" },
+    },
+    {
+      name: "ui-stays-on-the-browser-side",
+      comment: "I16: embeddable UI reads through the API, never through adapters, the engine or the database.",
+      severity: "error",
+      from: { path: "^packages/ui/" },
+      to: { path: "^packages/(adapters|engine|database|config|fixtures)/" },
+    },
+    {
       name: "no-relative-import-into-another-package",
       comment: "Import other workspace packages by name so package exports stay the only entry point.",
       severity: "error",

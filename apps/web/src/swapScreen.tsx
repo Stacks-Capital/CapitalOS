@@ -2,12 +2,17 @@ import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, usePrices } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useEffect, useState } from "react";
-import type { ConnectedWallet } from "./session.ts";
-import { toWalletRequest } from "./signing.ts";
-import { messageFor, panelState } from "./state.ts";
-import { canApprove, swapView } from "./swap.ts";
-import { Panel, StateNote } from "./ui.tsx";
-import { findProvider } from "./wallet.ts";
+import {
+  canApprove,
+  type ConnectedWallet,
+  findProvider,
+  messageFor,
+  Panel,
+  panelState,
+  StateNote,
+  swapView,
+  toWalletRequest,
+} from "@stacks-capital/ui";
 
 const MARKET = "bitflow.sbtc-usdcx";
 const ASSETS = { sentFeed: "BTC/USD", receivedFeed: "USDC/USD", sentDecimals: 8, receivedDecimals: 6 };

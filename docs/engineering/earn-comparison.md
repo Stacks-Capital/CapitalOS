@@ -27,7 +27,7 @@ A market with no snapshot yet returns null rates and null liquidity, marked stal
 
 ## Ranking rules
 
-The API serves facts; ranking is a decision, so it lives in the app and is tested there (`apps/web/src/compare.ts`).
+The API serves facts; ranking is a decision, so it lives in the app and is tested there (`packages/ui/src/compare.ts`).
 
 1. **Options are grouped by the asset they supply.** Two markets supplying different assets are never ranked against each other, and the screen says so.
 2. **Within a group, rank is base rate plus incentive rate**, added at the finer of the two scales.
@@ -43,7 +43,7 @@ A strategy you cannot leave is not the same product as one you can, which is why
 
 ## Tests
 
-`apps/web/src/compare.test.ts` (16): rate addition and comparison across scales, percentage formatting, ranking by base plus incentive, separate groups per supplied asset, each of the seven reasons an option is not ranked, an unrankable option staying visible below the ranked ones, an option with no supplied asset grouped alone, and unknown liquidity noted without blocking.
+`packages/ui/src/compare.test.ts` (16): rate addition and comparison across scales, percentage formatting, ranking by base plus incentive, separate groups per supplied asset, each of the seven reasons an option is not ranked, an unrankable option staying visible below the ranked ones, an option with no supplied asset grouped alone, and unknown liquidity noted without blocking.
 
 `apps/api/test/integration/execution.test.ts`: the endpoint lists only markets that can be supplied into, and leaves rates and liquidity unknown when no worker has run.
 

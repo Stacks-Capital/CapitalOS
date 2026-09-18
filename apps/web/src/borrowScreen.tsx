@@ -2,13 +2,20 @@ import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, useMarketRisk } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useState } from "react";
-import { type BorrowAction, projectBorrow, QUOTE_ACTION } from "./borrow.ts";
-import { canSign, reviewQuote } from "./earn.ts";
-import type { ConnectedWallet } from "./session.ts";
-import { toWalletRequest } from "./signing.ts";
-import { messageFor, panelState } from "./state.ts";
-import { Panel, StateNote } from "./ui.tsx";
-import { findProvider } from "./wallet.ts";
+import {
+  type BorrowAction,
+  canSign,
+  type ConnectedWallet,
+  findProvider,
+  messageFor,
+  Panel,
+  panelState,
+  projectBorrow,
+  QUOTE_ACTION,
+  reviewQuote,
+  StateNote,
+  toWalletRequest,
+} from "@stacks-capital/ui";
 
 const MARKET = "granite.sbtc.isolated";
 const ACTIONS: { id: BorrowAction; label: string }[] = [

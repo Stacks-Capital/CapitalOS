@@ -54,7 +54,7 @@ Balances and positions are unavailable today: there is no balances or positions 
 
 ## Receipt and underlying double counting
 
-A vault receipt (for example `zft`) and the position it represents are the same money. Counting both doubles it. `buildPortfolio` in `src/holdings.ts` applies these rules:
+A vault receipt (for example `zft`) and the position it represents are the same money. Counting both doubles it. `buildPortfolio` in `packages/ui/src/holdings.ts` applies these rules:
 
 1. A balance whose asset is a market's receipt asset is shown as a receipt row and never counts toward a total. Receipt units are not underlying units.
 2. When the protocol also reports a supplied position for that market, the receipt row says it is already shown by the position.
@@ -93,7 +93,7 @@ Rules the flow keeps:
 
 ## Tests
 
-`node --test apps/web/src/*.test.ts`, 23 tests, no browser needed:
+`node --test packages/ui/src/*.test.ts`, 23 tests, no browser needed:
 
 - `holdings.test.ts`: the five rules above, including a wallet balance plus a supplied position totalling once with the receipt excluded, a receipt with no position, an unknown part making a total unknown, and debt staying out of the total.
 - `earn.test.ts`: the stage table including unknown states going to recovery, the pending step remembered per network and address and surviving missing, broken or nonsense storage, review amounts and expiry, refusing to sign an expired or blocked quote, and the wallet request built from a plan step with its post conditions.

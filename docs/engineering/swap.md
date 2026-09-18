@@ -36,7 +36,7 @@ Refreshing asks the server for a new quote, which resets the countdown. The API 
 
 ## Tests
 
-`apps/web/src/swap.test.ts` (10): impact of zero on a fair quote, a positive impact when the quote is worse than the oracle, unknown impact when a price is missing or stale, no impact from an empty side, the route and amounts shown, quote warnings passed through, the countdown, refresh required inside the margin, an expired quote refused, and a quote refused when it is not executable or has no floor on what is received.
+`packages/ui/src/swap.test.ts` (10): impact of zero on a fair quote, a positive impact when the quote is worse than the oracle, unknown impact when a price is missing or stale, no impact from an empty side, the route and amounts shown, quote warnings passed through, the countdown, refresh required inside the margin, an expired quote refused, and a quote refused when it is not executable or has no floor on what is received.
 
 ## Unsupported and deferred
 

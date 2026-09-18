@@ -225,6 +225,34 @@ importers:
         specifier: workspace:*
         version: link:../../packages/fixtures
 
+  apps/embed-example:
+    dependencies:
+      '@stacks-capital/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@stacks-capital/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@stacks-capital/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      vite:
+        specifier: 8.3.0
+        version: 8.3.0(@types/node@24.13.4)(yaml@2.9.1)
+
   apps/partner-example:
     dependencies:
       '@scure/bip32':
@@ -260,6 +288,9 @@ importers:
       '@stacks-capital/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@stacks-capital/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@stacks-capital/wallets':
         specifier: workspace:*
         version: link:../../packages/wallets
@@ -419,7 +450,30 @@ importers:
 
   packages/server-sdk: {}
 
-  packages/ui: {}
+  packages/ui:
+    dependencies:
+      '@stacks-capital/client':
+        specifier: workspace:*
+        version: link:../client
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stacks-capital/react':
+        specifier: workspace:*
+        version: link:../react
+      '@stacks-capital/wallets':
+        specifier: workspace:*
+        version: link:../wallets
+      '@stacks/transactions':
+        specifier: 7.6.0
+        version: 7.6.0
+    devDependencies:
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
 
   packages/wallets:
     dependencies:
