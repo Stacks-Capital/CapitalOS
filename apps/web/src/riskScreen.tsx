@@ -1,8 +1,14 @@
 import { useCapital, useMarketRisk, usePositions, useWorkflows } from "@stacks-capital/react";
-import { concentrationBy, scenarios, wouldLiquidate } from "./exposure.ts";
-import type { ConnectedWallet } from "./session.ts";
-import { panelState } from "./state.ts";
-import { Panel, StateNote, Unavailable } from "./ui.tsx";
+import {
+  concentrationBy,
+  type ConnectedWallet,
+  Panel,
+  panelState,
+  scenarios,
+  StateNote,
+  Unavailable,
+  wouldLiquidate,
+} from "@stacks-capital/ui";
 
 const MARKET = "granite.sbtc.isolated";
 const bps = (value: bigint | string | null) => (value === null ? "unknown" : `${(Number(value) / 100).toFixed(2)}%`);

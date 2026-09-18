@@ -4,6 +4,7 @@ import {
   insertRewardSnapshot,
   listKnownOwners,
   listMarketAssets,
+  recordOpsEvent,
   insertPriceSnapshot,
   latestMarketSnapshot,
   listProjectionTargets,
@@ -45,6 +46,14 @@ export type TickSummary = {
 // One pass of the K05 pipeline: evidence first, then projections, then reconciliation.
 export async function tick(deps: TickDeps): Promise<TickSummary> {
   const ingested = await ingestBlocks(deps);
+  // How far behind the chain this tick left us. Alerts read this, not the log.
+  await recordOpsEvent(deps.sql, {
+    kind: "ingestion_tick",
+    network: deps.network,
+    subject: "stacks",
+    value: ingested.checkpoint === null ? null : Math.max(0, ingested.tipHeight - ingested.checkpoint.height),
+    at: deps.at,
+  });
   const targets = await listProjectionTargets(deps.sql, deps.network);
   const events = await ingestEvents({ ...deps, targets });
 

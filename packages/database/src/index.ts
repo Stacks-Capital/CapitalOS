@@ -67,6 +67,29 @@ export {
 } from "./ingestion.ts";
 export { type EarnOptionRow, listEarnOptions } from "./earn.ts";
 export {
+  type AlertInput,
+  type AlertKind,
+  type AlertRow,
+  type CapabilityOverride,
+  clearCapabilityOverride,
+  DEFAULT_STUCK_SECONDS,
+  effectiveCapability,
+  type IngestionHealth,
+  listCapabilityOverrides,
+  type MetricsSnapshot,
+  metricsSnapshot,
+  type OpsEvent,
+  type OpsEventKind,
+  openAlerts,
+  type QuoteHealth,
+  raiseAlert,
+  recordOpsEvent,
+  resolveAlert,
+  setCapabilityOverride,
+  type StuckThresholds,
+  type StuckWorkflow,
+} from "./ops.ts";
+export {
   insertPositionSnapshot,
   insertRewardSnapshot,
   latestPositions,

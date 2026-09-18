@@ -1,0 +1,23 @@
+{
+  "name": "@stacks-capital/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "server": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/server.ts",
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@stacks-capital/api": "workspace:*",
+    "@stacks-capital/database": "workspace:*",
+    "@stacks-capital/fixtures": "workspace:*",
+    "@stacks/encryption": "7.6.0",
+    "@stacks/transactions": "7.6.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0"
+  }
+}

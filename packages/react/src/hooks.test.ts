@@ -242,6 +242,35 @@ describe("useWorkflow", () => {
   });
 });
 
+describe("refresh", () => {
+  it("acts on the current key even when called from an earlier render", async () => {
+    const cache = createCache({ staleMs: 60_000 });
+    const reads: (string | undefined)[] = [];
+    const client = fakeClient({
+      workflow: async (id: string) => {
+        reads.push(id);
+        return { data: { id, state: `read ${reads.length}` }, context: page("x").context } as never;
+      },
+    });
+
+    let id: string | null = null;
+    const { view, results } = harness(client, cache, () => useWorkflow(id));
+    await view.settle();
+    // Keep the refresh from a render where there was no workflow yet, as an async handler would.
+    const staleRefresh = (results.at(-1) as MarketsResult).refresh;
+
+    id = "wf_7";
+    await view.set("SP1");
+    assert.deepEqual(reads, ["wf_7"]);
+
+    await act(async () => {
+      await staleRefresh();
+    });
+    assert.deepEqual(reads, ["wf_7", "wf_7"]);
+    view.unmount();
+  });
+});
+
 describe("provider", () => {
   it("refuses to work outside a provider", () => {
     const Probe = () => {

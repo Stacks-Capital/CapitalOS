@@ -24,7 +24,15 @@ import {
   signatureMatches,
 } from "./auth.ts";
 import { decodeCursor, encodeCursor } from "./cursor.ts";
-import { createQuote, liveReads, marketRisk, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
+import {
+  createQuote,
+  liveReads,
+  marketRisk,
+  type ReadsLoader,
+  recordSignature,
+  requireEnabled,
+  startWorkflow,
+} from "./execution.ts";
 import { ApiError, errorBody } from "./errors.ts";
 import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLimit.ts";
 import {
@@ -487,6 +495,11 @@ export function createApp(deps: AppDependencies) {
     if (body.quote.network !== body.network || body.intent.action !== body.quote.action) {
       throw new ApiError("INVALID_REQUEST", "plan quote does not match the request network or action");
     }
+    await requireEnabled(deps.sql, {
+      network: body.network,
+      marketId: body.quote.marketId,
+      action: body.quote.action,
+    });
     const owner = quoteOwner(principal, body.owner);
     const at = now();
     const plan = await mintPlan({

@@ -122,6 +122,24 @@ describe("building a client", () => {
   });
 });
 
+describe("the default fetch", () => {
+  it("is called the way browsers require, not detached from the global object", async () => {
+    const original = globalThis.fetch;
+    // Browsers throw when fetch runs with any receiver other than the global object. This does the same.
+    globalThis.fetch = function (this: unknown, ..._args: unknown[]) {
+      if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+      return Promise.resolve(envelope({ items: [], nextCursor: null }));
+    } as typeof fetch;
+    try {
+      const client = createClient({ baseUrl: BASE, network: "mainnet", clientId: "pk_1" });
+      const page = await client.markets();
+      assert.deepEqual(page.items, []);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+});
+
 describe("reads", () => {
   it("always sends the network and returns the envelope context", async () => {
     const { client, calls } = build([envelope({ items: [MARKET], nextCursor: "cursor_2" })]);

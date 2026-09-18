@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { PlanStep, Quote } from "@stacks-capital/client";
 import { canSign, clearPending, loadPending, pendingKey, reviewQuote, savePending, stageFor } from "./earn.ts";
-import { encodePostCondition, toWalletRequest } from "./signing.ts";
+import { askWallet, encodePostCondition, toWalletRequest } from "./signing.ts";
 
 const SBTC = "stacks:mainnet:contract:SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token:sbtc-token";
 const NOW = new Date("2026-09-18T12:00:00.000Z");
@@ -179,5 +179,50 @@ describe("what the wallet is asked to sign", () => {
   it("refuses a step it cannot sign rather than sending something else", () => {
     const bitcoin: PlanStep = { ...step, payload: { kind: "bitcoin_deposit" } };
     assert.throws(() => toWalletRequest(bitcoin), /only sign Stacks contract calls/);
+  });
+});
+
+describe("asking the wallet", () => {
+  const request = { method: "stx_callContract" as const, params: {} as never };
+
+  it("passes an answer through", async () => {
+    const answer = await askWallet({ request: async () => ({ txid: "0xabc" }) }, "leather", request);
+    assert.deepEqual(answer, { kind: "answered", result: { txid: "0xabc" } });
+  });
+
+  it("treats Leather's 4001 and Xverse's -32000 as the user saying no, not as an unknown broadcast", async () => {
+    const leather = await askWallet(
+      {
+        request: async () => {
+          throw { code: 4001, message: "User rejected the request" };
+        },
+      },
+      "leather",
+      request,
+    );
+    assert.equal(leather.kind, "rejected");
+    const xverse = await askWallet(
+      {
+        request: async () => {
+          throw { error: { code: -32000, message: "User rejected" } };
+        },
+      },
+      "xverse",
+      request,
+    );
+    assert.equal(xverse.kind, "rejected");
+  });
+
+  it("records any other failure as unknown, because it cannot say whether anything was sent", async () => {
+    const answer = await askWallet(
+      {
+        request: async () => {
+          throw new Error("extension crashed");
+        },
+      },
+      "leather",
+      request,
+    );
+    assert.deepEqual(answer, { kind: "unknown", result: { error: "extension crashed" } });
   });
 });

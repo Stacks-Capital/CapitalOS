@@ -4,13 +4,12 @@ import { CapitalProvider } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useMemo, useState } from "react";
 import type { WebConfig } from "./config.ts";
-import { type ConnectedWallet, signIn } from "./session.ts";
 import { Borrow } from "./borrowScreen.tsx";
 import { Earn } from "./earnScreen.tsx";
 import { Risk } from "./riskScreen.tsx";
 import { Activity, Markets, Portfolio } from "./screens.tsx";
 import { Swap } from "./swapScreen.tsx";
-import { connectWallet, installedWallets, messageSigner } from "./wallet.ts";
+import { type ConnectedWallet, connectWallet, installedWallets, messageSigner, signIn } from "@stacks-capital/ui";
 
 const TABS = ["Portfolio", "Earn", "Borrow", "Swap", "Risk", "Markets", "Activity"] as const;
 type Tab = (typeof TABS)[number];
@@ -97,7 +96,7 @@ export function App({ config }: { config: WebConfig }) {
       )}
 
       <main>
-        {tab === "Portfolio" ? <Portfolio address={wallet?.address ?? null} /> : null}
+        {tab === "Portfolio" ? <Portfolio address={wallet?.address ?? null} signedIn={sessionToken !== null} /> : null}
         {tab === "Earn" ? <Earn wallet={wallet} signedIn={sessionToken !== null} /> : null}
         {tab === "Borrow" ? <Borrow wallet={wallet} signedIn={sessionToken !== null} /> : null}
         {tab === "Swap" ? <Swap wallet={wallet} signedIn={sessionToken !== null} /> : null}

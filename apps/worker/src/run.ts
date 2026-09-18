@@ -1,6 +1,7 @@
 import { PROVIDERS } from "@stacks-capital/config";
 import { requireNetwork } from "@stacks-capital/core";
-import { connect, requireDatabaseUrl } from "@stacks-capital/database";
+import { connect, metricsSnapshot, recordOpsEvent, requireDatabaseUrl } from "@stacks-capital/database";
+import { evaluateAlerts, reconcileAlerts } from "./alerts.ts";
 import { createHiro } from "./hiro.ts";
 import { tick } from "./tick.ts";
 
@@ -22,12 +23,28 @@ process.on("SIGTERM", stop);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms).unref());
 
 do {
+  const at = new Date();
   try {
-    const summary = await tick({ sql, hiro, network, at: new Date() });
+    const summary = await tick({ sql, hiro, network, at });
     console.log(JSON.stringify(summary));
   } catch (error) {
     // A failed tick is never fatal: the checkpoint stays where it is and the next tick retries from there.
-    console.error(JSON.stringify({ at: new Date().toISOString(), error: (error as Error).message }));
+    console.error(JSON.stringify({ at: at.toISOString(), error: (error as Error).message }));
+    await recordOpsEvent(sql, {
+      kind: "ingestion_failed",
+      network,
+      subject: "stacks",
+      code: (error as { code?: string }).code ?? "UNCLASSIFIED",
+      at,
+    }).catch(() => {});
+  }
+  try {
+    const snapshot = await metricsSnapshot(sql, { network, at: new Date(), windowSeconds: 15 * 60 });
+    const { notifications } = await reconcileAlerts(sql, network, evaluateAlerts(snapshot), new Date());
+    // Only changes are printed: a problem that persists does not repeat itself every tick.
+    for (const notification of notifications) console.log(JSON.stringify({ alert: notification }));
+  } catch (error) {
+    console.error(JSON.stringify({ at: new Date().toISOString(), alertsError: (error as Error).message }));
   }
   if (once || stopping) break;
   await sleep(intervalMs);

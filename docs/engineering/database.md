@@ -45,6 +45,7 @@ All three database commands read `DATABASE_URL` from the environment or `.env.lo
 | `0006_identity.sql` (I05) | `partners`, `partner_apps`, `allowed_origins`, `api_keys`, `auth_nonces`, `user_sessions`, plus `app_id` and `owner_address` on `workflows` |
 | `0007_projections.sql` (I06) | `price_snapshots`, `reconciliation_runs` |
 | `0008_rewards.sql` (I11) | `reward_snapshots` |
+| `0009_ops.sql` (I17) | `ops_events`, `alerts`, `capability_overrides`, and the `effective_capabilities` view |
 
 Values that core restricts (networks, chains, actions, capability states, workflow states, next actions, position kinds) are Postgres domains, so the database rejects anything core does not know.
 
