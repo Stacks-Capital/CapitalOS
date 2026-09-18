@@ -137,3 +137,24 @@ export type Position = {
   adapterVersion: string;
   calculationVersion: string;
 };
+
+export type EarnOption = {
+  marketId: string;
+  protocol: string;
+  suppliedAssetId: string | null;
+  receiptAssetId: string | null;
+  supply: { state: string; reason: string };
+  /** Null when the market lists no withdrawal action at all. */
+  withdrawal: { state: string; reason: string } | null;
+  baseRate: string | null;
+  baseRateScale: number | null;
+  incentiveRate: string | null;
+  incentiveRateScale: number | null;
+  availableLiquidity: string | null;
+  capacity: string | null;
+  paused: boolean | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string | null;
+  adapterVersion: string;
+};

@@ -33,6 +33,7 @@ export { DEFAULT_RETRY, DEFAULT_TIMEOUT_MS, type RetryPolicy } from "./http.ts";
 export type {
   AssetAmount,
   Capability,
+  EarnOption,
   CapabilityState,
   Challenge,
   Market,

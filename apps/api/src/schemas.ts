@@ -293,3 +293,27 @@ export const Position = z
   .openapi("Position");
 
 export const PositionsResponse = envelope("PositionsResponse", z.object({ items: z.array(Position) }));
+
+export const EarnOption = z
+  .object({
+    marketId: z.string(),
+    protocol: z.string(),
+    suppliedAssetId: z.string().nullable(),
+    receiptAssetId: z.string().nullable(),
+    supply: z.object({ state: z.string(), reason: z.string() }),
+    withdrawal: z.object({ state: z.string(), reason: z.string() }).nullable(),
+    baseRate: z.string().nullable(),
+    baseRateScale: z.number().int().nullable(),
+    incentiveRate: z.string().nullable(),
+    incentiveRateScale: z.number().int().nullable(),
+    availableLiquidity: z.string().nullable(),
+    capacity: z.string().nullable(),
+    paused: z.boolean().nullable(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+    observedAt: z.iso.datetime().nullable(),
+    adapterVersion: z.string(),
+  })
+  .openapi("EarnOption");
+
+export const EarnOptionsResponse = envelope("EarnOptionsResponse", z.object({ items: z.array(EarnOption) }));

@@ -5,6 +5,7 @@ export {
   type QueryResult,
   useCapabilities,
   useCapitalQuery,
+  useEarnOptions,
   useMarkets,
   usePositions,
   useWorkflow,

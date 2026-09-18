@@ -7,6 +7,7 @@ import { MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import { createApp } from "../../src/app.ts";
 import { memoryLimiter } from "../../src/rateLimit.ts";
 import {
+  EarnOptionsResponse,
   ErrorBody,
   PositionsResponse,
   QuoteResponse,
@@ -247,6 +248,25 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
 
     const withoutOwner = await app.request("/v1/positions?network=mainnet", { headers: keyHeaders });
     assert.equal(withoutOwner.status, 400);
+  });
+
+  it("serves what each earn market pays and allows, with unknowns left unknown", async () => {
+    const response = await app.request("/v1/earn/options?network=mainnet", { headers: keyHeaders });
+    assert.equal(response.status, 200);
+    const body = EarnOptionsResponse.parse(await response.json());
+
+    const vault = body.data.items.find((item) => item.marketId === "zest.sbtc.vault");
+    assert.equal(vault?.supply.state, "enabled");
+    assert.equal(vault?.withdrawal?.state, "enabled");
+    assert.ok(vault?.suppliedAssetId?.endsWith("sbtc-token"));
+    // No worker has run in this schema, so rates and liquidity are unknown rather than zero.
+    assert.equal(vault?.baseRate, null);
+    assert.equal(vault?.availableLiquidity, null);
+    assert.equal(vault?.stale, true);
+
+    // Only markets that can be supplied into are listed at all.
+    assert.ok(body.data.items.every((item) => item.supply.state !== undefined));
+    assert.ok(!body.data.items.some((item) => item.marketId === "sbtc.deposit"));
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {

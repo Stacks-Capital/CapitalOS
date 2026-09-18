@@ -9,6 +9,7 @@ import {
   StartWorkflowRequest,
   ChallengeRequest,
   ChallengeResponse,
+  EarnOptionsResponse,
   ErrorBody,
   ListQuery,
   MarketsResponse,
@@ -103,6 +104,14 @@ export const signatureRoute = createRoute({
     404: error("No such workflow for the caller"),
     ...errorResponses,
   },
+});
+
+export const earnOptionsRoute = createRoute({
+  method: "get",
+  path: "/v1/earn/options",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: { 200: json("What each earn market pays and allows", EarnOptionsResponse), ...errorResponses },
 });
 
 export const positionsRoute = createRoute({

@@ -1,6 +1,7 @@
 import {
   cacheKey,
   type Entry,
+  type EarnOption,
   type Market,
   type MarketCapability,
   type Page,
@@ -83,6 +84,12 @@ export function useCapabilities(options: PageQuery = {}): QueryResult<Page<Marke
     (signal) => client.capabilities({ limit, cursor, signal }),
     query,
   );
+}
+
+export function useEarnOptions(options: QueryOptions = {}): QueryResult<Result<{ items: EarnOption[] }>> {
+  const { client, scope } = useCapital();
+  const key = cacheKey(scope, "earnOptions");
+  return useCapitalQuery<Result<{ items: EarnOption[] }>>(key, (signal) => client.earnOptions({ signal }), options);
 }
 
 export function usePositions(

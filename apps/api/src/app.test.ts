@@ -101,6 +101,7 @@ describe("OpenAPI document", () => {
       "/v1/auth/challenge",
       "/v1/auth/verify",
       "/v1/capabilities",
+      "/v1/earn/options",
       "/v1/markets",
       "/v1/positions",
       "/v1/quotes",

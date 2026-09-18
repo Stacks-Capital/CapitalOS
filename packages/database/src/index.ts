@@ -63,6 +63,7 @@ export {
   recordBlock,
   recordReconciliation,
 } from "./ingestion.ts";
+export { type EarnOptionRow, listEarnOptions } from "./earn.ts";
 export {
   insertPositionSnapshot,
   insertRewardSnapshot,

@@ -8,6 +8,7 @@ import {
   isAllowedOrigin,
   latestPositions,
   listCapabilities,
+  listEarnOptions,
   listMarkets,
   type Sql,
 } from "@stacks-capital/database";
@@ -27,6 +28,7 @@ import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLi
 import {
   capabilitiesRoute,
   challengeRoute,
+  earnOptionsRoute,
   marketsRoute,
   positionsRoute,
   quoteRoute,
@@ -165,6 +167,45 @@ export function createApp(deps: AppDependencies) {
         data: {
           items: page.items,
           nextCursor: page.hasMore && last ? encodeCursor("capabilities", [last.marketId, last.action]) : null,
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(earnOptionsRoute, async (c) => {
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const options = await listEarnOptions(deps.sql, network);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: options.map((option) => ({
+            marketId: option.marketId,
+            protocol: option.protocol,
+            suppliedAssetId: option.suppliedAssetId,
+            receiptAssetId: option.receiptAssetId,
+            supply: { state: option.supplyState, reason: option.supplyReason },
+            withdrawal:
+              option.withdrawState === null
+                ? null
+                : { state: option.withdrawState, reason: option.withdrawReason ?? "" },
+            baseRate: option.baseRate,
+            baseRateScale: option.baseRateScale,
+            incentiveRate: option.incentiveRate,
+            incentiveRateScale: option.incentiveRateScale,
+            availableLiquidity: option.availableLiquidity,
+            capacity: option.capacity,
+            paused: option.paused,
+            stale: option.stale,
+            warnings: option.warnings,
+            observedAt: option.observedAt === null ? null : option.observedAt.toISOString(),
+            adapterVersion: option.adapterVersion,
+          })),
         },
         context: context(),
       },

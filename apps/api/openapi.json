@@ -303,6 +303,187 @@
           }
         ]
       },
+      "EarnOptionsResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EarnOption"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "EarnOption": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "suppliedAssetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receiptAssetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supply": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ]
+          },
+          "withdrawal": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "state": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ]
+          },
+          "baseRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baseRateScale": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "incentiveRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "incentiveRateScale": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "availableLiquidity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capacity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paused": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "adapterVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "marketId",
+          "protocol",
+          "suppliedAssetId",
+          "receiptAssetId",
+          "supply",
+          "withdrawal",
+          "baseRate",
+          "baseRateScale",
+          "incentiveRate",
+          "incentiveRateScale",
+          "availableLiquidity",
+          "capacity",
+          "paused",
+          "stale",
+          "warnings",
+          "observedAt",
+          "adapterVersion"
+        ]
+      },
       "PositionsResponse": {
         "type": "object",
         "properties": {
@@ -1474,6 +1655,109 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/earn/options": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What each earn market pays and allows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarnOptionsResponse"
                 }
               }
             }

@@ -11,6 +11,7 @@ import {
 } from "./http.ts";
 import type {
   Challenge,
+  EarnOption,
   Market,
   MarketCapability,
   Page,
@@ -60,6 +61,8 @@ export type CapitalClient = {
     input: { nonceId: string; publicKey: string; signature: string },
     options?: CallOptions,
   ): Promise<Result<Session>>;
+  /** What each earn market pays and allows, as facts. Ranking is the caller's decision. */
+  earnOptions(options?: CallOptions): Promise<Result<{ items: EarnOption[] }>>;
   /** Positions for one address. A session reads its own; a key names the owner. */
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
@@ -172,6 +175,15 @@ export function createClient(options: ClientOptions): CapitalClient {
         body: { network, ...input },
         signal: call_?.signal,
         retry: false,
+      }),
+
+    earnOptions: (call_) =>
+      call<{ items: EarnOption[] }>({
+        method: "GET",
+        path: "/v1/earn/options",
+        query: { network },
+        signal: call_?.signal,
+        retry: true,
       }),
 
     positions: (call_) =>
