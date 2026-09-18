@@ -54,5 +54,6 @@ export type {
   SignatureOutcome,
   StartedWorkflow,
   Workflow,
+  WorkflowSummary,
   WorkflowTransition,
 } from "./types.ts";

@@ -11,4 +11,5 @@ export {
   usePositions,
   usePrices,
   useWorkflow,
+  useWorkflows,
 } from "./hooks.ts";

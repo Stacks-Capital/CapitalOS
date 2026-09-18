@@ -21,10 +21,12 @@ export {
   findWorkflowForTenant,
   isAllowedOrigin,
   type KeyPrincipal,
+  listWorkflowsForTenant,
   type PendingNonce,
   revokeApiKey,
   type SessionPrincipal,
   type WorkflowRecord,
+  type WorkflowSummary,
 } from "./identity.ts";
 export {
   type AttemptInsert,

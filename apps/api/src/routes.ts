@@ -21,7 +21,9 @@ import {
   SessionResponse,
   VerifyRequest,
   WorkflowParams,
+  WorkflowListQuery,
   WorkflowResponse,
+  WorkflowsResponse,
 } from "./schemas.ts";
 
 const error = (description: string) => ({ description, content: { "application/json": { schema: ErrorBody } } });
@@ -142,6 +144,14 @@ export const positionsRoute = createRoute({
   security: keyOrSession,
   request: { query: PositionQuery },
   responses: { 200: json("Positions for one address", PositionsResponse), ...errorResponses },
+});
+
+export const workflowsRoute = createRoute({
+  method: "get",
+  path: "/v1/workflows",
+  security: keyOrSession,
+  request: { query: WorkflowListQuery },
+  responses: { 200: json("The caller's workflows, newest first", WorkflowsResponse), ...errorResponses },
 });
 
 export const workflowRoute = createRoute({

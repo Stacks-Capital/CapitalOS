@@ -359,3 +359,26 @@ export const MarketRisk = z
 export const MarketRiskResponse = envelope("MarketRiskResponse", MarketRisk);
 
 export const PricesResponse = envelope("PricesResponse", z.object({ items: z.array(OracleQuote) }));
+
+export const WorkflowListQuery = z.object({
+  network: Network,
+  owner: z.string().max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().max(512).optional(),
+});
+
+export const WorkflowSummary = z
+  .object({
+    id: z.string(),
+    network: Network,
+    state: z.string(),
+    nextAction: z.string(),
+    quoteId: z.string().nullable(),
+    planId: z.string().nullable(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    transitionCount: z.number().int(),
+  })
+  .openapi("WorkflowSummary");
+
+export const WorkflowsResponse = envelope("WorkflowsResponse", pageOf(WorkflowSummary));

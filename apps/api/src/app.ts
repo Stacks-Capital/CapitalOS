@@ -10,6 +10,7 @@ import {
   latestPrices,
   listCapabilities,
   listEarnOptions,
+  listWorkflowsForTenant,
   listMarkets,
   type Sql,
 } from "@stacks-capital/database";
@@ -39,6 +40,7 @@ import {
   startWorkflowRoute,
   verifyRoute,
   workflowRoute,
+  workflowsRoute,
 } from "./routes.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
 import { serializePlan, serializeQuote } from "./serialize.ts";
@@ -357,6 +359,42 @@ export function createApp(deps: AppDependencies) {
           sessionId: session.sessionId,
           address: session.address,
           expiresAt: session.expiresAt.toISOString(),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(workflowsRoute, async (c) => {
+    const { network, owner, limit, cursor } = c.req.valid("query");
+    const after = decodeCursor("workflows", cursor, 2);
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Workflows need an API key or a wallet session");
+    requireScope(principal, "workflows:write");
+    // A session lists only its own; a key lists its app, or one address within it.
+    const ownerAddress = principal.kind === "session" ? principal.address : (owner ?? null);
+
+    const page = await listWorkflowsForTenant(deps.sql, {
+      appId: principal.appId,
+      ownerAddress,
+      network,
+      limit,
+      before: after === null ? undefined : { createdAt: new Date(after[0] ?? ""), id: after[1] ?? "" },
+    });
+    const last = page.items.at(-1);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: page.items.map((workflow) => ({
+            ...workflow,
+            createdAt: workflow.createdAt.toISOString(),
+            updatedAt: workflow.updatedAt.toISOString(),
+          })),
+          nextCursor: page.hasMore && last ? encodeCursor("workflows", [last.createdAt.toISOString(), last.id]) : null,
         },
         context: context(),
       },

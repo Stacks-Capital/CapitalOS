@@ -24,6 +24,7 @@ import type {
   SignatureOutcome,
   StartedWorkflow,
   Workflow,
+  WorkflowSummary,
 } from "./types.ts";
 
 export const CLIENT_ID_HEADER = "x-capital-client-id";
@@ -65,6 +66,8 @@ export type CapitalClient = {
   ): Promise<Result<Session>>;
   /** What each earn market pays and allows, as facts. Ranking is the caller's decision. */
   earnOptions(options?: CallOptions): Promise<Result<{ items: EarnOption[] }>>;
+  /** The caller's workflows, newest first. */
+  workflows(options?: PageOptions & { owner?: string }): Promise<Page<WorkflowSummary>>;
   /** Latest price for each feed the platform reads. */
   prices(options?: CallOptions): Promise<Result<{ items: OracleQuoteView[] }>>;
   /** Risk parameters, prices and the caller's position for one market. */
@@ -191,6 +194,17 @@ export function createClient(options: ClientOptions): CapitalClient {
         signal: call_?.signal,
         retry: true,
       }),
+
+    workflows: async (page) => {
+      const { data, context } = await call<{ items: WorkflowSummary[]; nextCursor: string | null }>({
+        method: "GET",
+        path: "/v1/workflows",
+        query: { network, limit: page?.limit, cursor: page?.cursor, owner: page?.owner },
+        signal: page?.signal,
+        retry: true,
+      });
+      return { items: data.items, nextCursor: data.nextCursor, context };
+    },
 
     prices: (call_) =>
       call<{ items: OracleQuoteView[] }>({

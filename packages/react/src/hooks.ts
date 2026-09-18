@@ -11,6 +11,7 @@ import {
   type Position,
   type Result,
   type Workflow,
+  type WorkflowSummary,
 } from "@stacks-capital/client";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useCapital } from "./context.ts";
@@ -121,6 +122,13 @@ export function usePositions(
     (signal) => client.positions({ ...(owner === undefined ? {} : { owner }), signal }),
     query,
   );
+}
+
+export function useWorkflows(options: PageQuery = {}): QueryResult<Page<WorkflowSummary>> {
+  const { client, scope } = useCapital();
+  const { limit, cursor, ...query } = options;
+  const key = cacheKey(scope, "workflows", { limit, cursor });
+  return useCapitalQuery<Page<WorkflowSummary>>(key, (signal) => client.workflows({ limit, cursor, signal }), query);
 }
 
 export function useWorkflow(id: string | null, options: QueryOptions = {}): QueryResult<Result<Workflow>> {

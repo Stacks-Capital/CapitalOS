@@ -184,3 +184,15 @@ export type MarketRisk = {
   position: { collateral: string | null; debt: string | null; stale: boolean; warnings: string[] };
   warnings: string[];
 };
+
+export type WorkflowSummary = {
+  id: string;
+  network: StacksNetwork;
+  state: string;
+  nextAction: string;
+  quoteId: string | null;
+  planId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  transitionCount: number;
+};

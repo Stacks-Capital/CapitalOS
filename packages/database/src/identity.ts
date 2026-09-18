@@ -212,3 +212,45 @@ export async function findWorkflowForTenant(
   `;
   return row ?? null;
 }
+
+export type WorkflowSummary = {
+  id: string;
+  network: NetworkName;
+  state: string;
+  nextAction: string;
+  quoteId: string | null;
+  planId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  transitionCount: number;
+};
+
+/** A tenant's workflows, newest first. The same tenant filter as a single read, applied in the query. */
+export async function listWorkflowsForTenant(
+  sql: Sql,
+  input: {
+    appId: string;
+    ownerAddress: string | null;
+    network: NetworkName;
+    limit: number;
+    /** Keyset on both the time and the id, so workflows created in the same instant are never skipped. */
+    before?: { createdAt: Date; id: string } | undefined;
+  },
+): Promise<{ items: WorkflowSummary[]; hasMore: boolean }> {
+  const rows = await sql<WorkflowSummary[]>`
+    SELECT w.id, w.network, w.state, w.next_action AS "nextAction", w.quote_id AS "quoteId", w.plan_id AS "planId",
+           w.created_at AS "createdAt", w.updated_at AS "updatedAt",
+           (SELECT count(*)::int FROM state_transitions t WHERE t.workflow_id = w.id) AS "transitionCount"
+    FROM workflows w
+    WHERE w.app_id = ${input.appId}
+      AND w.network = ${input.network}
+      AND (${input.ownerAddress}::text IS NULL OR w.owner_address = ${input.ownerAddress}::text)
+      AND (
+        ${input.before?.createdAt ?? null}::timestamptz IS NULL
+        OR (w.created_at, w.id) < (${input.before?.createdAt ?? null}::timestamptz, ${input.before?.id ?? null}::text)
+      )
+    ORDER BY w.created_at DESC, w.id DESC
+    LIMIT ${input.limit + 1}
+  `;
+  return { items: rows.slice(0, input.limit), hasMore: rows.length > input.limit };
+}

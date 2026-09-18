@@ -10,6 +10,7 @@ import {
   EarnOptionsResponse,
   ErrorBody,
   MarketRiskResponse,
+  WorkflowsResponse,
   PositionsResponse,
   QuoteResponse,
   SignatureResponse,
@@ -308,6 +309,35 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
 
     const missing = await app.request("/v1/markets/nope.market/risk?network=mainnet", { headers: keyHeaders });
     assert.equal(missing.status, 404);
+  });
+
+  it("lists the caller's workflows newest first, and keeps another tenant out", async () => {
+    const { started } = await startedWorkflow();
+    const response = await app.request("/v1/workflows?network=mainnet&limit=100", { headers: keyHeaders });
+    assert.equal(response.status, 200);
+    const body = WorkflowsResponse.parse(await response.json());
+    assert.ok(body.data.items.some((item) => item.id === started.workflowId));
+    const first = body.data.items[0];
+    assert.ok(first !== undefined && first.transitionCount > 0);
+
+    // Every workflow here was created at the same instant, so paging must key on the id as well as the time.
+    const page = await app.request("/v1/workflows?network=mainnet&limit=2", { headers: keyHeaders });
+    const firstPage = WorkflowsResponse.parse(await page.json()).data;
+    assert.equal(firstPage.items.length, 2);
+    assert.ok(firstPage.nextCursor !== null);
+    const second = await app.request(
+      `/v1/workflows?network=mainnet&limit=2&cursor=${encodeURIComponent(firstPage.nextCursor ?? "")}`,
+      { headers: keyHeaders },
+    );
+    const secondPage = WorkflowsResponse.parse(await second.json()).data;
+    const ids = [...firstPage.items, ...secondPage.items].map((item) => item.id);
+    assert.equal(new Set(ids).size, ids.length);
+
+    const { token } = await createApiKey(sql, { appId: OTHER_APP.id, scopes: ["workflows:write"] });
+    const other = await app.request("/v1/workflows?network=mainnet", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    assert.deepEqual(WorkflowsResponse.parse(await other.json()).data.items, []);
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {
