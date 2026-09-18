@@ -25,6 +25,7 @@ export type NextAction =
   | "WAIT"
   | "RETRY_READ"
   | "RECLAIM"
+  | "FOLLOW_UP"
   | "CONTACT_SUPPORT"
   | "COMPLETE"
   | "START_NEW";
@@ -53,7 +54,7 @@ export type Workflow = {
 const ALLOWED: Readonly<Record<WorkflowState, readonly WorkflowState[]>> = {
   DRAFT: ["QUOTED", "EXPIRED", "FAILED"],
   QUOTED: ["AWAITING_SIGNATURE", "EXPIRED", "FAILED"],
-  AWAITING_SIGNATURE: ["SUBMITTED", "BROADCAST_UNKNOWN", "USER_REJECTED", "EXPIRED", "FAILED"],
+  AWAITING_SIGNATURE: ["SUBMITTED", "BROADCAST_UNKNOWN", "USER_REJECTED", "EXPIRED", "FAILED", "ACTION_REQUIRED"],
   BROADCAST_UNKNOWN: ["SUBMITTED", "CONFIRMING", "USER_REJECTED", "MANUAL_REVIEW", "FAILED"],
   SUBMITTED: ["CONFIRMING", "BROADCAST_UNKNOWN", "REORGED", "FAILED"],
   CONFIRMING: ["STEP_CONFIRMED", "REORGED", "BROADCAST_UNKNOWN", "ACTION_REQUIRED", "FAILED"],
@@ -68,7 +69,7 @@ const ALLOWED: Readonly<Record<WorkflowState, readonly WorkflowState[]>> = {
   FAILED: [],
 };
 
-export function nextActionFor(state: WorkflowState): NextAction {
+export function nextActionFor(state: WorkflowState, evidence?: string): NextAction {
   switch (state) {
     case "DRAFT":
     case "QUOTED":
@@ -82,7 +83,7 @@ export function nextActionFor(state: WorkflowState): NextAction {
     case "RECONCILING":
       return "WAIT";
     case "ACTION_REQUIRED":
-      return "RECLAIM";
+      return evidence?.startsWith("partial:") ? "FOLLOW_UP" : "RECLAIM";
     case "REORGED":
     case "MANUAL_REVIEW":
       return "CONTACT_SUPPORT";
@@ -136,7 +137,7 @@ export function transition(
   const next: Workflow = {
     ...workflow,
     state: to,
-    nextAction: nextActionFor(to),
+    nextAction: nextActionFor(to, input.evidence),
     transitions: [...workflow.transitions, record],
   };
   return next;
