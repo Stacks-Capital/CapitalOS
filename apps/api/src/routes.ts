@@ -13,6 +13,8 @@ import {
   ListQuery,
   MarketsResponse,
   NetworkQuery,
+  PositionQuery,
+  PositionsResponse,
   SessionResponse,
   VerifyRequest,
   WorkflowParams,
@@ -101,6 +103,14 @@ export const signatureRoute = createRoute({
     404: error("No such workflow for the caller"),
     ...errorResponses,
   },
+});
+
+export const positionsRoute = createRoute({
+  method: "get",
+  path: "/v1/positions",
+  security: keyOrSession,
+  request: { query: PositionQuery },
+  responses: { 200: json("Positions for one address", PositionsResponse), ...errorResponses },
 });
 
 export const workflowRoute = createRoute({

@@ -6,7 +6,13 @@ import { FIXTURE_APP, OTHER_APP, seedFixtures } from "@stacks-capital/database/f
 import { MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import { createApp } from "../../src/app.ts";
 import { memoryLimiter } from "../../src/rateLimit.ts";
-import { ErrorBody, QuoteResponse, SignatureResponse, StartedWorkflowResponse } from "../../src/schemas.ts";
+import {
+  ErrorBody,
+  PositionsResponse,
+  QuoteResponse,
+  SignatureResponse,
+  StartedWorkflowResponse,
+} from "../../src/schemas.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
 // The fixtures are quoted at this instant, so a quote made here is fresh.
@@ -31,7 +37,7 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     app = build(NOW);
     const { token } = await createApiKey(sql, {
       appId: FIXTURE_APP.id,
-      scopes: ["quotes:write", "workflows:write", "markets:read"],
+      scopes: ["quotes:write", "workflows:write", "markets:read", "positions:read"],
     });
     keyHeaders = { authorization: `Bearer ${token}` };
   });
@@ -213,6 +219,34 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     });
     assert.equal(result.response.status, 400);
     assert.equal(ErrorBody.parse(result.body).error.code, "INVALID_REQUEST");
+  });
+
+  it("serves the positions the worker projected, and refuses a key without an owner", async () => {
+    await sql`
+      INSERT INTO position_snapshots (owner, network, deployment_id, market_id, kind, protocol_key, asset_id, quantity,
+                                      stale, warnings, source, observed_at, adapter_version, calculation_version)
+      SELECT ${MAINNET_OWNER}, 'mainnet', c.deployment_id, 'zest.sbtc.vault', 'supplied', 'zest.sbtc.vault:supplied',
+             m.supplied_asset_id, 100054938, false, '{}', 'hiro-read', ${new Date(NOW.getTime() + 3_600_000)},
+             'zest-earn@0.1.0',
+             'position-decoder@0.1.0'
+      FROM markets m
+      JOIN capabilities c ON c.network = m.network AND c.market_id = m.id AND c.action = 'supply'
+      WHERE m.network = 'mainnet' AND m.id = 'zest.sbtc.vault'
+    `;
+
+    const response = await app.request(`/v1/positions?network=mainnet&owner=${MAINNET_OWNER}`, {
+      headers: { ...keyHeaders, "x-scope": "positions" },
+    });
+    assert.equal(response.status, 200);
+    const body = PositionsResponse.parse(await response.json());
+    // The fixtures hold their own position for this market under a different protocol key, and both survive.
+    const supplied = body.data.items.find((item) => item.protocolKey === "zest.sbtc.vault:supplied");
+    assert.equal(supplied?.quantity, "100054938");
+    // The fixtures also hold an unknown position, and unknown stays unknown rather than becoming zero.
+    assert.ok(body.data.items.some((item) => item.quantity === null && item.warnings.length > 0));
+
+    const withoutOwner = await app.request("/v1/positions?network=mainnet", { headers: keyHeaders });
+    assert.equal(withoutOwner.status, 400);
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {

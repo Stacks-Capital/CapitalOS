@@ -14,6 +14,7 @@ import type {
   Market,
   MarketCapability,
   Page,
+  Position,
   QuotedPlan,
   Result,
   Session,
@@ -59,6 +60,8 @@ export type CapitalClient = {
     input: { nonceId: string; publicKey: string; signature: string },
     options?: CallOptions,
   ): Promise<Result<Session>>;
+  /** Positions for one address. A session reads its own; a key names the owner. */
+  positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
   quote(
     input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
@@ -169,6 +172,15 @@ export function createClient(options: ClientOptions): CapitalClient {
         body: { network, ...input },
         signal: call_?.signal,
         retry: false,
+      }),
+
+    positions: (call_) =>
+      call<{ items: Position[] }>({
+        method: "GET",
+        path: "/v1/positions",
+        query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
       }),
 
     quote: (input, call_) =>

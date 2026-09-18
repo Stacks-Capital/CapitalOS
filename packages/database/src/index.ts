@@ -64,6 +64,18 @@ export {
   recordReconciliation,
 } from "./ingestion.ts";
 export {
+  insertPositionSnapshot,
+  insertRewardSnapshot,
+  latestPositions,
+  listKnownOwners,
+  listMarketAssets,
+  type MarketAssets,
+  type OwnerPosition,
+  type PositionKind,
+  type PositionSnapshotRow,
+  type RewardSnapshotRow,
+} from "./positions.ts";
+export {
   type CapabilityRecord,
   type CapabilityState,
   listCapabilities,

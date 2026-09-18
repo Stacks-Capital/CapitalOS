@@ -5,6 +5,7 @@ import {
   type MarketCapability,
   type Page,
   RESOURCES,
+  type Position,
   type Result,
   type Workflow,
 } from "@stacks-capital/client";
@@ -80,6 +81,20 @@ export function useCapabilities(options: PageQuery = {}): QueryResult<Page<Marke
   return useCapitalQuery<Page<MarketCapability>>(
     key,
     (signal) => client.capabilities({ limit, cursor, signal }),
+    query,
+  );
+}
+
+export function usePositions(
+  options: QueryOptions & { owner?: string } = {},
+): QueryResult<Result<{ items: Position[] }>> {
+  const { client, scope } = useCapital();
+  const { owner, ...query } = options;
+  const address = owner ?? scope.address;
+  const key = address === null ? null : cacheKey(scope, RESOURCES.positions, { owner: address });
+  return useCapitalQuery<Result<{ items: Position[] }>>(
+    key,
+    (signal) => client.positions({ ...(owner === undefined ? {} : { owner }), signal }),
     query,
   );
 }

@@ -268,3 +268,28 @@ export const StartedWorkflowResponse = envelope(
   z.object({ workflowId: z.string(), state: z.string(), nextAction: z.string(), plan: Plan }),
 );
 export const SignatureResponse = envelope("SignatureResponse", SignatureOutcome);
+
+export const PositionQuery = z.object({
+  network: Network,
+  owner: z.string().max(64).optional().openapi({ description: "Required for an API key, ignored for a session." }),
+});
+
+export const Position = z
+  .object({
+    marketId: z.string(),
+    kind: z.enum(["wallet", "supplied", "debt", "collateral", "pending_deposit", "pending_withdrawal", "staked"]),
+    protocolKey: z.string(),
+    assetId: z.string(),
+    quantity: z.string().nullable().openapi({ description: "Null when unknown. Zero is a real balance." }),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+    observedAt: z.iso.datetime(),
+    blockHeight: z.number().int().nullable(),
+    rewardRate: z.string().nullable(),
+    rewardScale: z.number().int().nullable(),
+    adapterVersion: z.string(),
+    calculationVersion: z.string(),
+  })
+  .openapi("Position");
+
+export const PositionsResponse = envelope("PositionsResponse", z.object({ items: z.array(Position) }));

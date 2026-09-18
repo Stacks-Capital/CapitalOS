@@ -1,16 +1,27 @@
-import { useCapabilities, useMarkets, useWorkflow } from "@stacks-capital/react";
+import { useCapabilities, useMarkets, usePositions, useWorkflow } from "@stacks-capital/react";
 import { useState } from "react";
-import { buildPortfolio } from "./holdings.ts";
+import { buildPortfolio, type Position } from "./holdings.ts";
 import { panelState, UNAVAILABLE } from "./state.ts";
 import { Amount, Panel, StateNote, Unavailable } from "./ui.tsx";
 
 export function Portfolio({ address }: { address: string | null }) {
   const markets = useMarkets({ limit: 100 });
+  const positions = usePositions({ enabled: address !== null });
   const state = panelState(markets, markets.data?.context);
+  const positionsState = panelState(positions, positions.data?.context);
 
-  // Balances and positions have no endpoint yet, so the portfolio is built from what exists: nothing.
-  // The rule is here and tested, waiting for the data (see holdings.ts).
-  const portfolio = buildPortfolio({ balances: [], positions: [], markets: markets.data?.items ?? [] });
+  // Positions come from the worker's projections (I11). Wallet balances still have no endpoint.
+  const held: Position[] = (positions.data?.data.items ?? [])
+    .filter((position) => position.kind === "supplied" || position.kind === "debt" || position.kind === "collateral")
+    .map((position) => ({
+      marketId: position.marketId,
+      kind: position.kind as Position["kind"],
+      assetId: position.assetId,
+      quantity: position.quantity,
+      stale: position.stale,
+      warnings: position.warnings,
+    }));
+  const portfolio = buildPortfolio({ balances: [], positions: held, markets: markets.data?.items ?? [] });
 
   return (
     <>
@@ -20,7 +31,12 @@ export function Portfolio({ address }: { address: string | null }) {
         ) : (
           <>
             <Unavailable reason={UNAVAILABLE.balances} />
-            <Unavailable reason={UNAVAILABLE.positions} />
+            <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
+            {portfolio.totals.length > 0 ? (
+              <p>
+                Total {portfolio.totals.map((total) => `${total.quantity ?? "unknown"} ${total.assetId}`).join(", ")}
+              </p>
+            ) : null}
             {portfolio.rows.length > 0 ? (
               <table>
                 <tbody>

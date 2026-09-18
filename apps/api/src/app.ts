@@ -6,6 +6,7 @@ import {
   exchangeNonceForSession,
   findWorkflowForTenant,
   isAllowedOrigin,
+  latestPositions,
   listCapabilities,
   listMarkets,
   type Sql,
@@ -27,6 +28,7 @@ import {
   capabilitiesRoute,
   challengeRoute,
   marketsRoute,
+  positionsRoute,
   quoteRoute,
   signatureRoute,
   startWorkflowRoute,
@@ -163,6 +165,47 @@ export function createApp(deps: AppDependencies) {
         data: {
           items: page.items,
           nextCursor: page.hasMore && last ? encodeCursor("capabilities", [last.marketId, last.action]) : null,
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(positionsRoute, async (c) => {
+    const { network, owner } = c.req.valid("query");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Positions need an API key or a wallet session");
+    requireScope(principal, "positions:read");
+    // A session only ever reads its own address; a key must name whose positions it wants.
+    const address = principal.kind === "session" ? principal.address : owner;
+    if (address === undefined) throw new ApiError("INVALID_REQUEST", "owner is required for an API key");
+    if (principal.kind === "session" && principal.network !== network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+
+    const items = await latestPositions(deps.sql, { network, owner: address });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: items.map((position) => ({
+            marketId: position.marketId,
+            kind: position.kind,
+            protocolKey: position.protocolKey,
+            assetId: position.assetId,
+            quantity: position.quantity,
+            stale: position.stale,
+            warnings: position.warnings,
+            observedAt: position.observedAt.toISOString(),
+            blockHeight: position.blockHeight,
+            rewardRate: position.rewardRate,
+            rewardScale: position.rewardScale,
+            adapterVersion: position.adapterVersion,
+            calculationVersion: position.calculationVersion,
+          })),
         },
         context: context(),
       },

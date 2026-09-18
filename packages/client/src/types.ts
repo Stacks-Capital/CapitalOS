@@ -111,3 +111,29 @@ export type SignatureOutcome = {
   outcome: "BROADCAST" | "SIGNED" | "UNKNOWN";
   txid: string | null;
 };
+
+export type PositionKind =
+  | "wallet"
+  | "supplied"
+  | "debt"
+  | "collateral"
+  | "pending_deposit"
+  | "pending_withdrawal"
+  | "staked";
+
+export type Position = {
+  marketId: string;
+  kind: PositionKind;
+  protocolKey: string;
+  assetId: string;
+  /** Null when unknown. Zero is a real balance. */
+  quantity: string | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string;
+  blockHeight: number | null;
+  rewardRate: string | null;
+  rewardScale: number | null;
+  adapterVersion: string;
+  calculationVersion: string;
+};

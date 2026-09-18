@@ -140,3 +140,9 @@ export function tupleString(tuple: Record<string, ClarityJson>, key: string): st
   if (field === undefined || !field.type.startsWith("(string")) return null;
   return String(field.value);
 }
+
+export function decodeUintList(hex: string): bigint[] {
+  const json = unwrap(cvToJSON(hexToCV(hex)) as ClarityJson);
+  if (!json.type.startsWith("(list")) return [];
+  return (json.value as ClarityJson[]).map((entry) => BigInt(entry.value as string));
+}

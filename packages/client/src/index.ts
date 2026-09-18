@@ -40,6 +40,8 @@ export type {
   Fee,
   Page,
   Plan,
+  Position,
+  PositionKind,
   PlanStep,
   Quote,
   QuotedPlan,
