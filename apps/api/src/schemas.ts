@@ -155,3 +155,134 @@ export const Workflow = z
 export const ChallengeResponse = envelope("ChallengeResponse", Challenge);
 export const SessionResponse = envelope("SessionResponse", Session);
 export const WorkflowResponse = envelope("WorkflowResponse", Workflow);
+
+export const Action = z.enum([
+  "deposit_sbtc",
+  "withdraw_sbtc",
+  "supply",
+  "withdraw_supply",
+  "borrow",
+  "repay",
+  "swap",
+  "stake",
+]);
+
+const IntegerString = z.string().regex(/^[0-9]+$/);
+
+export const IntentBody = z
+  .object({
+    action: Action,
+    marketId: z.string().min(1).max(128),
+    amount: IntegerString,
+    recipient: z.string().max(128).optional(),
+    maxFee: IntegerString.optional(),
+    minOut: IntegerString.optional(),
+    collateralAmount: IntegerString.optional(),
+    slippageBps: IntegerString.optional(),
+    bufferBps: IntegerString.optional(),
+    onBehalfOf: z.string().max(64).optional(),
+    routePool: z.string().max(128).optional(),
+    inputAsset: z.string().max(64).optional(),
+  })
+  .openapi("Intent");
+
+export const QuoteRequest = IntentBody.extend({
+  network: Network,
+  owner: z
+    .string()
+    .max(64)
+    .optional()
+    .openapi({ description: "Required for API keys. Wallet sessions use the signed-in address." }),
+}).openapi("QuoteRequest");
+
+export const AmountWire = z.object({
+  asset: z.string().openapi({ description: "Canonical asset id from formatAssetId, never a ticker." }),
+  quantity: z.string().regex(/^-?[0-9]+$/),
+});
+
+export const QuoteDocument = z
+  .object({
+    id: z.string(),
+    action: Action,
+    marketId: z.string(),
+    network: Network,
+    input: z.array(AmountWire),
+    expectedOutput: z.array(AmountWire),
+    fees: z.array(
+      z.object({
+        kind: z.enum(["miner", "signer", "protocol", "network"]),
+        amount: AmountWire,
+        max: AmountWire.optional(),
+      }),
+    ),
+    snapshots: z.array(z.string()),
+    expiresAt: z.iso.datetime(),
+    executable: z.boolean(),
+    warnings: z.array(z.string()),
+    registryVersion: z.string(),
+    adapterVersion: z.string(),
+    minimumOutput: AmountWire.optional(),
+  })
+  .openapi("Quote");
+
+const BitcoinPayload = z.object({
+  kind: z.literal("bitcoin_deposit"),
+  amountSats: IntegerString,
+  stacksRecipient: z.string(),
+  bitcoinNetwork: z.enum(["mainnet", "test", "regtest"]),
+  reclaimLockTime: z.number().int(),
+  maxSignerFeeSats: IntegerString,
+  emilyNotifyPath: z.string(),
+});
+
+const StacksPayload = z.object({
+  kind: z.literal("stacks_contract_call"),
+  contractId: z.string(),
+  functionName: z.string(),
+  functionArgs: z.array(z.unknown()),
+  postConditions: z.array(
+    z.object({
+      principal: z.string(),
+      mode: z.enum(["send_lte", "send_eq", "send_gte", "receive_gte"]),
+      amount: AmountWire,
+    }),
+  ),
+  postConditionMode: z.enum(["deny", "allow"]),
+  network: Network,
+});
+
+export const PlanDocument = z
+  .object({
+    id: z.string(),
+    quoteId: z.string(),
+    network: Network,
+    registryVersion: z.string(),
+    adapterVersion: z.string(),
+    expiresAt: z.iso.datetime(),
+    reviewSummary: z.string(),
+    steps: z.array(
+      z.object({
+        id: z.string(),
+        dependsOn: z.array(z.string()),
+        expectedAssetEffects: z.array(AmountWire),
+        payload: z.discriminatedUnion("kind", [BitcoinPayload, StacksPayload]),
+      }),
+    ),
+  })
+  .openapi("Plan");
+
+export const PlanRequest = z
+  .object({
+    network: Network,
+    owner: z.string().max(64).optional(),
+    intent: IntentBody,
+    quote: QuoteDocument,
+  })
+  .openapi("PlanRequest");
+
+export const QuoteResponse = envelope("QuoteResponse", QuoteDocument);
+export const PlanResponse = envelope("PlanResponse", PlanDocument);
+
+export type QuoteRequestBody = z.infer<typeof QuoteRequest>;
+export type PlanRequestBody = z.infer<typeof PlanRequest>;
+export type IntentBodyValue = z.infer<typeof IntentBody>;
