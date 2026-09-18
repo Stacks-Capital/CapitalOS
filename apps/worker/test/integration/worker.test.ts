@@ -21,6 +21,10 @@ const HEX = {
     "0x070c00000006066163637275650406626f72726f7704076465706f7369740409666c6173686c6f616e040672656465656d0405726570617904",
   btc: "0x070c000000020974696d657374616d70010000000000000000000001a0b0e88ccf0576616c7565010000000000000000000006f65088415c",
   zero: "0x070c000000020974696d657374616d7001000000000000000000000000000000000576616c75650100000000000000000000000000000000",
+  shares: "0x070100000000000000000000000005f5e100",
+  assets: "0x070100000000000000000000000005f6b79a",
+  points: "0x070b0000000201000000000000000000000000000000820100000000000000000000000000000082",
+  updated: "0x07010000000000000000000000006aacee0c",
   event:
     "0x0c0000000306616374696f6e0d000000076465706f7369740663616c6c657206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b657404646174610c0000000506616d6f756e740100000000000000000000000000001962066173736574730100000000000000000000000f5fc768c8096465706f7369746f7206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b657409726563697069656e740516756f6730289f363631aa3c732974504560192bfa0d7368617265732d6d696e746564010000000000000000000000000000195e",
 };
@@ -79,6 +83,10 @@ function fakeChain() {
       if (contractId !== VAULT) throw new Error(`no read for ${contractId}`);
       if (state.failVaultReads) throw new Error("HTTP 503");
       const byFunction: Record<string, string> = {
+        "get-balance": HEX.shares,
+        "convert-to-assets": HEX.assets,
+        "get-points-rate": HEX.points,
+        "get-last-update": HEX.updated,
         "get-total-assets": HEX.total,
         "get-available-assets": state.available,
         "get-cap-supply": HEX.cap,
@@ -241,6 +249,36 @@ describe("worker", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : fal
     assert.equal(row?.stale, true);
     assert.match(row?.warnings[0] ?? "", /read failed: HTTP 503/);
     chain.state.failVaultReads = false;
+  });
+
+  it("projects the vault position for a known owner in underlying units", async () => {
+    await run(20);
+    const rows = await sql<
+      { marketId: string; kind: string; assetId: string; quantity: string | null; warnings: string[] }[]
+    >`
+      SELECT market_id AS "marketId", kind, asset_id AS "assetId", quantity::text AS quantity, warnings
+      FROM position_snapshots WHERE source = 'hiro-read' ORDER BY market_id
+    `;
+    const vault = rows.find((row) => row.marketId === "zest.sbtc.vault");
+    // 1.0 share is worth 1.00054938 sBTC, and the position is stored in sBTC, not in shares.
+    assert.equal(vault?.quantity, "100054938");
+    assert.match(vault?.assetId ?? "", /sbtc-token$/);
+    assert.deepEqual(vault?.warnings, []);
+
+    // Markets with no per address read are unknown, never zero.
+    const unknown = rows.filter((row) => row.marketId !== "zest.sbtc.vault");
+    assert.ok(unknown.length > 0);
+    assert.ok(unknown.every((row) => row.quantity === null && row.warnings.length > 0));
+  });
+
+  it("projects the reward rate with the time the vault last updated it", async () => {
+    const [reward] = await sql<{ rate: string; rateScale: number; updatedAt: Date; stale: boolean }[]>`
+      SELECT rate::text AS rate, rate_scale::int AS "rateScale", updated_at AS "updatedAt", stale
+      FROM reward_snapshots WHERE market_id = 'zest.sbtc.vault' ORDER BY id DESC LIMIT 1
+    `;
+    assert.equal(reward?.rate, "130");
+    assert.equal(reward?.rateScale, 4);
+    assert.equal(reward?.updatedAt.toISOString(), "2026-09-18T07:53:48.000Z");
   });
 
   it("rewinds a reorg without deleting evidence", async () => {

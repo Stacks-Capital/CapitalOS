@@ -11,15 +11,20 @@ import {
 } from "./http.ts";
 import type {
   Challenge,
+  EarnOption,
   Market,
   MarketCapability,
+  MarketRisk,
+  OracleQuoteView,
   Page,
+  Position,
   QuotedPlan,
   Result,
   Session,
   SignatureOutcome,
   StartedWorkflow,
   Workflow,
+  WorkflowSummary,
 } from "./types.ts";
 
 export const CLIENT_ID_HEADER = "x-capital-client-id";
@@ -59,6 +64,16 @@ export type CapitalClient = {
     input: { nonceId: string; publicKey: string; signature: string },
     options?: CallOptions,
   ): Promise<Result<Session>>;
+  /** What each earn market pays and allows, as facts. Ranking is the caller's decision. */
+  earnOptions(options?: CallOptions): Promise<Result<{ items: EarnOption[] }>>;
+  /** The caller's workflows, newest first. */
+  workflows(options?: PageOptions & { owner?: string }): Promise<Page<WorkflowSummary>>;
+  /** Latest price for each feed the platform reads. */
+  prices(options?: CallOptions): Promise<Result<{ items: OracleQuoteView[] }>>;
+  /** Risk parameters, prices and the caller's position for one market. */
+  marketRisk(marketId: string, options?: CallOptions & { owner?: string }): Promise<Result<MarketRisk>>;
+  /** Positions for one address. A session reads its own; a key names the owner. */
+  positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
   quote(
     input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
@@ -169,6 +184,53 @@ export function createClient(options: ClientOptions): CapitalClient {
         body: { network, ...input },
         signal: call_?.signal,
         retry: false,
+      }),
+
+    earnOptions: (call_) =>
+      call<{ items: EarnOption[] }>({
+        method: "GET",
+        path: "/v1/earn/options",
+        query: { network },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    workflows: async (page) => {
+      const { data, context } = await call<{ items: WorkflowSummary[]; nextCursor: string | null }>({
+        method: "GET",
+        path: "/v1/workflows",
+        query: { network, limit: page?.limit, cursor: page?.cursor, owner: page?.owner },
+        signal: page?.signal,
+        retry: true,
+      });
+      return { items: data.items, nextCursor: data.nextCursor, context };
+    },
+
+    prices: (call_) =>
+      call<{ items: OracleQuoteView[] }>({
+        method: "GET",
+        path: "/v1/prices",
+        query: { network },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    marketRisk: (marketId, call_) =>
+      call<MarketRisk>({
+        method: "GET",
+        path: `/v1/markets/${encodeURIComponent(marketId)}/risk`,
+        query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    positions: (call_) =>
+      call<{ items: Position[] }>({
+        method: "GET",
+        path: "/v1/positions",
+        query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
       }),
 
     quote: (input, call_) =>

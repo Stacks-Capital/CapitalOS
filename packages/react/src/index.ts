@@ -5,6 +5,11 @@ export {
   type QueryResult,
   useCapabilities,
   useCapitalQuery,
+  useEarnOptions,
+  useMarketRisk,
   useMarkets,
+  usePositions,
+  usePrices,
   useWorkflow,
+  useWorkflows,
 } from "./hooks.ts";

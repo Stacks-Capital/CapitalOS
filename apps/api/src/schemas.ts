@@ -268,3 +268,117 @@ export const StartedWorkflowResponse = envelope(
   z.object({ workflowId: z.string(), state: z.string(), nextAction: z.string(), plan: Plan }),
 );
 export const SignatureResponse = envelope("SignatureResponse", SignatureOutcome);
+
+export const PositionQuery = z.object({
+  network: Network,
+  owner: z.string().max(64).optional().openapi({ description: "Required for an API key, ignored for a session." }),
+});
+
+export const Position = z
+  .object({
+    marketId: z.string(),
+    kind: z.enum(["wallet", "supplied", "debt", "collateral", "pending_deposit", "pending_withdrawal", "staked"]),
+    protocolKey: z.string(),
+    assetId: z.string(),
+    quantity: z.string().nullable().openapi({ description: "Null when unknown. Zero is a real balance." }),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+    observedAt: z.iso.datetime(),
+    blockHeight: z.number().int().nullable(),
+    rewardRate: z.string().nullable(),
+    rewardScale: z.number().int().nullable(),
+    adapterVersion: z.string(),
+    calculationVersion: z.string(),
+  })
+  .openapi("Position");
+
+export const PositionsResponse = envelope("PositionsResponse", z.object({ items: z.array(Position) }));
+
+export const EarnOption = z
+  .object({
+    marketId: z.string(),
+    protocol: z.string(),
+    suppliedAssetId: z.string().nullable(),
+    receiptAssetId: z.string().nullable(),
+    supply: z.object({ state: z.string(), reason: z.string() }),
+    withdrawal: z.object({ state: z.string(), reason: z.string() }).nullable(),
+    baseRate: z.string().nullable(),
+    baseRateScale: z.number().int().nullable(),
+    incentiveRate: z.string().nullable(),
+    incentiveRateScale: z.number().int().nullable(),
+    availableLiquidity: z.string().nullable(),
+    capacity: z.string().nullable(),
+    paused: z.boolean().nullable(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+    observedAt: z.iso.datetime().nullable(),
+    adapterVersion: z.string(),
+  })
+  .openapi("EarnOption");
+
+export const EarnOptionsResponse = envelope("EarnOptionsResponse", z.object({ items: z.array(EarnOption) }));
+
+export const OracleQuote = z
+  .object({
+    feedKey: z.string(),
+    price: z.string().nullable(),
+    scale: z.number().int(),
+    publishedAt: z.iso.datetime().nullable(),
+    observedAt: z.iso.datetime(),
+    source: z.string(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("OracleQuote");
+
+export const MarketRisk = z
+  .object({
+    marketId: z.string(),
+    params: z
+      .object({
+        ltvBorrowBps: z.string(),
+        ltvLiqBps: z.string(),
+        bufferBps: z.string(),
+        collateralDecimals: z.number().int(),
+        debtDecimals: z.number().int(),
+      })
+      .nullable()
+      .openapi({ description: "Null when the protocol's risk parameters could not be read." }),
+    collateralOracle: OracleQuote,
+    debtOracle: OracleQuote,
+    position: z.object({
+      collateral: z.string().nullable(),
+      debt: z.string().nullable(),
+      stale: z.boolean(),
+      warnings: z.array(z.string()),
+    }),
+    warnings: z.array(z.string()),
+  })
+  .openapi("MarketRisk");
+
+export const MarketRiskResponse = envelope("MarketRiskResponse", MarketRisk);
+
+export const PricesResponse = envelope("PricesResponse", z.object({ items: z.array(OracleQuote) }));
+
+export const WorkflowListQuery = z.object({
+  network: Network,
+  owner: z.string().max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().max(512).optional(),
+});
+
+export const WorkflowSummary = z
+  .object({
+    id: z.string(),
+    network: Network,
+    state: z.string(),
+    nextAction: z.string(),
+    quoteId: z.string().nullable(),
+    planId: z.string().nullable(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    transitionCount: z.number().int(),
+  })
+  .openapi("WorkflowSummary");
+
+export const WorkflowsResponse = envelope("WorkflowsResponse", pageOf(WorkflowSummary));
