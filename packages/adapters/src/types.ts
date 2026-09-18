@@ -2,6 +2,7 @@ import type {
   Action,
   CanonicalActivity,
   DataPoint,
+  Intent,
   Plan,
   PlanValidation,
   Quote,
@@ -36,20 +37,7 @@ export type Position = {
   blockHeight?: number;
 };
 
-export type Intent = {
-  action: Action;
-  marketId: string;
-  amount: string;
-  recipient?: string;
-  maxFee?: string;
-  minOut?: string;
-  collateralAmount?: string;
-  slippageBps?: string;
-  bufferBps?: string;
-  onBehalfOf?: string;
-  routePool?: string;
-  inputAsset?: string;
-};
+export type { Intent };
 
 export type Reconciliation = {
   matched: boolean;
