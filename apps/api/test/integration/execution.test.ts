@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { after, before, describe, it } from "node:test";
-import { connect, createApiKey, MIGRATIONS_DIR, migrate, type Sql } from "@stacks-capital/database";
+import {
+  clearCapabilityOverride,
+  connect,
+  createApiKey,
+  MIGRATIONS_DIR,
+  migrate,
+  type Sql,
+  setCapabilityOverride,
+} from "@stacks-capital/database";
 import { FIXTURE_APP, OTHER_APP, seedFixtures } from "@stacks-capital/database/fixtures";
 import { MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import { createApp } from "../../src/app.ts";
@@ -10,6 +18,7 @@ import {
   EarnOptionsResponse,
   ErrorBody,
   MarketRiskResponse,
+  MarketsResponse,
   WorkflowsResponse,
   PositionsResponse,
   QuoteResponse,
@@ -338,6 +347,88 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
       headers: { authorization: `Bearer ${token}` },
     });
     assert.deepEqual(WorkflowsResponse.parse(await other.json()).data.items, []);
+  });
+
+  it("counts every quote attempt, success or failure, per market", async () => {
+    await sql`DELETE FROM ops_events`;
+    await quote();
+    await post("/v1/quotes", { ...SUPPLY, marketId: "nope.market", owner: MAINNET_OWNER });
+    const rows = await sql<{ kind: string; subject: string; code: string | null }[]>`
+      SELECT kind, subject, code FROM ops_events ORDER BY id
+    `;
+    assert.deepEqual(
+      rows.map((row) => ({ ...row })),
+      [
+        { kind: "quote_succeeded", subject: "zest.sbtc.vault", code: null },
+        { kind: "quote_failed", subject: "nope.market", code: "UNSUPPORTED_ACTION" },
+      ],
+    );
+  });
+
+  it("stops quotes, plans and new workflows the moment an operator switches a capability off", async () => {
+    const earlier = await quote();
+    await setCapabilityOverride(sql, {
+      network: "mainnet",
+      marketId: "zest.sbtc.vault",
+      action: "supply",
+      state: "disabled",
+      reason: "vault under maintenance",
+      setBy: "test",
+      setAt: NOW,
+    });
+    try {
+      const refused = await post("/v1/quotes", { ...SUPPLY, owner: MAINNET_OWNER });
+      assert.equal(refused.response.status, 403);
+      const error = ErrorBody.parse(refused.body).error;
+      assert.equal(error.code, "CAPABILITY_DISABLED");
+      assert.match(error.message, /Switched off by an operator: vault under maintenance/);
+
+      // A quote made before the switch cannot start a workflow after it.
+      const started = await post("/v1/workflows", {
+        network: "mainnet",
+        quoteId: earlier.quote.id,
+        idempotencyKey: `idem_${randomBytes(6).toString("hex")}`,
+        ownerAddress: MAINNET_OWNER,
+      });
+      assert.equal(ErrorBody.parse(started.body).error.code, "CAPABILITY_DISABLED");
+
+      // Market lists show the switch and the reason, so callers see why.
+      const markets = await app.request("/v1/markets?network=mainnet&limit=100", { headers: keyHeaders });
+      const vault = MarketsResponse.parse(await markets.json()).data.items.find((m) => m.id === "zest.sbtc.vault");
+      const supply = vault?.capabilities.find((capability) => capability.action === "supply");
+      assert.equal(supply?.state, "disabled");
+      assert.match(supply?.reason ?? "", /vault under maintenance/);
+    } finally {
+      await clearCapabilityOverride(sql, { network: "mainnet", marketId: "zest.sbtc.vault", action: "supply" });
+    }
+    const restored = await post("/v1/quotes", { ...SUPPLY, owner: MAINNET_OWNER });
+    assert.equal(restored.response.status, 200);
+  });
+
+  it("never lets an override switch on something the registry disables", async () => {
+    const [disabled] = await sql<{ marketId: string; action: string }[]>`
+      SELECT market_id AS "marketId", action FROM capabilities WHERE network = 'mainnet' AND state = 'disabled' LIMIT 1
+    `;
+    if (disabled === undefined) return;
+    await setCapabilityOverride(sql, {
+      network: "mainnet",
+      marketId: disabled.marketId,
+      action: disabled.action,
+      state: "paused",
+      reason: "an operator tried to pause it",
+      setBy: "test",
+      setAt: NOW,
+    });
+    try {
+      const [effective] = await sql<{ state: string }[]>`
+        SELECT state FROM effective_capabilities
+        WHERE network = 'mainnet' AND market_id = ${disabled.marketId} AND action = ${disabled.action}
+      `;
+      // Disabled is stricter than paused, so the registry's answer stands.
+      assert.equal(effective?.state, "disabled");
+    } finally {
+      await clearCapabilityOverride(sql, { network: "mainnet", marketId: disabled.marketId, action: disabled.action });
+    }
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {

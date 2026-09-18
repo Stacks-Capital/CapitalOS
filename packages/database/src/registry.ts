@@ -56,7 +56,7 @@ export async function listMarkets(
              '[]'
            ) AS capabilities
     FROM markets m
-    LEFT JOIN capabilities c ON c.network = m.network AND c.market_id = m.id
+    LEFT JOIN effective_capabilities c ON c.network = m.network AND c.market_id = m.id
     WHERE m.network = ${input.network}
       AND (${input.afterId}::text IS NULL OR m.id > ${input.afterId}::text)
     GROUP BY m.network, m.id
@@ -81,7 +81,7 @@ export async function listCapabilities(
            deployment_id AS "deploymentId",
            adapter_version AS "adapterVersion",
            registry_version AS "registryVersion"
-    FROM capabilities
+    FROM effective_capabilities
     WHERE network = ${input.network}
       AND (${afterMarket}::text IS NULL OR (market_id, action::text) > (${afterMarket}::text, ${afterAction}::text))
     ORDER BY market_id, action
