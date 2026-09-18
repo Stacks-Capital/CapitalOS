@@ -58,7 +58,7 @@ module.exports = {
       name: "browser-packages-avoid-node-builtins",
       comment: "Page 06: browser exports must not import Node only modules.",
       severity: "error",
-      from: { path: "^packages/(core|sdk|wallets|react|ui)/src/", pathNot: "\\.test\\.ts$" },
+      from: { path: "^packages/(core|sdk|client|wallets|react|ui)/src/", pathNot: "\\.test\\.ts$" },
       to: { dependencyTypes: ["core"] },
     },
   ],
