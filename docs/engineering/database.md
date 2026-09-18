@@ -94,11 +94,11 @@ CI runs migrations, seeds twice and runs these tests against the Compose Postgre
 
 ## Findings for kenzman
 
-1. **USDCx asset name.** The onchain fungible token is `usdcx-token` on mainnet and testnet (Hiro contract interface), but the Granite adapter builds USDCx as `sip10(..., "usdcx")`. Post conditions naming `usdcx` would reference a token that does not exist.
-2. **Zest vault receipt name.** The vault's fungible token is `zft`, while the Zest adapter uses `zsBTC`.
+1. **USDCx asset name.** Fixed: adapters and quotes use onchain `usdcx-token`.
+2. **Zest vault receipt name.** Fixed: adapters and quotes use onchain `zft`. Product copy may still say zsBTC.
 3. **Registry gaps on testnet.** The Zest adapter lists `withdraw_supply` and the Granite adapter lists `withdraw_supply` and `repay`, but `CAPABILITIES` has no testnet record for them. The fixtures store these as disabled with a reason instead of inventing a capability.
-4. **Adapter market assets are labels.** `Market.suppliedAsset` and `receiptAsset` use labels such as `sbtc-token` rather than asset ids, so the fixtures map them to canonical ids.
-5. **Granite contract under the Zest protocol.** `v0-8-market` is registered with `protocol: "zest"` while its capabilities say `granite`.
+4. **Adapter market assets are labels.** Fixed: `Market.suppliedAsset` and `receiptAsset` are `formatAssetId` values. `labelToAsset` still accepts the old labels so historical rows resolve.
+5. **Granite contract under the Zest protocol.** Fixed: `v0-8-market` is registered as `protocol: "granite"`.
 
 The fixtures use the verified onchain names for assets. The quote and plan rows are stored exactly as the adapter produced them.
 
