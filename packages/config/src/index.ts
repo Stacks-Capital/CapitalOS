@@ -8,5 +8,6 @@ export {
   assertExecutable,
   capabilityFor,
   contract,
+  findContract,
 } from "./deployments.ts";
 export type { CapabilityRecord, CapabilityState, ContractRef, ProviderEndpoints } from "./deployments.ts";
