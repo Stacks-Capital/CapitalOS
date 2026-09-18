@@ -7,6 +7,10 @@ import {
   ListQuery,
   MarketsResponse,
   NetworkQuery,
+  PlanRequest,
+  PlanResponse,
+  QuoteRequest,
+  QuoteResponse,
   SessionResponse,
   VerifyRequest,
   WorkflowParams,
@@ -73,4 +77,20 @@ export const workflowRoute = createRoute({
     404: error("No workflow with this id for the caller"),
     ...errorResponses,
   },
+});
+
+export const quoteRoute = createRoute({
+  method: "post",
+  path: "/v1/quotes",
+  security: keyOrSession,
+  request: { body: { required: true, content: { "application/json": { schema: QuoteRequest } } } },
+  responses: { 200: json("Unsigned quote minted from live or injected reads", QuoteResponse), ...errorResponses },
+});
+
+export const planRoute = createRoute({
+  method: "post",
+  path: "/v1/plans",
+  security: keyOrSession,
+  request: { body: { required: true, content: { "application/json": { schema: PlanRequest } } } },
+  responses: { 200: json("Unsigned plan bound to a quote", PlanResponse), ...errorResponses },
 });
