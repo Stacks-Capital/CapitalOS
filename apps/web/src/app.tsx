@@ -96,7 +96,7 @@ export function App({ config }: { config: WebConfig }) {
       )}
 
       <main>
-        {tab === "Portfolio" ? <Portfolio address={wallet?.address ?? null} /> : null}
+        {tab === "Portfolio" ? <Portfolio address={wallet?.address ?? null} signedIn={sessionToken !== null} /> : null}
         {tab === "Earn" ? <Earn wallet={wallet} signedIn={sessionToken !== null} /> : null}
         {tab === "Borrow" ? <Borrow wallet={wallet} signedIn={sessionToken !== null} /> : null}
         {tab === "Swap" ? <Swap wallet={wallet} signedIn={sessionToken !== null} /> : null}

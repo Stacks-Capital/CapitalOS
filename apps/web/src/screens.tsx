@@ -11,9 +11,10 @@ import {
   Unavailable,
 } from "@stacks-capital/ui";
 
-export function Portfolio({ address }: { address: string | null }) {
+export function Portfolio({ address, signedIn }: { address: string | null; signedIn: boolean }) {
   const markets = useMarkets({ limit: 100 });
-  const positions = usePositions({ enabled: address !== null });
+  // Positions belong to a signed in address. Asking before sign in is refused, and says so loudly.
+  const positions = usePositions({ enabled: signedIn });
   const state = panelState(markets, markets.data?.context);
   const positionsState = panelState(positions, positions.data?.context);
 
@@ -38,7 +39,11 @@ export function Portfolio({ address }: { address: string | null }) {
         ) : (
           <>
             <Unavailable reason={UNAVAILABLE.balances} />
-            <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
+            {signedIn ? (
+              <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
+            ) : (
+              <p className="muted">Sign in to see your positions.</p>
+            )}
             {portfolio.totals.length > 0 ? (
               <p>
                 Total {portfolio.totals.map((total) => `${total.quantity ?? "unknown"} ${total.assetId}`).join(", ")}

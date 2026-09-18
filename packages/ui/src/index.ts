@@ -60,6 +60,8 @@ export {
 } from "./holdings.ts";
 export { type ConnectedWallet, type MessageSigner, type SignInResult, signIn } from "./session.ts";
 export {
+  askWallet,
+  type WalletAnswer,
   encodeArgument,
   encodePostCondition,
   type PostConditionRequest,

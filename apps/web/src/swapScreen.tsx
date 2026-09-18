@@ -3,6 +3,7 @@ import { useCapital, usePrices } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useEffect, useState } from "react";
 import {
+  askWallet,
   canApprove,
   type ConnectedWallet,
   findProvider,
@@ -72,10 +73,12 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       if (step === undefined) throw new Error("The plan has no step to sign");
       const provider = findProvider(wallet.id as WalletId);
       if (provider === null) throw new Error("The wallet is no longer available");
-      const request = toWalletRequest(step);
-      const walletResult = await provider
-        .request(request.method, request.params)
-        .catch((error: unknown) => ({ error: messageFor(error).message }));
+      const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step));
+      if (answer.kind === "rejected") {
+        setProblem(answer.message);
+        return;
+      }
+      const walletResult = answer.result;
       const recorded = await client.recordSignature(started.data.workflowId, { stepId: step.id, walletResult });
       setOutcome(`${recorded.data.state}, next ${recorded.data.nextAction}`);
       setQuoted(null);

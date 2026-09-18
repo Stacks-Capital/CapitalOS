@@ -9,6 +9,9 @@
       body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 60rem; padding: 1.5rem 1rem; }
       header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
       .panel { border: 1px solid #8884; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+      /* Wide tables scroll inside their panel on a phone rather than pushing the page sideways. */
+      .panel { overflow-x: auto; }
+      h2, h3, p, td, dd { overflow-wrap: anywhere; }
       table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
       th, td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid #8883; }
       .muted { opacity: 0.7; } .warn { color: #8a6d00; } .error { color: #a11; }

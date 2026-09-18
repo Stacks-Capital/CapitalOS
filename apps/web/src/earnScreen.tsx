@@ -3,6 +3,7 @@ import { useCapital, useWorkflow } from "@stacks-capital/react";
 import { useEffect, useMemo, useState } from "react";
 import type { WalletId } from "@stacks-capital/wallets";
 import {
+  askWallet,
   canSign,
   clearPending,
   EarnComparison,
@@ -64,6 +65,24 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
     }
   }
 
+  // Asks the wallet for one step. A rejection leaves the workflow waiting, so the user can simply try again.
+  async function requestSignature(start: StartedWorkflow) {
+    if (wallet === null) return;
+    const step = start.plan.steps[0];
+    if (step === undefined) throw new Error("The plan has no step to sign");
+    const provider = findProvider(wallet.id as WalletId);
+    if (provider === null) throw new Error(`${wallet.id} is not available any more`);
+
+    const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step));
+    if (answer.kind === "rejected") {
+      setProblem(answer.message);
+      return;
+    }
+    // Whatever else the wallet said is sent as it is. The server decides what it means.
+    await client.recordSignature(start.workflowId, { stepId: step.id, walletResult: answer.result });
+    await workflow.refresh();
+  }
+
   async function signAndSubmit() {
     if (quoted === null || wallet === null || scope === null) return;
     setBusy(true);
@@ -74,16 +93,20 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       const step = start.data.plan.steps[0];
       if (step === undefined) throw new Error("The plan has no step to sign");
       savePending(storage(), scope, { workflowId: start.data.workflowId, stepId: step.id });
+      await requestSignature(start.data);
+    } catch (error) {
+      setProblem(messageFor(error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
-      const provider = findProvider(wallet.id as WalletId);
-      if (provider === null) throw new Error(`${wallet.id} is not available any more`);
-      const request = toWalletRequest(step);
-      // Whatever the wallet answers is sent as it is. The server decides what it means.
-      const walletResult = await provider.request(request.method, request.params).catch((error: unknown) => ({
-        error: messageFor(error).message,
-      }));
-      await client.recordSignature(start.data.workflowId, { stepId: step.id, walletResult });
-      await workflow.refresh();
+  async function askAgain() {
+    if (started === null) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await requestSignature(started);
     } catch (error) {
       setProblem(messageFor(error).message);
     } finally {
@@ -154,6 +177,11 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       {stage === "signing" ? (
         <Panel title="Waiting for your wallet">
           <p>Approve the transaction in {wallet.id}. Nothing moves until you do.</p>
+          {started === null ? null : (
+            <button type="button" disabled={busy} onClick={() => void askAgain()}>
+              Ask the wallet again
+            </button>
+          )}
         </Panel>
       ) : null}
 
