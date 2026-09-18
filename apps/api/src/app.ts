@@ -20,12 +20,30 @@ import {
   signatureMatches,
 } from "./auth.ts";
 import { decodeCursor, encodeCursor } from "./cursor.ts";
+import { createQuote, liveReads, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
 import { ApiError, errorBody } from "./errors.ts";
 import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLimit.ts";
-import { capabilitiesRoute, challengeRoute, marketsRoute, verifyRoute, workflowRoute } from "./routes.ts";
+import {
+  capabilitiesRoute,
+  challengeRoute,
+  marketsRoute,
+  quoteRoute,
+  signatureRoute,
+  startWorkflowRoute,
+  verifyRoute,
+  workflowRoute,
+} from "./routes.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
+import { serializePlan, serializeQuote } from "./serialize.ts";
 
-export type AppDependencies = { sql: Sql; limiter: RateLimiter; limits?: RateLimits; now?: () => Date };
+export type AppDependencies = {
+  sql: Sql;
+  limiter: RateLimiter;
+  limits?: RateLimits;
+  now?: () => Date;
+  /** Where quotes read market state. Defaults to live provider reads with the server's Hiro key. */
+  reads?: ReadsLoader;
+};
 type Env = { Variables: { requestId: string } };
 
 export const OPENAPI_CONFIG = {
@@ -39,6 +57,7 @@ export const SESSION_TTL_SECONDS = 3_600;
 export function createApp(deps: AppDependencies) {
   const now = deps.now ?? (() => new Date());
   const limits = deps.limits ?? DEFAULT_RATE_LIMITS;
+  const reads = deps.reads ?? liveReads(process.env.HIRO_API_KEY);
   const context = () => ({ observedAt: now().toISOString(), stale: false, warnings: [] });
 
   const app = new OpenAPIHono<Env>({
@@ -234,6 +253,107 @@ export function createApp(deps: AppDependencies) {
           updatedAt: workflow.updatedAt.toISOString(),
           transitions: workflow.transitions.map((move) => ({ ...move, at: new Date(move.at).toISOString() })),
         },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  // Writing needs an account: a key with the right scope, or a signed in wallet acting for itself.
+  const writer = (principal: Awaited<ReturnType<typeof admit>>, scope: "quotes:write" | "workflows:write") => {
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "This needs an API key or a wallet session");
+    requireScope(principal, scope);
+    return principal;
+  };
+
+  app.openapi(quoteRoute, async (c) => {
+    const input = c.req.valid("json");
+    const principal = writer(await admit(c), "quotes:write");
+    if (principal.kind === "session" && principal.network !== input.network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+    const owner = principal.kind === "session" ? principal.address : input.owner;
+    const quoted = await createQuote(
+      { sql: deps.sql, reads, now },
+      {
+        network: input.network,
+        marketId: input.marketId,
+        action: input.action,
+        amount: input.amount,
+        owner,
+        slippageBps: input.slippageBps,
+        maxFee: input.maxFee,
+      },
+    );
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${input.network}` as const,
+        data: { quote: serializeQuote(quoted.quote), plan: serializePlan(quoted.plan) },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(startWorkflowRoute, async (c) => {
+    const input = c.req.valid("json");
+    const principal = writer(await admit(c), "workflows:write");
+    if (principal.kind === "session" && principal.network !== input.network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+    const ownerAddress = principal.kind === "session" ? principal.address : input.ownerAddress;
+    if (ownerAddress === undefined) throw new ApiError("INVALID_REQUEST", "ownerAddress is required for an API key");
+
+    const started = await startWorkflow(
+      { sql: deps.sql, now },
+      {
+        network: input.network,
+        quoteId: input.quoteId,
+        idempotencyKey: input.idempotencyKey,
+        appId: principal.appId,
+        ownerAddress,
+      },
+    );
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${input.network}` as const,
+        data: {
+          workflowId: started.workflow.id,
+          state: started.workflow.state,
+          nextAction: started.workflow.nextAction,
+          plan: serializePlan(started.plan),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(signatureRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const input = c.req.valid("json");
+    const principal = writer(await admit(c), "workflows:write");
+    const outcome = await recordSignature(
+      { sql: deps.sql, now },
+      {
+        network: input.network,
+        workflowId: id,
+        stepId: input.stepId,
+        appId: principal.appId,
+        ownerAddress: principal.kind === "session" ? principal.address : null,
+        walletResult: input.walletResult,
+      },
+    );
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${input.network}` as const,
+        data: outcome,
         context: context(),
       },
       200,

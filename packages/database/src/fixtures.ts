@@ -1,14 +1,11 @@
 import { createHash } from "node:crypto";
-import type postgres from "postgres";
 import { CONTRACTS, contract } from "@stacks-capital/config";
 import {
-  type AssetAmount,
   type AssetId,
   bitcoinNative,
   createWorkflow,
   formatAssetId,
   formatDeploymentId,
-  jsonAmount,
   type StacksNetwork,
   sip10,
   stacksNative,
@@ -16,6 +13,7 @@ import {
   type Workflow,
 } from "@stacks-capital/core";
 import { adapterContext, FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS, sandboxAdapters } from "@stacks-capital/fixtures";
+import { toJson } from "./json.ts";
 import type { Sql } from "./lib.ts";
 
 export const TABLES = [
@@ -80,22 +78,6 @@ function labelToAsset(network: StacksNetwork, label: string | undefined): string
   if (label === "bitcoin native btc") return formatAssetId(bitcoinNative(network));
   if (label === "zsBTC" && network === "mainnet") return formatAssetId(zestShares());
   return null;
-}
-
-function toJson(value: unknown): postgres.JSONValue {
-  if (typeof value === "bigint") return value.toString();
-  if (Array.isArray(value)) return value.map(toJson);
-  if (value !== null && typeof value === "object") {
-    if ("asset" in value && "quantity" in value && typeof value.quantity === "bigint") {
-      return jsonAmount(value as AssetAmount);
-    }
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([, entry]) => entry !== undefined)
-        .map(([key, entry]) => [key, toJson(entry)]),
-    );
-  }
-  return value as postgres.JSONValue;
 }
 
 function assetRow(asset: AssetId, decimals: number | null): Row {

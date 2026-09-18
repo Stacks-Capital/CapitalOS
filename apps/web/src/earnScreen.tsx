@@ -1,0 +1,206 @@
+import type { QuotedPlan, StartedWorkflow } from "@stacks-capital/client";
+import { useCapital, useMarkets, useWorkflow } from "@stacks-capital/react";
+import { useEffect, useMemo, useState } from "react";
+import type { WalletId } from "@stacks-capital/wallets";
+import { canSign, clearPending, loadPending, reviewQuote, savePending, stageFor } from "./earn.ts";
+import type { ConnectedWallet } from "./session.ts";
+import { toWalletRequest } from "./signing.ts";
+import { messageFor, panelState } from "./state.ts";
+import { Panel, StateNote } from "./ui.tsx";
+import { findProvider } from "./wallet.ts";
+
+const idempotencyKey = () => `idem_${crypto.randomUUID()}`;
+const storage = (): Storage | null => {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+};
+
+export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; signedIn: boolean }) {
+  const { client } = useCapital();
+  const markets = useMarkets({ limit: 100 });
+  const [marketId, setMarketId] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [quoted, setQuoted] = useState<QuotedPlan | null>(null);
+  const [started, setStarted] = useState<StartedWorkflow | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const network = wallet?.network ?? null;
+  const address = wallet?.address ?? null;
+  const scope = useMemo(() => (network === null || address === null ? null : { network, address }), [network, address]);
+  const pending = useMemo(() => (scope === null ? null : loadPending(storage(), scope)), [scope]);
+  const workflowId = started?.workflowId ?? pending?.workflowId ?? null;
+  const workflow = useWorkflow(workflowId, { staleMs: 5_000 });
+  const stage = stageFor(workflow.data?.data.state ?? (started === null ? null : started.state));
+
+  // A finished flow is not pending any more, so a reload starts fresh.
+  useEffect(() => {
+    if (scope !== null && (stage === "done" || stage === "recovery")) clearPending(storage(), scope);
+  }, [scope, stage]);
+
+  const supplyMarkets = (markets.data?.items ?? []).filter((market) =>
+    market.capabilities.some((capability) => capability.action === "supply" && capability.state === "enabled"),
+  );
+
+  async function getQuote() {
+    if (marketId === null || wallet === null) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      const result = await client.quote({ marketId, action: "supply", amount, owner: wallet.address });
+      setQuoted(result.data);
+    } catch (error) {
+      setProblem(messageFor(error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signAndSubmit() {
+    if (quoted === null || wallet === null || scope === null) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      const start = await client.startWorkflow({ quoteId: quoted.quote.id, idempotencyKey: idempotencyKey() });
+      setStarted(start.data);
+      const step = start.data.plan.steps[0];
+      if (step === undefined) throw new Error("The plan has no step to sign");
+      savePending(storage(), scope, { workflowId: start.data.workflowId, stepId: step.id });
+
+      const provider = findProvider(wallet.id as WalletId);
+      if (provider === null) throw new Error(`${wallet.id} is not available any more`);
+      const request = toWalletRequest(step);
+      // Whatever the wallet answers is sent as it is. The server decides what it means.
+      const walletResult = await provider.request(request.method, request.params).catch((error: unknown) => ({
+        error: messageFor(error).message,
+      }));
+      await client.recordSignature(start.data.workflowId, { stepId: step.id, walletResult });
+      await workflow.refresh();
+    } catch (error) {
+      setProblem(messageFor(error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (wallet === null || !signedIn) {
+    return (
+      <Panel title="Earn">
+        <p className="muted">Connect a wallet and sign in to supply into a vault.</p>
+      </Panel>
+    );
+  }
+
+  const view = quoted === null ? null : reviewQuote(quoted.quote, new Date());
+
+  return (
+    <>
+      {pending !== null && started === null ? (
+        <Panel title="Unfinished step">
+          <p>
+            A step from earlier is still open: <strong>{pending.workflowId}</strong>. It is shown below as it stands
+            now.
+          </p>
+        </Panel>
+      ) : null}
+
+      {stage === "review" ? (
+        <Panel title="Compare and review">
+          <StateNote state={panelState(markets, markets.data?.context)} onRetry={() => void markets.refresh()} />
+          <label>
+            Market
+            <select value={marketId ?? ""} onChange={(event) => setMarketId(event.target.value || null)}>
+              <option value="">Choose a vault</option>
+              {supplyMarkets.map((market) => (
+                <option key={market.id} value={market.id}>
+                  {market.id}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Amount in base units
+            <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" />
+          </label>
+          <button type="button" disabled={busy || marketId === null || amount === ""} onClick={() => void getQuote()}>
+            Get a quote
+          </button>
+
+          {view === null ? null : (
+            <div className="quote">
+              <p>
+                You supply {view.input}, expecting {view.expected}.
+              </p>
+              <ul>
+                {view.fees.map((fee) => (
+                  <li key={fee.kind}>
+                    {fee.kind} fee: {fee.amount}
+                  </li>
+                ))}
+              </ul>
+              {view.minimumOutput === null ? null : <p>At least {view.minimumOutput}.</p>}
+              {view.warnings.length > 0 ? <p className="warn">{view.warnings.join(" ")}</p> : null}
+              <p className={view.expired ? "error" : "muted"}>
+                {view.expired ? "This quote has expired. Ask for a new one." : `Valid for ${view.expiresInSeconds}s.`}
+              </p>
+              <p className="muted">{quoted?.plan.reviewSummary}</p>
+              <button type="button" disabled={busy || !canSign(view)} onClick={() => void signAndSubmit()}>
+                Sign in your wallet
+              </button>
+            </div>
+          )}
+        </Panel>
+      ) : null}
+
+      {stage === "signing" ? (
+        <Panel title="Waiting for your wallet">
+          <p>Approve the transaction in {wallet.id}. Nothing moves until you do.</p>
+        </Panel>
+      ) : null}
+
+      {stage === "confirming" ? (
+        <Panel
+          title="Confirming"
+          action={
+            <button type="button" onClick={() => void workflow.refresh()}>
+              Check
+            </button>
+          }
+        >
+          <p>
+            Submitted. State: <strong>{workflow.data?.data.state ?? started?.state}</strong>.
+          </p>
+          <p className="muted">Next: {workflow.data?.data.nextAction ?? started?.nextAction}</p>
+        </Panel>
+      ) : null}
+
+      {stage === "recovery" ? (
+        <Panel title="Needs a look">
+          <p className="warn">
+            The wallet did not return a transaction id, or the workflow needs attention. Nothing is retried
+            automatically, because that could move your money twice.
+          </p>
+          <p className="muted">
+            State: {workflow.data?.data.state ?? "unknown"}. Next: {workflow.data?.data.nextAction ?? "CONTACT_SUPPORT"}
+            . Workflow {workflowId}.
+          </p>
+        </Panel>
+      ) : null}
+
+      {stage === "done" ? (
+        <Panel title="Done">
+          <p>The supply completed. Workflow {workflowId}.</p>
+        </Panel>
+      ) : null}
+
+      {problem === null ? null : (
+        <p className="error" role="alert">
+          {problem}
+        </p>
+      )}
+    </>
+  );
+}
