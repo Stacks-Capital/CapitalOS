@@ -27,6 +27,18 @@ export {
   type WorkflowRecord,
 } from "./identity.ts";
 export {
+  type AttemptInsert,
+  createWorkflowRow,
+  findAttempt,
+  findStoredQuote,
+  insertPlan,
+  insertQuote,
+  recordAttempt,
+  stepKey,
+  type StoredQuote,
+  type WorkflowInsert,
+} from "./execution.ts";
+export {
   type ActivityRow,
   type BlockRow,
   type ChainName,

@@ -9,7 +9,18 @@ import {
   send,
   type Transport,
 } from "./http.ts";
-import type { Challenge, Market, MarketCapability, Page, Result, Session, Workflow } from "./types.ts";
+import type {
+  Challenge,
+  Market,
+  MarketCapability,
+  Page,
+  QuotedPlan,
+  Result,
+  Session,
+  SignatureOutcome,
+  StartedWorkflow,
+  Workflow,
+} from "./types.ts";
 
 export const CLIENT_ID_HEADER = "x-capital-client-id";
 
@@ -48,6 +59,22 @@ export type CapitalClient = {
     input: { nonceId: string; publicKey: string; signature: string },
     options?: CallOptions,
   ): Promise<Result<Session>>;
+  /** Quoting runs on the server, where the provider keys are. */
+  quote(
+    input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
+    options?: CallOptions,
+  ): Promise<Result<QuotedPlan>>;
+  /** The same idempotency key always names the same workflow, so a retry never starts a second one. */
+  startWorkflow(
+    input: { quoteId: string; idempotencyKey: string; ownerAddress?: string },
+    options?: CallOptions,
+  ): Promise<Result<StartedWorkflow>>;
+  /** Reports exactly what the wallet answered. A result without a txid is recorded, never retried. */
+  recordSignature(
+    workflowId: string,
+    input: { stepId: string; walletResult: unknown },
+    options?: CallOptions,
+  ): Promise<Result<SignatureOutcome>>;
   /** A client bound to a wallet session. The original is unchanged. */
   withSession(sessionToken: string): CapitalClient;
 };
@@ -139,6 +166,33 @@ export function createClient(options: ClientOptions): CapitalClient {
       call<Session>({
         method: "POST",
         path: "/v1/auth/verify",
+        body: { network, ...input },
+        signal: call_?.signal,
+        retry: false,
+      }),
+
+    quote: (input, call_) =>
+      call<QuotedPlan>({
+        method: "POST",
+        path: "/v1/quotes",
+        body: { network, ...input },
+        signal: call_?.signal,
+        retry: false,
+      }),
+
+    startWorkflow: (input, call_) =>
+      call<StartedWorkflow>({
+        method: "POST",
+        path: "/v1/workflows",
+        body: { network, ...input },
+        signal: call_?.signal,
+        retry: false,
+      }),
+
+    recordSignature: (workflowId, input, call_) =>
+      call<SignatureOutcome>({
+        method: "POST",
+        path: `/v1/workflows/${encodeURIComponent(workflowId)}/signature`,
         body: { network, ...input },
         signal: call_?.signal,
         retry: false,

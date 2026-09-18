@@ -15,6 +15,7 @@
     "@stacks-capital/react": "workspace:*",
     "@stacks-capital/wallets": "workspace:*",
     "@stacks/connect": "8.2.7",
+    "@stacks/transactions": "7.6.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

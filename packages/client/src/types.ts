@@ -64,3 +64,50 @@ export type Workflow = {
   updatedAt: string;
   transitions: WorkflowTransition[];
 };
+
+export type AssetAmount = { asset: string; quantity: string };
+export type Fee = { kind: "miner" | "signer" | "protocol" | "network"; amount: AssetAmount; max?: AssetAmount };
+
+export type Quote = {
+  id: string;
+  action: string;
+  marketId: string;
+  network: StacksNetwork;
+  input: AssetAmount[];
+  expectedOutput: AssetAmount[];
+  minimumOutput?: AssetAmount;
+  fees: Fee[];
+  snapshots: string[];
+  warnings: string[];
+  executable: boolean;
+  expiresAt: string;
+  registryVersion: string;
+  adapterVersion: string;
+};
+
+export type PlanStep = {
+  id: string;
+  payload: { kind: string } & Record<string, unknown>;
+  expectedAssetEffects: AssetAmount[];
+  dependsOn: string[];
+};
+
+export type Plan = {
+  id: string;
+  quoteId: string;
+  network: StacksNetwork;
+  steps: PlanStep[];
+  reviewSummary: string;
+  expiresAt: string;
+  registryVersion: string;
+  adapterVersion: string;
+};
+
+export type QuotedPlan = { quote: Quote; plan: Plan };
+export type StartedWorkflow = { workflowId: string; state: string; nextAction: string; plan: Plan };
+export type SignatureOutcome = {
+  state: string;
+  nextAction: string;
+  outcome: "BROADCAST" | "SIGNED" | "UNKNOWN";
+  txid: string | null;
+};

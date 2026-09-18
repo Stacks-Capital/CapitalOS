@@ -155,3 +155,116 @@ export const Workflow = z
 export const ChallengeResponse = envelope("ChallengeResponse", Challenge);
 export const SessionResponse = envelope("SessionResponse", Session);
 export const WorkflowResponse = envelope("WorkflowResponse", Workflow);
+
+export const AssetAmount = z.object({ asset: z.string(), quantity: z.string().regex(/^-?[0-9]+$/) });
+
+export const Fee = z.object({
+  kind: z.enum(["miner", "signer", "protocol", "network"]),
+  amount: AssetAmount,
+  max: AssetAmount.optional(),
+});
+
+export const Quote = z
+  .object({
+    id: z.string(),
+    action: z.string(),
+    marketId: z.string(),
+    network: Network,
+    input: z.array(AssetAmount),
+    expectedOutput: z.array(AssetAmount),
+    minimumOutput: AssetAmount.optional(),
+    fees: z.array(Fee),
+    snapshots: z.array(z.string()),
+    warnings: z.array(z.string()),
+    executable: z.boolean(),
+    expiresAt: z.iso.datetime(),
+    registryVersion: z.string(),
+    adapterVersion: z.string(),
+  })
+  .openapi("Quote");
+
+export const PlanStep = z
+  .object({
+    id: z.string(),
+    payload: z.looseObject({ kind: z.string() }),
+    expectedAssetEffects: z.array(AssetAmount),
+    dependsOn: z.array(z.string()),
+  })
+  .openapi("PlanStep");
+
+export const Plan = z
+  .object({
+    id: z.string(),
+    quoteId: z.string(),
+    network: Network,
+    steps: z.array(PlanStep),
+    reviewSummary: z.string(),
+    expiresAt: z.iso.datetime(),
+    registryVersion: z.string(),
+    adapterVersion: z.string(),
+  })
+  .openapi("Plan");
+
+export const QuoteRequest = z
+  .object({
+    network: Network,
+    marketId: z.string().max(128),
+    action: z.enum(["deposit_sbtc", "withdraw_sbtc", "supply", "withdraw_supply", "borrow", "repay", "swap", "stake"]),
+    amount: z
+      .string()
+      .regex(/^[0-9]+$/)
+      .max(39),
+    slippageBps: z
+      .string()
+      .regex(/^[0-9]+$/)
+      .max(5)
+      .optional(),
+    maxFee: z
+      .string()
+      .regex(/^[0-9]+$/)
+      .max(39)
+      .optional(),
+    owner: z
+      .string()
+      .max(64)
+      .optional()
+      .openapi({ description: "Ignored for a wallet session, which quotes for itself." }),
+  })
+  .openapi("QuoteRequest");
+
+export const StartWorkflowRequest = z
+  .object({
+    network: Network,
+    quoteId: z.string().max(128),
+    idempotencyKey: z.string().min(8).max(128).openapi({ description: "The same key always names the same workflow." }),
+    ownerAddress: z
+      .string()
+      .max(64)
+      .optional()
+      .openapi({ description: "Required for an API key, ignored for a session." }),
+  })
+  .openapi("StartWorkflowRequest");
+
+export const SignatureRequest = z
+  .object({
+    network: Network,
+    stepId: z.string().max(128),
+    walletResult: z.looseObject({}).openapi({ description: "Exactly what the wallet returned, unchanged." }),
+  })
+  .openapi("SignatureRequest");
+
+export const SignatureOutcome = z
+  .object({
+    state: z.string(),
+    nextAction: z.string(),
+    outcome: z.enum(["BROADCAST", "SIGNED", "UNKNOWN"]),
+    txid: z.string().nullable(),
+  })
+  .openapi("SignatureOutcome");
+
+export const QuoteResponse = envelope("QuoteResponse", z.object({ quote: Quote, plan: Plan }));
+export const StartedWorkflowResponse = envelope(
+  "StartedWorkflowResponse",
+  z.object({ workflowId: z.string(), state: z.string(), nextAction: z.string(), plan: Plan }),
+);
+export const SignatureResponse = envelope("SignatureResponse", SignatureOutcome);

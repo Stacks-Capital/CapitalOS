@@ -1,6 +1,12 @@
 import { createRoute } from "@hono/zod-openapi";
 import {
   CapabilitiesResponse,
+  QuoteRequest,
+  QuoteResponse,
+  SignatureRequest,
+  SignatureResponse,
+  StartedWorkflowResponse,
+  StartWorkflowRequest,
   ChallengeRequest,
   ChallengeResponse,
   ErrorBody,
@@ -31,6 +37,8 @@ const keyOrSession = [{ apiKey: [] }, { walletSession: [] }];
 
 const json = <T>(description: string, schema: T) => ({ description, content: { "application/json": { schema } } });
 
+const body = <T>(schema: T) => ({ required: true, content: { "application/json": { schema } } });
+
 export const marketsRoute = createRoute({
   method: "get",
   path: "/v1/markets",
@@ -51,7 +59,7 @@ export const challengeRoute = createRoute({
   method: "post",
   path: "/v1/auth/challenge",
   security: browserApp,
-  request: { body: { required: true, content: { "application/json": { schema: ChallengeRequest } } } },
+  request: { body: body(ChallengeRequest) },
   responses: { 200: json("Message for the wallet to sign", ChallengeResponse), ...errorResponses },
 });
 
@@ -59,8 +67,40 @@ export const verifyRoute = createRoute({
   method: "post",
   path: "/v1/auth/verify",
   security: browserApp,
-  request: { body: { required: true, content: { "application/json": { schema: VerifyRequest } } } },
+  request: { body: body(VerifyRequest) },
   responses: { 200: json("Wallet session", SessionResponse), ...errorResponses },
+});
+
+export const quoteRoute = createRoute({
+  method: "post",
+  path: "/v1/quotes",
+  security: keyOrSession,
+  request: { body: body(QuoteRequest) },
+  responses: { 200: json("A quote and the plan that executes it", QuoteResponse), ...errorResponses },
+});
+
+export const startWorkflowRoute = createRoute({
+  method: "post",
+  path: "/v1/workflows",
+  security: keyOrSession,
+  request: { body: body(StartWorkflowRequest) },
+  responses: {
+    200: json("The workflow and the plan to sign", StartedWorkflowResponse),
+    404: error("No such quote"),
+    ...errorResponses,
+  },
+});
+
+export const signatureRoute = createRoute({
+  method: "post",
+  path: "/v1/workflows/{id}/signature",
+  security: keyOrSession,
+  request: { params: WorkflowParams, body: body(SignatureRequest) },
+  responses: {
+    200: json("What the wallet answered, and where the workflow stands", SignatureResponse),
+    404: error("No such workflow for the caller"),
+    ...errorResponses,
+  },
 });
 
 export const workflowRoute = createRoute({

@@ -31,15 +31,23 @@ export {
 } from "./client.ts";
 export { DEFAULT_RETRY, DEFAULT_TIMEOUT_MS, type RetryPolicy } from "./http.ts";
 export type {
+  AssetAmount,
   Capability,
   CapabilityState,
   Challenge,
   Market,
   MarketCapability,
+  Fee,
   Page,
+  Plan,
+  PlanStep,
+  Quote,
+  QuotedPlan,
   ResponseContext,
   Result,
   Session,
+  SignatureOutcome,
+  StartedWorkflow,
   Workflow,
   WorkflowTransition,
 } from "./types.ts";

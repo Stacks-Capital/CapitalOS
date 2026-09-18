@@ -190,12 +190,18 @@ importers:
       '@hono/zod-openapi':
         specifier: 1.6.3
         version: 1.6.3(hono@4.13.8)(zod@4.6.5)
+      '@stacks-capital/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@stacks-capital/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@stacks-capital/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@stacks-capital/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@stacks/encryption':
         specifier: 7.6.0
         version: 7.6.0
@@ -215,6 +221,9 @@ importers:
       '@stacks-capital/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@stacks-capital/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
 
   apps/partner-example: {}
 
@@ -235,6 +244,9 @@ importers:
       '@stacks/connect':
         specifier: 8.2.7
         version: 8.2.7(@types/react@19.3.0)(lit@3.3.0)(react@19.3.0)(typescript@6.0.3)(zod@3.22.4)
+      '@stacks/transactions':
+        specifier: 7.6.0
+        version: 7.6.0
       react:
         specifier: 19.3.0
         version: 19.3.0

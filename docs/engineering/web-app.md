@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| Task | I09 Wallet shell and portfolio screens |
-| Requirements | POS-01, WF-01 |
+| Tasks | I09 Wallet shell and portfolio screens, I10 Earn review and progress UI |
+| Requirements | POS-01, WF-01, EARN-01, EARN-02 |
 | Owner / reviewer | IBK / kenzman |
-| Depends on | I02 wallet feasibility, I06 worker, I08 hooks |
+| Depends on | I02 wallet feasibility, I06 worker, I08 hooks, K06 and K09 adapters |
 | Date | 2026-09-18 |
 
 Deliverable from the task page: build navigation, connect, balances and partial data states; avoid receipt and underlying double counting.
@@ -62,11 +62,41 @@ A vault receipt (for example `zft`) and the position it represents are the same 
 4. Debt is listed but never added to what the wallet owns.
 5. A total with any unknown part is unknown, with the reasons attached. It is never a partial sum presented as complete.
 
+## Earn flow (I10)
+
+Deliverable from the task page: compare, review, signature, confirmation and recovery states; a reload resumes the correct pending step.
+
+The write path the flow needs did not exist. No task in the split assigned it, so it landed here (see the PR). The API grew three routes, and quoting runs the SDK on the server, as decided in docs/engineering/sdk-client.md:
+
+| Route | What it does |
+|---|---|
+| `POST /v1/quotes` | Runs `createCapitalOS` with server side reads, stores the quote and its plan, returns both |
+| `POST /v1/workflows` | Turns a quote into a workflow at `AWAITING_SIGNATURE` with its steps. One workflow per idempotency key |
+| `POST /v1/workflows/{id}/signature` | Records what the wallet answered and moves the workflow |
+
+Stages follow the workflow's own state, never the screen's memory:
+
+| Workflow state | Stage |
+|---|---|
+| none, `DRAFT`, `QUOTED` | review |
+| `AWAITING_SIGNATURE` | signing |
+| `SUBMITTED`, `CONFIRMING`, `STEP_CONFIRMED`, `RECONCILING` | confirming |
+| `COMPLETED` | done |
+| `BROADCAST_UNKNOWN`, `ACTION_REQUIRED`, `MANUAL_REVIEW`, `REORGED`, anything unknown | recovery |
+
+Rules the flow keeps:
+
+- A quote that expired or is not executable cannot be signed. The button is disabled and the reason is shown.
+- The plan is sent to the wallet exactly as the server built it, post conditions included. Arguments are encoded, nothing is added.
+- Whatever the wallet answers is forwarded unchanged. A result without a transaction id becomes `BROADCAST_UNKNOWN` and the screen says a human has to look, because resubmitting could move the money twice.
+- The pending workflow and step are remembered per network and address, so a reload returns to the same step and another wallet never sees it. A finished or failed flow is forgotten.
+
 ## Tests
 
 `node --test apps/web/src/*.test.ts`, 23 tests, no browser needed:
 
 - `holdings.test.ts`: the five rules above, including a wallet balance plus a supplied position totalling once with the receipt excluded, a receipt with no position, an unknown part making a total unknown, and debt staying out of the total.
+- `earn.test.ts`: the stage table including unknown states going to recovery, the pending step remembered per network and address and surviving missing, broken or nonsense storage, review amounts and expiry, refusing to sign an expired or blocked quote, and the wallet request built from a plan step with its post conditions.
 - `shell.test.ts`: wallet detection per wallet, reading a Stacks address out of several answer shapes (and refusing a Bitcoin one), Xverse's capitalised network, sign in end to end, a wallet on the wrong network refused before signing, a rejected signature classified as a user action, a failed challenge never reaching the wallet, and the panel state table including keeping stale data on screen.
 
 The screens themselves are thin: every rule they follow lives in a tested module.
@@ -74,7 +104,8 @@ The screens themselves are thin: every rule they follow lives in a tested module
 ## Unsupported and deferred
 
 - No balances or positions endpoint yet, so those panels are unavailable. They are one hook each once the routes exist.
-- No quote or execution screens: those are I10, and they wait on the quote endpoint (see docs/engineering/sdk-client.md).
+- Earn covers `supply` only. Borrow, repay and swap screens are I13 and I14, and sBTC deposit needs the Bitcoin flow.
 - Component rendering is not unit tested. Node's test runner cannot strip JSX, so the logic lives in `.ts` modules that are tested, and the `.tsx` files stay declarative. A browser test runner would be a separate decision.
-- The session lives in memory only. A page reload signs the user out again.
+- The session lives in memory only. A page reload signs the user out again, although the pending step is remembered and shown once signed back in.
+- Confirmation does not stream. The screen re-reads the workflow when asked, and the worker (I06) is what moves it forward.
 - No styling system, just a small stylesheet in `index.html`.
