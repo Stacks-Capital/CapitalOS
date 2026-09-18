@@ -57,8 +57,16 @@ describe("K11-K14 credit, swap and risk", () => {
     assert.ok(borrowCall?.kind === "stacks_contract_call" && borrowCall.functionName === "borrow");
     assert.equal(borrowCall.postConditions[0]?.mode, "receive_gte");
 
-    const repay = granite.quote(ctx, { action: "repay", marketId: "granite.sbtc.isolated", amount: "50000000000" });
-    const repayPlan = granite.buildPlan(ctx, repay, {
+    const { granite: graniteWithDebt } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({ ...base, position: { collateral: "100000000", debt: "50000000000" } })),
+    );
+    const repay = graniteWithDebt.quote(ctx, {
+      action: "repay",
+      marketId: "granite.sbtc.isolated",
+      amount: "50000000000",
+    });
+    const repayPlan = graniteWithDebt.buildPlan(ctx, repay, {
       action: "repay",
       marketId: "granite.sbtc.isolated",
       amount: "50000000000",
@@ -159,5 +167,40 @@ describe("K11-K14 credit, swap and risk", () => {
     );
     assert.equal(capabilityFor("borrow", "testnet", "granite")?.state, "disabled");
     assert.equal(capabilityFor("swap", "testnet", "bitflow")?.state, "disabled");
+  });
+
+  it("refuses repay above current debt, a paused vault, and an unknown position", () => {
+    const ctx = adapterContext("mainnet");
+    const { granite } = sandboxAdapters("mainnet");
+    assert.throws(
+      () => granite.quote(ctx, { action: "repay", marketId: "granite.sbtc.isolated", amount: "1" }),
+      (error: unknown) => codeOf(error) === "INSUFFICIENT_BALANCE",
+    );
+
+    const vault = MAINNET_READS.debtVault;
+    assert.ok(vault);
+    const { granite: paused } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({
+        ...base,
+        debtVault: { ...vault, pausedRedeem: true },
+      })),
+    );
+    assert.throws(
+      () => paused.quote(ctx, { action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }),
+      (error: unknown) => codeOf(error) === "CAPABILITY_DISABLED",
+    );
+
+    const { granite: unknownPosition } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => {
+        const { position: _dropped, ...rest } = base;
+        return rest;
+      }),
+    );
+    assert.throws(
+      () => unknownPosition.quote(ctx, { action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }),
+      (error: unknown) => codeOf(error) === "PLAN_INVALID",
+    );
   });
 });
