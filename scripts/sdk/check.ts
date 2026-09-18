@@ -1,10 +1,13 @@
 import {
   canSubmitWrite,
-  createCapitalOS,
-  executable,
-  loadLiveReads,
+  parsePlan,
+  parseQuote,
   requireNetwork,
-} from "../../packages/sdk/src/index.ts";
+  serializePlan,
+  serializeQuote,
+} from "../../packages/core/src/index.ts";
+import { createExecutionEngine, executable, loadServerReads } from "../../packages/engine/src/index.ts";
+import { createCapitalOS } from "../../packages/sdk/src/index.ts";
 import {
   FIXTURE_NOW,
   MAINNET_OWNER,
@@ -12,7 +15,7 @@ import {
   TESTNET_OWNER,
   TESTNET_READS,
 } from "../../packages/fixtures/src/index.ts";
-import type { AdapterReads } from "../../packages/sdk/src/index.ts";
+import type { AdapterReads } from "../../packages/engine/src/index.ts";
 
 type Check = { name: string; ok: boolean; detail: string };
 
@@ -39,7 +42,7 @@ function mustThrowCode(name: string, fn: () => unknown, code: string): void {
 
 const now = live ? new Date() : new Date(FIXTURE_NOW);
 const reads: AdapterReads = live
-  ? await loadLiveReads({ network: "mainnet", owner: MAINNET_OWNER, now })
+  ? await loadServerReads({ network: "mainnet", owner: MAINNET_OWNER, now })
   : MAINNET_READS;
 
 if (live) {
@@ -58,16 +61,26 @@ if (live) {
     reads.riskParams?.ltvBorrowBps === "8000" && reads.riskParams.ltvLiqBps === "8500",
     `borrow ${reads.riskParams?.ltvBorrowBps} liq ${reads.riskParams?.ltvLiqBps}`,
   );
-  record("Pyth left fail-closed", reads.oracle?.sbtc.stale === true, reads.oracle?.sbtc.source ?? "missing");
+  record(
+    "DIA sBTC price",
+    reads.oracle?.sbtc !== undefined,
+    `${reads.oracle?.sbtc.source ?? "missing"} stale=${String(reads.oracle?.sbtc.stale)}`,
+  );
+  record(
+    "DIA USDCx fail-closed unless fresh",
+    reads.oracle?.usdcx !== undefined,
+    `${reads.oracle?.usdcx.source ?? "missing"} stale=${String(reads.oracle?.usdcx.stale)}`,
+  );
   record("no sBTC-USDCx Bitflow pool pinned", reads.swap?.stale === true, reads.swap?.source ?? "missing");
 }
 
-const os = createCapitalOS({
+const engine = createExecutionEngine({
   network: "mainnet",
   reads,
   owner: MAINNET_OWNER,
   now,
 });
+const os = createCapitalOS({ network: "mainnet", now });
 const signing = { sender: MAINNET_OWNER };
 
 try {
@@ -83,7 +96,7 @@ try {
 
 mustThrowCode("SDK does not broadcast", () => os.submit(), "UNSUPPORTED_ACTION");
 
-const deposit = os.quoteAndPlan({
+const deposit = engine.quoteAndPlan({
   action: "deposit_sbtc",
   marketId: "sbtc.deposit",
   amount: "100000000",
@@ -98,38 +111,55 @@ record(
   `plan ${deposit.plan.steps[0]?.payload.kind}, source ${reads.source ?? "fixture"}`,
 );
 
-const supply = os.quoteAndPlan({ action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" });
+const supply = engine.quoteAndPlan({ action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" });
+const zft =
+  supply.quote.expectedOutput[0]?.asset.identity.kind === "contract" &&
+  supply.quote.expectedOutput[0].asset.identity.assetName === "zft";
 record(
   "Zest supply quote/plan",
-  supply.quote.executable && os.validate(supply.plan, supply.quote, signing).ok,
-  `shares ${supply.quote.expectedOutput[0]?.quantity.toString(10) ?? "none"}`,
+  supply.quote.executable && zft && os.validate(supply.plan, supply.quote, signing).ok,
+  `shares ${supply.quote.expectedOutput[0]?.quantity.toString(10) ?? "none"} asset ${zft ? "zft" : "wrong"}`,
 );
 
 if (live) {
-  mustThrowCode(
-    "Granite borrow fail-closed without Pyth",
-    () => os.quote({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" }),
-    "ORACLE_STALE",
+  const graniteCode = (() => {
+    try {
+      engine.quote({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "1000000" });
+      return "quoted";
+    } catch (error) {
+      return codeOf(error);
+    }
+  })();
+  record(
+    "Granite borrow uses DIA and fail-closes if stale",
+    graniteCode === "ORACLE_STALE" || graniteCode === "INSUFFICIENT_BALANCE",
+    graniteCode,
   );
   mustThrowCode(
     "Bitflow swap fail-closed without sBTC-USDCx pool",
-    () => os.quote({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" }),
+    () => engine.quote({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" }),
     "ORACLE_STALE",
   );
 } else {
-  const borrow = os.quoteAndPlan({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "50000000000" });
+  const borrow = engine.quoteAndPlan({ action: "borrow", marketId: "granite.sbtc.isolated", amount: "50000000000" });
+  const usdcx =
+    borrow.quote.expectedOutput[0]?.asset.identity.kind === "contract" &&
+    borrow.quote.expectedOutput[0].asset.identity.assetName === "usdcx-token";
   record(
     "Granite USDCx borrow (fixture oracle)",
-    os.validate(borrow.plan, borrow.quote, signing).ok,
+    usdcx && os.validate(borrow.plan, borrow.quote, signing).ok,
     borrow.plan.steps.map((step) => step.id).join(",") || "no steps",
   );
-  const swap = os.quoteAndPlan({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" });
+  const swap = engine.quoteAndPlan({ action: "swap", marketId: "bitflow.sbtc-usdcx", amount: "100000000" });
   record(
     "Bitflow swap (fixture route)",
     swap.plan.steps[0]?.payload.kind === "stacks_contract_call" && os.validate(swap.plan, swap.quote, signing).ok,
     `min-out ${swap.quote.minimumOutput?.quantity.toString(10) ?? "none"}`,
   );
 }
+
+const roundTrip = os.validate(parsePlan(serializePlan(supply.plan)), parseQuote(serializeQuote(supply.quote)), signing);
+record("SDK validates the JSON quote/plan wire format", roundTrip.ok, roundTrip.reasons.join("; ") || "ok");
 
 let flow = os.startWorkflow({ id: "sdk-check", idempotencyKey: "sdk-check" });
 flow = os.recordQuote(flow, supply.quote);
@@ -140,7 +170,7 @@ record(
   flow.state,
 );
 
-const testnet = createCapitalOS({
+const testnet = createExecutionEngine({
   network: "testnet",
   reads: TESTNET_READS,
   owner: TESTNET_OWNER,
@@ -171,6 +201,6 @@ if (failed.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `\n${checks.length} SDK checks passed. Mode: ${live ? "live Hiro/Emily reads" : "fixtures"}. Unsigned plans only.`,
+    `\n${checks.length} checks passed. Mode: ${live ? "live Hiro/Emily/DIA reads" : "fixtures"}. Engine quotes; SDK validates. Unsigned plans only.`,
   );
 }

@@ -47,6 +47,15 @@ export function capitalError(code: ErrorCode, message: string): CapitalError {
   return { code, class: ERROR_CLASS[code], message };
 }
 
+export function isCapitalError(error: unknown): error is CapitalError {
+  if (typeof error !== "object" || error === null) return false;
+  if (!("code" in error) || !("class" in error) || !("message" in error)) return false;
+  const code = error.code;
+  if (typeof code !== "string" || !(code in ERROR_CLASS)) return false;
+  const typed = code as ErrorCode;
+  return error.class === ERROR_CLASS[typed] && typeof error.message === "string";
+}
+
 export function isRetryableRead(error: CapitalError): boolean {
   return error.class === "retryable_read";
 }

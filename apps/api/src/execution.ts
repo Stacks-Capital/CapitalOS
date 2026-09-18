@@ -6,6 +6,7 @@ import {
   recordUnknownBroadcast,
   transition,
   walletOutcome,
+  type Intent,
   type Plan,
   type Quote,
   type StacksNetwork,
@@ -21,16 +22,29 @@ import {
   recordAttempt,
   type Sql,
 } from "@stacks-capital/database";
-import { createCapitalOS, loadLiveReads } from "@stacks-capital/sdk";
+import { createExecutionEngine, loadServerReads } from "@stacks-capital/engine";
 import { ApiError } from "./errors.ts";
 
 /** Reads are injected so tests use fixtures and production uses live provider reads with the server's key. */
-export type ReadsLoader = (network: StacksNetwork, owner: string | undefined) => Promise<AdapterReads>;
+export type ReadsLoader =
+  | AdapterReads
+  | ((network: StacksNetwork, owner: string | undefined) => AdapterReads | Promise<AdapterReads>);
+
+export async function loadReads(
+  reads: ReadsLoader,
+  network: StacksNetwork,
+  owner: string | undefined,
+): Promise<AdapterReads> {
+  return typeof reads === "function" ? reads(network, owner) : reads;
+}
 
 export function liveReads(apiKey: string | undefined): ReadsLoader {
-  const withKey: typeof fetch = (input, init) =>
-    fetch(input, apiKey === undefined ? init : { ...init, headers: { ...init?.headers, "x-api-key": apiKey } });
-  return (network, owner) => loadLiveReads({ network, ...(owner === undefined ? {} : { owner }), fetch: withKey });
+  return (network, owner) =>
+    loadServerReads({
+      network,
+      ...(owner === undefined ? {} : { owner }),
+      ...(apiKey === undefined ? {} : { hiroApiKey: apiKey }),
+    });
 }
 
 export type QuoteInput = {
@@ -38,40 +52,40 @@ export type QuoteInput = {
   marketId: string;
   action: string;
   amount: string;
-  owner: string | undefined;
+  owner: string;
   slippageBps?: string | undefined;
   maxFee?: string | undefined;
 };
 
-/** Quoting runs the SDK here, on the server, where the provider keys live (see docs/engineering/sdk-client.md). */
+/** Quoting runs the engine here, on the server, where the provider keys live. */
 export async function createQuote(
   deps: { sql: Sql; reads: ReadsLoader; now: () => Date },
   input: QuoteInput,
 ): Promise<{ quote: Quote; plan: Plan }> {
   let reads: AdapterReads;
   try {
-    reads = await deps.reads(input.network, input.owner);
+    reads = await loadReads(deps.reads, input.network, input.owner);
   } catch (error) {
     throw asApiError(error, "Market data is unavailable right now");
   }
 
-  const os = createCapitalOS({
-    network: input.network,
-    reads,
-    ...(input.owner === undefined ? {} : { owner: input.owner }),
-    now: deps.now(),
-  });
+  const intent: Intent = {
+    action: input.action as Intent["action"],
+    marketId: input.marketId,
+    amount: input.amount,
+    recipient: input.owner,
+  };
+  if (input.slippageBps !== undefined) intent.slippageBps = input.slippageBps;
+  if (input.maxFee !== undefined) intent.maxFee = input.maxFee;
 
   let quoted: { quote: Quote; plan: Plan };
   try {
-    quoted = os.quoteAndPlan({
-      action: input.action as never,
-      marketId: input.marketId,
-      amount: input.amount,
-      ...(input.owner === undefined ? {} : { recipient: input.owner }),
-      ...(input.slippageBps === undefined ? {} : { slippageBps: input.slippageBps }),
-      ...(input.maxFee === undefined ? {} : { maxFee: input.maxFee }),
-    });
+    quoted = createExecutionEngine({
+      network: input.network,
+      reads,
+      owner: input.owner,
+      now: deps.now(),
+    }).quoteAndPlan(intent);
   } catch (error) {
     throw asApiError(error, "This market cannot be quoted");
   }

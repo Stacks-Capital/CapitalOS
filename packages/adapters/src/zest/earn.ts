@@ -1,8 +1,9 @@
-import { capabilityFor, contract } from "@stacks-capital/config";
+import { capabilityFor, contract, findContract, FUNGIBLE_ASSET_NAME } from "@stacks-capital/config";
 import {
   amount,
   assertPositive,
   capitalError,
+  formatAssetId,
   mulDiv,
   parseQuantity,
   sip10,
@@ -19,23 +20,26 @@ export const ZEST_EARN_VERSION = "zest-earn@0.1.0";
 export const ZEST_MARKET_SBTC = "zest.sbtc.vault";
 
 function sbtc(network: StacksNetwork) {
-  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 }
 
 function zsbtc(network: StacksNetwork) {
   const vault = contract("zest", "v0-vault-sbtc", network);
-  return sip10(network, vault.contractId, "zsBTC");
+  return sip10(network, vault.contractId, FUNGIBLE_ASSET_NAME.zestShares);
 }
 
 function vaultMarket(ctx: AdapterContext, action: Action): Market {
   const capability = capabilityFor(action, ctx.network, "zest");
+  const vault = findContract("zest", "v0-vault-sbtc", ctx.network);
   return {
     id: ZEST_MARKET_SBTC,
     protocol: "zest",
     action,
     network: ctx.network,
-    suppliedAsset: "sbtc-token",
-    receiptAsset: "zsBTC",
+    suppliedAsset: formatAssetId(sbtc(ctx.network)),
+    ...(vault === undefined
+      ? {}
+      : { receiptAsset: formatAssetId(sip10(ctx.network, vault.contractId, FUNGIBLE_ASSET_NAME.zestShares)) }),
     state: capability?.state ?? "disabled",
     warnings: capability?.state === "enabled" ? [] : [capability?.reason ?? "Zest earn is not available"],
   };

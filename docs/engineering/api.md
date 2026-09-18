@@ -41,9 +41,9 @@ Routes declare zod schemas. The same schemas validate requests and generate the 
 
   | Code | Status |
   |---|---|
-  | `INVALID_REQUEST`, `NETWORK_MISMATCH` | 400 |
+  | `INVALID_REQUEST`, `NETWORK_MISMATCH`, `ORACLE_STALE`, `QUOTE_EXPIRED`, `PLAN_INVALID`, `CAP_REACHED`, `INSUFFICIENT_BALANCE`, `UNSUPPORTED_ACTION` | 400 |
   | `UNAUTHORIZED` | 401 |
-  | `FORBIDDEN` | 403 |
+  | `FORBIDDEN`, `CAPABILITY_DISABLED` | 403 |
   | `NOT_FOUND` | 404 |
   | `RATE_LIMITED` | 429 |
   | `PROVIDER_TIMEOUT`, `TEMPORARY_UNAVAILABLE` | 503 |
@@ -61,6 +61,8 @@ Routes declare zod schemas. The same schemas validate requests and generate the 
 | `POST /v1/auth/challenge` | Browser app | A sign in message for a Stacks address on the requested network |
 | `POST /v1/auth/verify` | Browser app | A wallet session token for a signed challenge |
 | `GET /v1/workflows/{id}` | Key with `workflows:write`, or wallet session | One workflow with its state transitions |
+| `POST /v1/quotes` | Key with `quotes:write`, or wallet session | Unsigned quote from the server engine (Hiro/DIA reads, or injected reads in tests) |
+| `POST /v1/plans` | Key with `quotes:write`, or wallet session | Unsigned plan bound to a quote |
 | `GET /v1/openapi.json` | Anyone | The OpenAPI 3.1 document, including the three security schemes |
 
 Registry reads come from `@stacks-capital/database`, whose query helpers the worker can reuse.
@@ -127,7 +129,7 @@ Rate limits fail closed. Commands are not queued while Redis is disconnected, an
 ## Not in this task
 
 - Creating API keys and registering partner apps has no route yet. Keys are created with `createApiKey` from `@stacks-capital/database`; an admin surface belongs to a later task.
-- Creating quotes, plans and workflows belongs to later tasks. `quotes:write`, `positions:read` and `webhooks:manage` exist as scopes but no route uses them yet.
+- Creating quotes and plans is live on `POST /v1/quotes` and `POST /v1/plans` (server engine). Persisting those rows onto a workflow remains I05. `positions:read` and `webhooks:manage` exist as scopes but no route uses them yet.
 - Sessions cannot be revoked through the API yet, and there is no refresh; a new sign in is needed after an hour.
 - Client IPs come from the socket. Behind a proxy every browser caller would share one bucket per app, so trusted proxy headers need to be configured at deployment.
 - `openapi:check` detects any schema change but does not classify changes as breaking or additive.

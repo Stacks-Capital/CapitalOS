@@ -199,9 +199,9 @@ importers:
       '@stacks-capital/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@stacks-capital/sdk':
+      '@stacks-capital/engine':
         specifier: workspace:*
-        version: link:../../packages/sdk
+        version: link:../../packages/engine
       '@stacks/encryption':
         specifier: 7.6.0
         version: 7.6.0
@@ -225,7 +225,29 @@ importers:
         specifier: workspace:*
         version: link:../../packages/fixtures
 
-  apps/partner-example: {}
+  apps/partner-example:
+    dependencies:
+      '@scure/bip32':
+        specifier: 1.7.0
+        version: 1.7.0
+      '@scure/bip39':
+        specifier: 1.6.0
+        version: 1.6.0
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stacks-capital/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+      '@stacks-capital/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
+      '@stacks-capital/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@stacks/transactions':
+        specifier: 7.6.0
+        version: 7.6.0
 
   apps/web:
     dependencies:
@@ -318,6 +340,22 @@ importers:
         specifier: workspace:*
         version: link:../fixtures
 
+  packages/engine:
+    dependencies:
+      '@stacks-capital/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@stacks-capital/config':
+        specifier: workspace:*
+        version: link:../config
+      '@stacks-capital/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@stacks-capital/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
   packages/fixtures:
     dependencies:
       '@stacks-capital/adapters':
@@ -362,9 +400,6 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@stacks-capital/adapters':
-        specifier: workspace:*
-        version: link:../adapters
       '@stacks-capital/config':
         specifier: workspace:*
         version: link:../config
@@ -375,6 +410,9 @@ importers:
         specifier: workspace:*
         version: link:../wallets
     devDependencies:
+      '@stacks-capital/engine':
+        specifier: workspace:*
+        version: link:../engine
       '@stacks-capital/fixtures':
         specifier: workspace:*
         version: link:../fixtures
@@ -3172,7 +3210,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.7
+      '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

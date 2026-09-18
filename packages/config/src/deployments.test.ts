@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CAPABILITIES, CONTRACTS, assertExecutable, capabilityFor, contract } from "./deployments.ts";
+import {
+  CAPABILITIES,
+  CONTRACTS,
+  FUNGIBLE_ASSET_NAME,
+  assertExecutable,
+  capabilityFor,
+  contract,
+  findContract,
+} from "./deployments.ts";
 
 describe("capability registry", () => {
   it("pins the I01 sBTC and USDCx principals", () => {
@@ -13,6 +21,11 @@ describe("capability registry", () => {
       "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token",
     );
     assert.equal(contract("usdcx", "usdcx", "mainnet").contractId, "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx");
+    assert.equal(contract("granite", "v0-8-market", "mainnet").protocol, "granite");
+    assert.equal(
+      contract("dia", "dia-oracle", "mainnet").contractId,
+      "SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle",
+    );
   });
 
   it("enables mainnet sBTC deposit and Zest supply, and disables testnet deposit and staking", () => {
@@ -29,6 +42,13 @@ describe("capability registry", () => {
     assert.ok(CONTRACTS.some((item) => item.label === "dlmm-swap-router-v-1-1" && item.role === "superseded_router"));
     assert.equal(contract("zest", "v0-vault-usdc", "mainnet").revision, "6162068");
     assert.equal(contract("bitflow", "dlmm-swap-router-v-1-2", "mainnet").revision, "6979616");
+    assert.equal(FUNGIBLE_ASSET_NAME.usdcx, "usdcx-token");
+    assert.equal(FUNGIBLE_ASSET_NAME.zestShares, "zft");
+  });
+
+  it("does not invent a Zest vault on public testnet", () => {
+    assert.equal(findContract("zest", "v0-vault-sbtc", "testnet"), undefined);
+    assert.throws(() => contract("zest", "v0-vault-sbtc", "testnet"), /No contract zest\/v0-vault-sbtc on testnet/);
   });
 
   it("does not treat the npm testnet sBTC principal as canonical", () => {

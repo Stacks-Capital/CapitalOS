@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
-import { CONTRACTS, contract } from "@stacks-capital/config";
+import { CONTRACTS, FUNGIBLE_ASSET_NAME, contract } from "@stacks-capital/config";
 import {
   type AssetId,
   bitcoinNative,
   createWorkflow,
   formatAssetId,
   formatDeploymentId,
+  parseAssetId,
   type StacksNetwork,
   sip10,
   stacksNative,
@@ -66,17 +67,25 @@ const fixtureHash = (label: string): string =>
 
 // Onchain fungible token names, verified against Hiro contract interfaces on 2026-09-17.
 const sbtc = (network: StacksNetwork): AssetId =>
-  sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 const usdcx = (network: StacksNetwork): AssetId =>
-  sip10(network, contract("usdcx", "usdcx", network).contractId, "usdcx-token");
-const zestShares = (): AssetId => sip10("mainnet", contract("zest", "v0-vault-sbtc", "mainnet").contractId, "zft");
+  sip10(network, contract("usdcx", "usdcx", network).contractId, FUNGIBLE_ASSET_NAME.usdcx);
+const zestShares = (): AssetId =>
+  sip10("mainnet", contract("zest", "v0-vault-sbtc", "mainnet").contractId, FUNGIBLE_ASSET_NAME.zestShares);
 
-// Adapter markets describe assets with labels, so they are mapped to canonical asset ids here.
 function labelToAsset(network: StacksNetwork, label: string | undefined): string | null {
-  if (label === "sbtc-token") return formatAssetId(sbtc(network));
-  if (label === "usdcx") return formatAssetId(usdcx(network));
+  if (label === undefined) return null;
+  try {
+    return formatAssetId(parseAssetId(label));
+  } catch {
+    // Adapter markets used to emit labels; keep the aliases so older rows still resolve.
+  }
+  if (label === "sbtc-token" || label === FUNGIBLE_ASSET_NAME.sbtc) return formatAssetId(sbtc(network));
+  if (label === "usdcx" || label === FUNGIBLE_ASSET_NAME.usdcx) return formatAssetId(usdcx(network));
   if (label === "bitcoin native btc") return formatAssetId(bitcoinNative(network));
-  if (label === "zsBTC" && network === "mainnet") return formatAssetId(zestShares());
+  if ((label === "zsBTC" || label === FUNGIBLE_ASSET_NAME.zestShares) && network === "mainnet") {
+    return formatAssetId(zestShares());
+  }
   return null;
 }
 
@@ -341,7 +350,7 @@ function snapshotRows() {
   if (vault === undefined) throw new Error("MAINNET_READS has no Zest vault fixture");
   const blockHash = fixtureHash("block:stacks:2");
   const vaultDeployment = contract("zest", "v0-vault-sbtc", "mainnet");
-  const marketDeployment = contract("zest", "v0-8-market", "mainnet");
+  const marketDeployment = contract("granite", "v0-8-market", "mainnet");
   const deploymentId = (ref: typeof vaultDeployment) =>
     formatDeploymentId({
       protocol: ref.protocol,

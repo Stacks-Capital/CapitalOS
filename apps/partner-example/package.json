@@ -2,5 +2,23 @@
   "name": "@stacks-capital/partner-example",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/program.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test --experimental-strip-types src/*.test.ts",
+    "start": "node --experimental-strip-types src/run.ts",
+    "start:live": "node --experimental-strip-types src/run.ts --live"
+  },
+  "dependencies": {
+    "@scure/bip32": "1.7.0",
+    "@scure/bip39": "1.6.0",
+    "@stacks-capital/core": "workspace:*",
+    "@stacks-capital/engine": "workspace:*",
+    "@stacks-capital/fixtures": "workspace:*",
+    "@stacks-capital/sdk": "workspace:*",
+    "@stacks/transactions": "7.6.0"
+  }
 }

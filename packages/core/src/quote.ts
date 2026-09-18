@@ -12,6 +12,32 @@ export type Action =
   | "swap"
   | "stake";
 
+export const ACTIONS: readonly Action[] = [
+  "deposit_sbtc",
+  "withdraw_sbtc",
+  "supply",
+  "withdraw_supply",
+  "borrow",
+  "repay",
+  "swap",
+  "stake",
+];
+
+export type Intent = {
+  action: Action;
+  marketId: MarketId;
+  amount: string;
+  recipient?: string;
+  maxFee?: string;
+  minOut?: string;
+  collateralAmount?: string;
+  slippageBps?: string;
+  bufferBps?: string;
+  onBehalfOf?: string;
+  routePool?: string;
+  inputAsset?: string;
+};
+
 export type FeeKind = "miner" | "signer" | "protocol" | "network";
 
 export type Fee = {

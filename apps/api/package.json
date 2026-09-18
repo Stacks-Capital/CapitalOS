@@ -9,7 +9,7 @@
     "@stacks-capital/adapters": "workspace:*",
     "@stacks-capital/core": "workspace:*",
     "@stacks-capital/database": "workspace:*",
-    "@stacks-capital/sdk": "workspace:*",
+    "@stacks-capital/engine": "workspace:*",
     "@stacks/encryption": "7.6.0",
     "@stacks/transactions": "7.6.0",
     "hono": "4.13.8",

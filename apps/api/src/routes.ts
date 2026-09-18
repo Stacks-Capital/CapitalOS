@@ -1,19 +1,21 @@
 import { createRoute } from "@hono/zod-openapi";
 import {
   CapabilitiesResponse,
-  QuoteRequest,
-  QuoteResponse,
-  SignatureRequest,
-  SignatureResponse,
-  StartedWorkflowResponse,
-  StartWorkflowRequest,
   ChallengeRequest,
   ChallengeResponse,
   ErrorBody,
   ListQuery,
   MarketsResponse,
   NetworkQuery,
+  PlanRequest,
+  PlanResponse,
+  QuoteRequest,
+  QuoteResponse,
   SessionResponse,
+  SignatureRequest,
+  SignatureResponse,
+  StartedWorkflowResponse,
+  StartWorkflowRequest,
   VerifyRequest,
   WorkflowParams,
   WorkflowResponse,
@@ -30,7 +32,6 @@ const errorResponses = {
   503: error("Temporarily unavailable"),
 } as const;
 
-// Security scheme names registered in app.ts.
 const anyCaller = [{ apiKey: [] }, { walletSession: [] }, { clientId: [] }];
 const browserApp = [{ clientId: [] }];
 const keyOrSession = [{ apiKey: [] }, { walletSession: [] }];
@@ -76,7 +77,15 @@ export const quoteRoute = createRoute({
   path: "/v1/quotes",
   security: keyOrSession,
   request: { body: body(QuoteRequest) },
-  responses: { 200: json("A quote and the plan that executes it", QuoteResponse), ...errorResponses },
+  responses: { 200: json("A quote and the unsigned plan that executes it", QuoteResponse), ...errorResponses },
+});
+
+export const planRoute = createRoute({
+  method: "post",
+  path: "/v1/plans",
+  security: keyOrSession,
+  request: { body: body(PlanRequest) },
+  responses: { 200: json("Unsigned plan bound to a posted quote", PlanResponse), ...errorResponses },
 });
 
 export const startWorkflowRoute = createRoute({

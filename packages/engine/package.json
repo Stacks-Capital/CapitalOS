@@ -1,5 +1,5 @@
 {
-  "name": "@stacks-capital/sdk",
+  "name": "@stacks-capital/engine",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,12 +14,11 @@
     "test": "node --test --experimental-strip-types src/*.test.ts"
   },
   "dependencies": {
+    "@stacks-capital/adapters": "workspace:*",
     "@stacks-capital/config": "workspace:*",
-    "@stacks-capital/core": "workspace:*",
-    "@stacks-capital/wallets": "workspace:*"
+    "@stacks-capital/core": "workspace:*"
   },
   "devDependencies": {
-    "@stacks-capital/engine": "workspace:*",
     "@stacks-capital/fixtures": "workspace:*"
   }
 }

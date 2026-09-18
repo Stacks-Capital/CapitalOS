@@ -1,8 +1,9 @@
-import { BITFLOW_ALLOWED_POOLS, capabilityFor, contract } from "@stacks-capital/config";
+import { BITFLOW_ALLOWED_POOLS, capabilityFor, contract, FUNGIBLE_ASSET_NAME } from "@stacks-capital/config";
 import {
   amount,
   assertPositive,
   capitalError,
+  formatAssetId,
   minOutFromSpot,
   parseQuantity,
   sip10,
@@ -21,11 +22,11 @@ export const DEFAULT_SLIPPAGE_BPS = 50n;
 export const DEFAULT_MAX_STEPS = "8";
 
 function sbtc(network: StacksNetwork) {
-  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 }
 
 function usdcx(network: StacksNetwork) {
-  return sip10(network, contract("usdcx", "usdcx", network).contractId, "usdcx");
+  return sip10(network, contract("usdcx", "usdcx", network).contractId, FUNGIBLE_ASSET_NAME.usdcx);
 }
 
 function swapMarket(ctx: AdapterContext): Market {
@@ -35,8 +36,8 @@ function swapMarket(ctx: AdapterContext): Market {
     protocol: "bitflow",
     action: "swap",
     network: ctx.network,
-    suppliedAsset: "sbtc-token",
-    receiptAsset: "usdcx",
+    suppliedAsset: formatAssetId(sbtc(ctx.network)),
+    receiptAsset: formatAssetId(usdcx(ctx.network)),
     state: capability?.state ?? "disabled",
     warnings:
       capability?.state === "enabled"
@@ -48,7 +49,7 @@ function swapMarket(ctx: AdapterContext): Market {
 }
 
 function payingSbtc(intent: Intent): boolean {
-  return intent.inputAsset !== "usdcx";
+  return intent.inputAsset !== "usdcx" && intent.inputAsset !== FUNGIBLE_ASSET_NAME.usdcx;
 }
 
 function routerId(network: StacksNetwork): string {

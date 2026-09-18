@@ -656,7 +656,17 @@
             "type": "string"
           },
           "action": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "deposit_sbtc",
+              "withdraw_sbtc",
+              "supply",
+              "withdraw_supply",
+              "borrow",
+              "repay",
+              "swap",
+              "stake"
+            ]
           },
           "marketId": {
             "type": "string"
@@ -675,7 +685,8 @@
               "type": "object",
               "properties": {
                 "asset": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Canonical asset id from formatAssetId, never a ticker."
                 },
                 "quantity": {
                   "type": "string",
@@ -694,7 +705,8 @@
               "type": "object",
               "properties": {
                 "asset": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Canonical asset id from formatAssetId, never a ticker."
                 },
                 "quantity": {
                   "type": "string",
@@ -706,22 +718,6 @@
                 "quantity"
               ]
             }
-          },
-          "minimumOutput": {
-            "type": "object",
-            "properties": {
-              "asset": {
-                "type": "string"
-              },
-              "quantity": {
-                "type": "string",
-                "pattern": "^-?[0-9]+$"
-              }
-            },
-            "required": [
-              "asset",
-              "quantity"
-            ]
           },
           "fees": {
             "type": "array",
@@ -741,7 +737,8 @@
                   "type": "object",
                   "properties": {
                     "asset": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Canonical asset id from formatAssetId, never a ticker."
                     },
                     "quantity": {
                       "type": "string",
@@ -757,7 +754,8 @@
                   "type": "object",
                   "properties": {
                     "asset": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Canonical asset id from formatAssetId, never a ticker."
                     },
                     "quantity": {
                       "type": "string",
@@ -782,24 +780,41 @@
               "type": "string"
             }
           },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "executable": {
+            "type": "boolean"
+          },
           "warnings": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "executable": {
-            "type": "boolean"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
           "registryVersion": {
             "type": "string"
           },
           "adapterVersion": {
             "type": "string"
+          },
+          "minimumOutput": {
+            "type": "object",
+            "properties": {
+              "asset": {
+                "type": "string",
+                "description": "Canonical asset id from formatAssetId, never a ticker."
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^-?[0-9]+$"
+              }
+            },
+            "required": [
+              "asset",
+              "quantity"
+            ]
           }
         },
         "required": [
@@ -811,9 +826,9 @@
           "expectedOutput",
           "fees",
           "snapshots",
-          "warnings",
-          "executable",
           "expiresAt",
+          "executable",
+          "warnings",
           "registryVersion",
           "adapterVersion"
         ]
@@ -835,35 +850,35 @@
             ],
             "description": "Required on every request. There is no default network."
           },
-          "steps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlanStep"
-            }
+          "registryVersion": {
+            "type": "string"
           },
-          "reviewSummary": {
+          "adapterVersion": {
             "type": "string"
           },
           "expiresAt": {
             "type": "string",
             "format": "date-time"
           },
-          "registryVersion": {
+          "reviewSummary": {
             "type": "string"
           },
-          "adapterVersion": {
-            "type": "string"
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanStep"
+            }
           }
         },
         "required": [
           "id",
           "quoteId",
           "network",
-          "steps",
-          "reviewSummary",
-          "expiresAt",
           "registryVersion",
-          "adapterVersion"
+          "adapterVersion",
+          "expiresAt",
+          "reviewSummary",
+          "steps"
         ]
       },
       "PlanStep": {
@@ -872,17 +887,11 @@
           "id": {
             "type": "string"
           },
-          "payload": {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "additionalProperties": {}
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "expectedAssetEffects": {
             "type": "array",
@@ -890,7 +899,8 @@
               "type": "object",
               "properties": {
                 "asset": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Canonical asset id from formatAssetId, never a ticker."
                 },
                 "quantity": {
                   "type": "string",
@@ -903,35 +913,181 @@
               ]
             }
           },
-          "dependsOn": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "payload": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "bitcoin_deposit"
+                    ]
+                  },
+                  "amountSats": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  },
+                  "stacksRecipient": {
+                    "type": "string"
+                  },
+                  "bitcoinNetwork": {
+                    "type": "string",
+                    "enum": [
+                      "mainnet",
+                      "test",
+                      "regtest"
+                    ]
+                  },
+                  "reclaimLockTime": {
+                    "type": "integer"
+                  },
+                  "maxSignerFeeSats": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  },
+                  "emilyNotifyPath": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "amountSats",
+                  "stacksRecipient",
+                  "bitcoinNetwork",
+                  "reclaimLockTime",
+                  "maxSignerFeeSats",
+                  "emilyNotifyPath"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "stacks_contract_call"
+                    ]
+                  },
+                  "contractId": {
+                    "type": "string"
+                  },
+                  "functionName": {
+                    "type": "string"
+                  },
+                  "functionArgs": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "postConditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "principal": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "send_lte",
+                            "send_eq",
+                            "send_gte",
+                            "receive_gte"
+                          ]
+                        },
+                        "amount": {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "description": "Canonical asset id from formatAssetId, never a ticker."
+                            },
+                            "quantity": {
+                              "type": "string",
+                              "pattern": "^-?[0-9]+$"
+                            }
+                          },
+                          "required": [
+                            "asset",
+                            "quantity"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "principal",
+                        "mode",
+                        "amount"
+                      ]
+                    }
+                  },
+                  "postConditionMode": {
+                    "type": "string",
+                    "enum": [
+                      "deny",
+                      "allow"
+                    ]
+                  },
+                  "network": {
+                    "type": "string",
+                    "enum": [
+                      "mainnet",
+                      "testnet"
+                    ],
+                    "description": "Required on every request. There is no default network."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "contractId",
+                  "functionName",
+                  "functionArgs",
+                  "postConditions",
+                  "postConditionMode",
+                  "network"
+                ]
+              }
+            ]
           }
         },
         "required": [
           "id",
-          "payload",
+          "dependsOn",
           "expectedAssetEffects",
-          "dependsOn"
+          "payload"
         ]
       },
       "QuoteRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Intent"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "network": {
+                "type": "string",
+                "enum": [
+                  "mainnet",
+                  "testnet"
+                ],
+                "description": "Required on every request. There is no default network."
+              },
+              "owner": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Required for API keys. Wallet sessions quote for the signed-in address."
+              }
+            },
+            "required": [
+              "network"
+            ]
+          }
+        ]
+      },
+      "Intent": {
         "type": "object",
         "properties": {
-          "network": {
-            "type": "string",
-            "enum": [
-              "mainnet",
-              "testnet"
-            ],
-            "description": "Required on every request. There is no default network."
-          },
-          "marketId": {
-            "type": "string",
-            "maxLength": 128
-          },
           "action": {
             "type": "string",
             "enum": [
@@ -945,9 +1101,31 @@
               "stake"
             ]
           },
+          "marketId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
           "amount": {
             "type": "string",
             "maxLength": 39,
+            "pattern": "^[0-9]+$"
+          },
+          "recipient": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxFee": {
+            "type": "string",
+            "maxLength": 39,
+            "pattern": "^[0-9]+$"
+          },
+          "minOut": {
+            "type": "string",
+            "pattern": "^[0-9]+$"
+          },
+          "collateralAmount": {
+            "type": "string",
             "pattern": "^[0-9]+$"
           },
           "slippageBps": {
@@ -955,22 +1133,89 @@
             "maxLength": 5,
             "pattern": "^[0-9]+$"
           },
-          "maxFee": {
+          "bufferBps": {
             "type": "string",
-            "maxLength": 39,
             "pattern": "^[0-9]+$"
+          },
+          "onBehalfOf": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "routePool": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "inputAsset": {
+            "type": "string",
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "action",
+          "marketId",
+          "amount"
+        ]
+      },
+      "PlanResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "PlanRequest": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "mainnet",
+              "testnet"
+            ],
+            "description": "Required on every request. There is no default network."
           },
           "owner": {
             "type": "string",
-            "maxLength": 64,
-            "description": "Ignored for a wallet session, which quotes for itself."
+            "maxLength": 64
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/Quote"
           }
         },
         "required": [
           "network",
-          "marketId",
-          "action",
-          "amount"
+          "intent",
+          "quote"
         ]
       },
       "StartedWorkflowResponse": {
@@ -1735,11 +1980,105 @@
         },
         "responses": {
           "200": {
-            "description": "A quote and the plan that executes it",
+            "description": "A quote and the unsigned plan that executes it",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans": {
+      "post": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unsigned plan bound to a posted quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
                 }
               }
             }

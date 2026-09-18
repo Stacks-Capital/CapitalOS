@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { stacksAddressNetwork } from "@stacks-capital/core";
+import { isCapitalError, stacksAddressNetwork } from "@stacks-capital/core";
 import {
   createNonce,
   exchangeNonceForSession,
@@ -27,12 +27,14 @@ import {
   capabilitiesRoute,
   challengeRoute,
   marketsRoute,
+  planRoute,
   quoteRoute,
   signatureRoute,
   startWorkflowRoute,
   verifyRoute,
   workflowRoute,
 } from "./routes.ts";
+import { intentFromBody, mintPlan, quoteOwner, toQuoteWire } from "./quote.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
 import { serializePlan, serializeQuote } from "./serialize.ts";
 
@@ -113,6 +115,10 @@ export function createApp(deps: AppDependencies) {
   app.onError((error, c) => {
     if (error instanceof ApiError) {
       return c.json(errorBody(c.get("requestId"), error.code, error.message, error.retryAfter), error.status);
+    }
+    if (isCapitalError(error)) {
+      const mapped = new ApiError(error.code, error.message);
+      return c.json(errorBody(c.get("requestId"), mapped.code, mapped.message), mapped.status);
     }
     return c.json(errorBody(c.get("requestId"), "INTERNAL", "Unexpected error"), 500);
   });
@@ -259,7 +265,6 @@ export function createApp(deps: AppDependencies) {
     );
   });
 
-  // Writing needs an account: a key with the right scope, or a signed in wallet acting for itself.
   const writer = (principal: Awaited<ReturnType<typeof admit>>, scope: "quotes:write" | "workflows:write") => {
     if (principal.kind === "client") throw new ApiError("FORBIDDEN", "This needs an API key or a wallet session");
     requireScope(principal, scope);
@@ -272,7 +277,7 @@ export function createApp(deps: AppDependencies) {
     if (principal.kind === "session" && principal.network !== input.network) {
       throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
     }
-    const owner = principal.kind === "session" ? principal.address : input.owner;
+    const owner = quoteOwner(principal, input.owner);
     const quoted = await createQuote(
       { sql: deps.sql, reads, now },
       {
@@ -291,6 +296,37 @@ export function createApp(deps: AppDependencies) {
         requestId: c.get("requestId"),
         network: `stacks:${input.network}` as const,
         data: { quote: serializeQuote(quoted.quote), plan: serializePlan(quoted.plan) },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(planRoute, async (c) => {
+    const body = c.req.valid("json");
+    const principal = writer(await admit(c), "quotes:write");
+    if (principal.kind === "session" && principal.network !== body.network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+    if (body.quote.network !== body.network || body.intent.action !== body.quote.action) {
+      throw new ApiError("INVALID_REQUEST", "plan quote does not match the request network or action");
+    }
+    const owner = quoteOwner(principal, body.owner);
+    const at = now();
+    const plan = await mintPlan({
+      network: body.network,
+      owner,
+      now: at,
+      intent: intentFromBody(body.intent),
+      quote: toQuoteWire(body.quote),
+      reads,
+    });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${body.network}` as const,
+        data: plan,
         context: context(),
       },
       200,

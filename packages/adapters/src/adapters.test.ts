@@ -163,6 +163,10 @@ describe("sBTC and Zest adapters", () => {
       amount: "100000000",
     });
     assert.equal(supply.expectedOutput[0]?.quantity, 100000000n);
+    assert.equal(
+      supply.expectedOutput[0]?.asset.identity.kind === "contract" && supply.expectedOutput[0].asset.identity.assetName,
+      "zft",
+    );
     const call = supplyPlan.steps[0]?.payload;
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "deposit");
     const redeem = zest.quote(mainnet, {
@@ -178,6 +182,20 @@ describe("sBTC and Zest adapters", () => {
       minOut: "100000000",
     });
     assert.equal(zest.explainRisk(mainnet, "zest.sbtc.vault").variables.rounding, "down");
+  });
+
+  it("lists Zest markets as disabled on testnet without a vault receipt", () => {
+    const zest = createZestEarnAdapter(reads);
+    const markets = zest.listMarkets(ctx("testnet"));
+    assert.equal(markets.length, 2);
+    for (const market of markets) {
+      assert.equal(market.state, "disabled");
+      assert.equal(market.receiptAsset, undefined);
+    }
+    assert.match(
+      markets.find((market) => market.action === "supply")?.warnings.join(" ") ?? "",
+      /not deployed on public Stacks testnet/i,
+    );
   });
 
   it("quotes Granite isolated collateral and USDCx borrow with deny-mode price-feeds none", () => {
@@ -197,6 +215,15 @@ describe("sBTC and Zest adapters", () => {
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "borrow");
     assert.equal(call.functionArgs[3]?.type, "none");
     assert.equal(call.postConditions[0]?.mode, "receive_gte");
+    assert.equal(
+      borrow.expectedOutput[0]?.asset.identity.kind === "contract" && borrow.expectedOutput[0].asset.identity.assetName,
+      "usdcx-token",
+    );
+    assert.equal(
+      call.postConditions[0]?.amount.asset.identity.kind === "contract" &&
+        call.postConditions[0].amount.asset.identity.assetName,
+      "usdcx-token",
+    );
   });
 
   it("plans a Bitflow sBTC to USDCx swap with onchain min-out", () => {
@@ -208,5 +235,24 @@ describe("sBTC and Zest adapters", () => {
     const call = plan.steps[0]?.payload;
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "swap-x-for-y-simple-range-multi");
     assert.equal(quote.minimumOutput?.quantity, 99002500000n);
+  });
+
+  it("lists every adapter market on mainnet and testnet without requiring undeployed contracts", () => {
+    const adapters = [
+      createSbtcDepositAdapter(reads),
+      createSbtcWithdrawAdapter(reads),
+      createZestEarnAdapter(reads),
+      createGraniteCreditAdapter(reads),
+      createBitflowSwapAdapter(reads),
+    ];
+    for (const network of ["mainnet", "testnet"] as const) {
+      for (const adapter of adapters) {
+        const markets = adapter.listMarkets(ctx(network));
+        assert.ok(markets.length > 0, `${adapter.protocol} ${network}`);
+        for (const market of markets) {
+          assert.equal(market.network, network);
+        }
+      }
+    }
   });
 });

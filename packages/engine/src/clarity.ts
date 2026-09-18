@@ -19,6 +19,12 @@ export function encodeUint(value: bigint): string {
   return `0x01${value.toString(16).padStart(32, "0")}`;
 }
 
+export function encodeAscii(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `0x0d${bytes.length.toString(16).padStart(8, "0")}${hex}`;
+}
+
 function c32Hash160(address: string): string {
   let n = 0n;
   for (const ch of address.slice(1)) {
@@ -63,4 +69,22 @@ export function clarityIntAfter(hex: string, name: string): bigint {
   const encoded = h.slice(at + needle.length, at + needle.length + 14);
   if (!encoded.startsWith("02")) throw new Error(`tuple field ${name} is not an int`);
   return BigInt(`0x${encoded.slice(10)}`);
+}
+
+export function clarityUintAfter(hex: string, name: string): bigint {
+  const h = hex.startsWith("0x") ? hex.slice(2) : hex;
+  const needle = utf8Hex(name);
+  const at = h.indexOf(needle);
+  if (at < 0) throw new Error(`tuple field ${name} missing`);
+  const encoded = h.slice(at + needle.length, at + needle.length + 34);
+  if (!encoded.startsWith("01") || encoded.length < 34) throw new Error(`tuple field ${name} is not a uint`);
+  return BigInt(`0x${encoded.slice(2, 34)}`);
+}
+
+/** DIA get-value response used by tests: (ok {timestamp: uint, value: uint}). */
+export function diaOracleHex(price: bigint, timestampMs: bigint): string {
+  const uint = (value: bigint) => `01${value.toString(16).padStart(32, "0")}`;
+  const field = (name: string, encoded: string) =>
+    `${name.length.toString(16).padStart(2, "0")}${utf8Hex(name)}${encoded}`;
+  return `0x070c00000002${field("timestamp", uint(timestampMs))}${field("value", uint(price))}`;
 }
