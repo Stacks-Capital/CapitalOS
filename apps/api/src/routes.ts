@@ -12,9 +12,11 @@ import {
   EarnOptionsResponse,
   ErrorBody,
   ListQuery,
+  MarketRiskResponse,
   MarketsResponse,
   NetworkQuery,
   PositionQuery,
+  PricesResponse,
   PositionsResponse,
   SessionResponse,
   VerifyRequest,
@@ -112,6 +114,26 @@ export const earnOptionsRoute = createRoute({
   security: anyCaller,
   request: { query: NetworkQuery },
   responses: { 200: json("What each earn market pays and allows", EarnOptionsResponse), ...errorResponses },
+});
+
+export const pricesRoute = createRoute({
+  method: "get",
+  path: "/v1/prices",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: { 200: json("Latest price for each feed the platform reads", PricesResponse), ...errorResponses },
+});
+
+export const marketRiskRoute = createRoute({
+  method: "get",
+  path: "/v1/markets/{id}/risk",
+  security: keyOrSession,
+  request: { params: WorkflowParams, query: PositionQuery },
+  responses: {
+    200: json("Risk parameters, prices and the caller's position", MarketRiskResponse),
+    404: error("No such market"),
+    ...errorResponses,
+  },
 });
 
 export const positionsRoute = createRoute({

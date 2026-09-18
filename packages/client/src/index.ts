@@ -38,6 +38,8 @@ export type {
   Challenge,
   Market,
   MarketCapability,
+  MarketRisk,
+  OracleQuoteView,
   Fee,
   Page,
   Plan,

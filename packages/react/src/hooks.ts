@@ -4,6 +4,8 @@ import {
   type EarnOption,
   type Market,
   type MarketCapability,
+  type MarketRisk,
+  type OracleQuoteView,
   type Page,
   RESOURCES,
   type Position,
@@ -90,6 +92,21 @@ export function useEarnOptions(options: QueryOptions = {}): QueryResult<Result<{
   const { client, scope } = useCapital();
   const key = cacheKey(scope, "earnOptions");
   return useCapitalQuery<Result<{ items: EarnOption[] }>>(key, (signal) => client.earnOptions({ signal }), options);
+}
+
+export function usePrices(options: QueryOptions = {}): QueryResult<Result<{ items: OracleQuoteView[] }>> {
+  const { client, scope } = useCapital();
+  return useCapitalQuery<Result<{ items: OracleQuoteView[] }>>(
+    cacheKey(scope, "prices"),
+    (signal) => client.prices({ signal }),
+    options,
+  );
+}
+
+export function useMarketRisk(marketId: string | null, options: QueryOptions = {}): QueryResult<Result<MarketRisk>> {
+  const { client, scope } = useCapital();
+  const key = marketId === null ? null : cacheKey(scope, "risk", { marketId });
+  return useCapitalQuery<Result<MarketRisk>>(key, (signal) => client.marketRisk(marketId ?? "", { signal }), options);
 }
 
 export function usePositions(

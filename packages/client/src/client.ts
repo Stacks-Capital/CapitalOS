@@ -14,6 +14,8 @@ import type {
   EarnOption,
   Market,
   MarketCapability,
+  MarketRisk,
+  OracleQuoteView,
   Page,
   Position,
   QuotedPlan,
@@ -63,6 +65,10 @@ export type CapitalClient = {
   ): Promise<Result<Session>>;
   /** What each earn market pays and allows, as facts. Ranking is the caller's decision. */
   earnOptions(options?: CallOptions): Promise<Result<{ items: EarnOption[] }>>;
+  /** Latest price for each feed the platform reads. */
+  prices(options?: CallOptions): Promise<Result<{ items: OracleQuoteView[] }>>;
+  /** Risk parameters, prices and the caller's position for one market. */
+  marketRisk(marketId: string, options?: CallOptions & { owner?: string }): Promise<Result<MarketRisk>>;
   /** Positions for one address. A session reads its own; a key names the owner. */
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
@@ -182,6 +188,24 @@ export function createClient(options: ClientOptions): CapitalClient {
         method: "GET",
         path: "/v1/earn/options",
         query: { network },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    prices: (call_) =>
+      call<{ items: OracleQuoteView[] }>({
+        method: "GET",
+        path: "/v1/prices",
+        query: { network },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    marketRisk: (marketId, call_) =>
+      call<MarketRisk>({
+        method: "GET",
+        path: `/v1/markets/${encodeURIComponent(marketId)}/risk`,
+        query: { network, owner: call_?.owner },
         signal: call_?.signal,
         retry: true,
       }),

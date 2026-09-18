@@ -484,6 +484,226 @@
           "adapterVersion"
         ]
       },
+      "PricesResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OracleQuote"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "OracleQuote": {
+        "type": "object",
+        "properties": {
+          "feedKey": {
+            "type": "string"
+          },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scale": {
+            "type": "integer"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "feedKey",
+          "price",
+          "scale",
+          "publishedAt",
+          "observedAt",
+          "source",
+          "stale",
+          "warnings"
+        ]
+      },
+      "MarketRiskResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketRisk"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "MarketRisk": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "params": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ltvBorrowBps": {
+                "type": "string"
+              },
+              "ltvLiqBps": {
+                "type": "string"
+              },
+              "bufferBps": {
+                "type": "string"
+              },
+              "collateralDecimals": {
+                "type": "integer"
+              },
+              "debtDecimals": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "ltvBorrowBps",
+              "ltvLiqBps",
+              "bufferBps",
+              "collateralDecimals",
+              "debtDecimals"
+            ],
+            "description": "Null when the protocol's risk parameters could not be read."
+          },
+          "collateralOracle": {
+            "$ref": "#/components/schemas/OracleQuote"
+          },
+          "debtOracle": {
+            "$ref": "#/components/schemas/OracleQuote"
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "collateral": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "debt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "collateral",
+              "debt",
+              "stale",
+              "warnings"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "marketId",
+          "params",
+          "collateralOracle",
+          "debtOracle",
+          "position",
+          "warnings"
+        ]
+      },
       "PositionsResponse": {
         "type": "object",
         "properties": {
@@ -1784,6 +2004,240 @@
           },
           "403": {
             "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest price for each feed the platform reads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/{id}/risk": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "Required for an API key, ignored for a session."
+            },
+            "required": false,
+            "description": "Required for an API key, ignored for a session.",
+            "name": "owner",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Risk parameters, prices and the caller's position",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketRiskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such market",
             "content": {
               "application/json": {
                 "schema": {

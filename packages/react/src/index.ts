@@ -6,7 +6,9 @@ export {
   useCapabilities,
   useCapitalQuery,
   useEarnOptions,
+  useMarketRisk,
   useMarkets,
   usePositions,
+  usePrices,
   useWorkflow,
 } from "./hooks.ts";

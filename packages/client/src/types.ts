@@ -158,3 +158,29 @@ export type EarnOption = {
   observedAt: string | null;
   adapterVersion: string;
 };
+
+export type OracleQuoteView = {
+  feedKey: string;
+  price: string | null;
+  scale: number;
+  publishedAt: string | null;
+  observedAt: string;
+  source: string;
+  stale: boolean;
+  warnings: string[];
+};
+
+export type MarketRisk = {
+  marketId: string;
+  params: {
+    ltvBorrowBps: string;
+    ltvLiqBps: string;
+    bufferBps: string;
+    collateralDecimals: number;
+    debtDecimals: number;
+  } | null;
+  collateralOracle: OracleQuoteView;
+  debtOracle: OracleQuoteView;
+  position: { collateral: string | null; debt: string | null; stale: boolean; warnings: string[] };
+  warnings: string[];
+};

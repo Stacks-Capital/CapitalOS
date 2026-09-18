@@ -317,3 +317,45 @@ export const EarnOption = z
   .openapi("EarnOption");
 
 export const EarnOptionsResponse = envelope("EarnOptionsResponse", z.object({ items: z.array(EarnOption) }));
+
+export const OracleQuote = z
+  .object({
+    feedKey: z.string(),
+    price: z.string().nullable(),
+    scale: z.number().int(),
+    publishedAt: z.iso.datetime().nullable(),
+    observedAt: z.iso.datetime(),
+    source: z.string(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("OracleQuote");
+
+export const MarketRisk = z
+  .object({
+    marketId: z.string(),
+    params: z
+      .object({
+        ltvBorrowBps: z.string(),
+        ltvLiqBps: z.string(),
+        bufferBps: z.string(),
+        collateralDecimals: z.number().int(),
+        debtDecimals: z.number().int(),
+      })
+      .nullable()
+      .openapi({ description: "Null when the protocol's risk parameters could not be read." }),
+    collateralOracle: OracleQuote,
+    debtOracle: OracleQuote,
+    position: z.object({
+      collateral: z.string().nullable(),
+      debt: z.string().nullable(),
+      stale: z.boolean(),
+      warnings: z.array(z.string()),
+    }),
+    warnings: z.array(z.string()),
+  })
+  .openapi("MarketRisk");
+
+export const MarketRiskResponse = envelope("MarketRiskResponse", MarketRisk);
+
+export const PricesResponse = envelope("PricesResponse", z.object({ items: z.array(OracleQuote) }));

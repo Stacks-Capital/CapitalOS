@@ -9,6 +9,7 @@ import { memoryLimiter } from "../../src/rateLimit.ts";
 import {
   EarnOptionsResponse,
   ErrorBody,
+  MarketRiskResponse,
   PositionsResponse,
   QuoteResponse,
   SignatureResponse,
@@ -267,6 +268,46 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     // Only markets that can be supplied into are listed at all.
     assert.ok(body.data.items.every((item) => item.supply.state !== undefined));
     assert.ok(!body.data.items.some((item) => item.marketId === "sbtc.deposit"));
+  });
+
+  it("serves risk parameters and prices, and leaves what it cannot read unknown", async () => {
+    const unknownPrices = await app.request(
+      `/v1/markets/granite.sbtc.isolated/risk?network=mainnet&owner=${MAINNET_OWNER}`,
+      {
+        headers: keyHeaders,
+      },
+    );
+    assert.equal(unknownPrices.status, 200);
+    const before = MarketRiskResponse.parse(await unknownPrices.json()).data;
+    assert.equal(before.params?.ltvBorrowBps, "7000");
+    // No price has been read in this schema, so the oracle is unknown and stale, not zero.
+    assert.equal(before.collateralOracle.price, null);
+    assert.equal(before.collateralOracle.stale, true);
+    assert.match(before.collateralOracle.warnings.join(" "), /No price has been read/);
+
+    await sql`
+      INSERT INTO price_snapshots (network, feed_key, price, price_scale, published_at, stale, warnings, source,
+                                   observed_at)
+      VALUES ('mainnet', 'BTC/USD', 7000000000000, 8, ${NOW}, false, '{}', 'dia-oracle', ${NOW})
+    `;
+    const withPrice = await app.request(
+      `/v1/markets/granite.sbtc.isolated/risk?network=mainnet&owner=${MAINNET_OWNER}`,
+      {
+        headers: keyHeaders,
+      },
+    );
+    const after = MarketRiskResponse.parse(await withPrice.json()).data;
+    assert.equal(after.collateralOracle.price, "7000000000000");
+    assert.equal(after.collateralOracle.source, "dia-oracle");
+  });
+
+  it("refuses risk to a browser client and answers 404 for a market that does not exist", async () => {
+    const browser = { "x-capital-client-id": FIXTURE_APP.clientId, origin: FIXTURE_APP.origin };
+    const asBrowser = await app.request("/v1/markets/granite.sbtc.isolated/risk?network=mainnet", { headers: browser });
+    assert.equal(asBrowser.status, 403);
+
+    const missing = await app.request("/v1/markets/nope.market/risk?network=mainnet", { headers: keyHeaders });
+    assert.equal(missing.status, 404);
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {

@@ -68,12 +68,14 @@ export {
   insertPositionSnapshot,
   insertRewardSnapshot,
   latestPositions,
+  latestPrices,
   listKnownOwners,
   listMarketAssets,
   type MarketAssets,
   type OwnerPosition,
   type PositionKind,
   type PositionSnapshotRow,
+  type PriceRow,
   type RewardSnapshotRow,
 } from "./positions.ts";
 export {

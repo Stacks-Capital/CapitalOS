@@ -121,3 +121,26 @@ export async function latestPositions(
     ORDER BY p.market_id, p.kind, p.protocol_key, p.asset_id, p.observed_at DESC
   `;
 }
+
+export type PriceRow = {
+  feedKey: string;
+  price: string | null;
+  priceScale: number;
+  publishedAt: Date | null;
+  stale: boolean;
+  warnings: string[];
+  source: string;
+  observedAt: Date;
+};
+
+/** The latest reading for each feed. A feed with no usable price is still returned, marked stale. */
+export async function latestPrices(sql: Sql, network: NetworkName, feeds: string[]): Promise<PriceRow[]> {
+  return sql<PriceRow[]>`
+    SELECT DISTINCT ON (feed_key)
+           feed_key AS "feedKey", price::text AS price, price_scale::int AS "priceScale",
+           published_at AS "publishedAt", stale, warnings, source, observed_at AS "observedAt"
+    FROM price_snapshots
+    WHERE network = ${network} AND feed_key = ANY(${sql.array(feeds)})
+    ORDER BY feed_key, observed_at DESC, id DESC
+  `;
+}

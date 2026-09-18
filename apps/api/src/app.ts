@@ -7,6 +7,7 @@ import {
   findWorkflowForTenant,
   isAllowedOrigin,
   latestPositions,
+  latestPrices,
   listCapabilities,
   listEarnOptions,
   listMarkets,
@@ -22,15 +23,17 @@ import {
   signatureMatches,
 } from "./auth.ts";
 import { decodeCursor, encodeCursor } from "./cursor.ts";
-import { createQuote, liveReads, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
+import { createQuote, liveReads, marketRisk, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
 import { ApiError, errorBody } from "./errors.ts";
 import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLimit.ts";
 import {
   capabilitiesRoute,
   challengeRoute,
   earnOptionsRoute,
+  marketRiskRoute,
   marketsRoute,
   positionsRoute,
+  pricesRoute,
   quoteRoute,
   signatureRoute,
   startWorkflowRoute,
@@ -207,6 +210,57 @@ export function createApp(deps: AppDependencies) {
             adapterVersion: option.adapterVersion,
           })),
         },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(pricesRoute, async (c) => {
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const prices = await latestPrices(deps.sql, network, ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"]);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: prices.map((price) => ({
+            feedKey: price.feedKey,
+            price: price.price,
+            scale: price.priceScale,
+            publishedAt: price.publishedAt === null ? null : price.publishedAt.toISOString(),
+            observedAt: price.observedAt.toISOString(),
+            source: price.source,
+            stale: price.stale,
+            warnings: price.warnings,
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(marketRiskRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const { network, owner } = c.req.valid("query");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Risk needs an API key or a wallet session");
+    requireScope(principal, "positions:read");
+    const address = principal.kind === "session" ? principal.address : (owner ?? null);
+
+    const known = await listMarkets(deps.sql, { network, afterId: null, limit: 100 });
+    if (!known.items.some((market) => market.id === id)) throw new ApiError("NOT_FOUND", "No such market");
+
+    const risk = await marketRisk({ sql: deps.sql, reads, now }, { network, marketId: id, owner: address });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: risk,
         context: context(),
       },
       200,
