@@ -24,11 +24,14 @@ Markets: `sbtc.deposit`, `sbtc.withdraw`, `zest.sbtc.vault`, `granite.sbtc.isola
 
 ## Severity
 
-| Level | Means | Examples |
-|---|---|---|
-| Critical | Funds at risk, or users see wrong numbers they may act on | Protocol exploit, key leak, reconciliation mismatch, reorg after completion |
-| High | An action does not work, or data is stale | Ingestion failing, oracle stale, quote failure spike, API down |
-| Warning | Degraded, users still safe | Ingestion lag warning, one workflow stuck awaiting a signature |
+The scale from page 03 of the spec.
+
+| Level | Means | Examples | First move |
+|---|---|---|---|
+| SEV-0 | Suspected active loss of funds, or a compromised registry | Protocol exploit, a plan that moves the wrong asset | Disable the affected writes at once |
+| SEV-1 | Wrong transaction plan or risk number, or one tenant seeing another's data | Leaked API key, reconciliation mismatch, reorg after completion | Disable the affected action, revoke keys |
+| SEV-2 | Stuck workflows, large data mismatch, major provider outage | Ingestion failing, oracle stale, quote failure spike, API or database down | Follow the entry below |
+| SEV-3 | Degraded read or UI | Ingestion lag warning, one workflow awaiting a signature | Watch, fix in working hours |
 
 ## Ingestion lag or failing
 

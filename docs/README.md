@@ -11,7 +11,12 @@
 
 - [Incident runbook](runbooks/incidents.md): symptoms, first actions, and when to escalate.
 - [Backup and restore](runbooks/backup-restore.md): the procedure and the drill that proves it.
+- [Rollback](runbooks/rollback.md): going back to the previous release, and the drill that proves it is safe.
 - [Metrics, alerts and feature flags](engineering/operations.md): what is measured and the operator switches.
+
+## Release
+
+- [Pilot and release checklist](release/pilot-checklist.md): evidence, manual checks and outstanding issues for the go/no-go.
 
 ## How it is built
 

@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@12.4.1",
   "scripts": {
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/engine && tsc --noEmit -p packages/fixtures && tsc --noEmit -p packages/sdk && tsc --noEmit -p packages/client && tsc --noEmit -p packages/react && tsc --noEmit -p packages/ui && tsc --noEmit -p packages/database && tsc --noEmit -p apps/api && tsc --noEmit -p apps/worker && tsc --noEmit -p apps/web && tsc --noEmit -p apps/embed-example && tsc --noEmit -p apps/e2e && tsc --noEmit -p apps/partner-example && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/checks && tsc --noEmit -p scripts/sdk && tsc --noEmit -p prototypes/wallet-feasibility",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/config && tsc --noEmit -p packages/wallets && tsc --noEmit -p packages/adapters && tsc --noEmit -p packages/engine && tsc --noEmit -p packages/fixtures && tsc --noEmit -p packages/sdk && tsc --noEmit -p packages/client && tsc --noEmit -p packages/react && tsc --noEmit -p packages/ui && tsc --noEmit -p packages/database && tsc --noEmit -p apps/api && tsc --noEmit -p apps/worker && tsc --noEmit -p apps/web && tsc --noEmit -p apps/embed-example && tsc --noEmit -p apps/e2e && tsc --noEmit -p apps/partner-example && tsc --noEmit -p scripts/contracts && tsc --noEmit -p scripts/probes && tsc --noEmit -p scripts/checks && tsc --noEmit -p scripts/sdk && tsc --noEmit -p scripts/release && tsc --noEmit -p prototypes/wallet-feasibility",
     "lint": "biome ci .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
@@ -35,6 +35,7 @@
     "services:up": "docker compose $([ -f .env.local ] && echo --env-file .env.local) up -d --wait postgres redis",
     "services:down": "docker compose $([ -f .env.local ] && echo --env-file .env.local) down",
     "db:migrate": "node --env-file-if-exists=.env.local packages/database/src/migrate.ts",
+    "release:rollback-drill": "node --env-file-if-exists=.env.local scripts/release/rollbackDrill.ts",
     "db:restore-drill": "node --env-file-if-exists=.env.local packages/database/src/restoreDrill.ts",
     "fixtures:seed": "node --env-file-if-exists=.env.local packages/database/src/seed.ts",
     "secrets:scan": "gitleaks git --redact --no-banner .",
