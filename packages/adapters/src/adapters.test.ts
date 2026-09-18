@@ -163,6 +163,10 @@ describe("sBTC and Zest adapters", () => {
       amount: "100000000",
     });
     assert.equal(supply.expectedOutput[0]?.quantity, 100000000n);
+    assert.equal(
+      supply.expectedOutput[0]?.asset.identity.kind === "contract" && supply.expectedOutput[0].asset.identity.assetName,
+      "zft",
+    );
     const call = supplyPlan.steps[0]?.payload;
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "deposit");
     const redeem = zest.quote(mainnet, {
@@ -197,6 +201,15 @@ describe("sBTC and Zest adapters", () => {
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "borrow");
     assert.equal(call.functionArgs[3]?.type, "none");
     assert.equal(call.postConditions[0]?.mode, "receive_gte");
+    assert.equal(
+      borrow.expectedOutput[0]?.asset.identity.kind === "contract" && borrow.expectedOutput[0].asset.identity.assetName,
+      "usdcx-token",
+    );
+    assert.equal(
+      call.postConditions[0]?.amount.asset.identity.kind === "contract" &&
+        call.postConditions[0].amount.asset.identity.assetName,
+      "usdcx-token",
+    );
   });
 
   it("plans a Bitflow sBTC to USDCx swap with onchain min-out", () => {
