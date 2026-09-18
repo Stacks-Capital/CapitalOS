@@ -7,6 +7,7 @@ import {
   assertExecutable,
   capabilityFor,
   contract,
+  findContract,
 } from "./deployments.ts";
 
 describe("capability registry", () => {
@@ -43,6 +44,11 @@ describe("capability registry", () => {
     assert.equal(contract("bitflow", "dlmm-swap-router-v-1-2", "mainnet").revision, "6979616");
     assert.equal(FUNGIBLE_ASSET_NAME.usdcx, "usdcx-token");
     assert.equal(FUNGIBLE_ASSET_NAME.zestShares, "zft");
+  });
+
+  it("does not invent a Zest vault on public testnet", () => {
+    assert.equal(findContract("zest", "v0-vault-sbtc", "testnet"), undefined);
+    assert.throws(() => contract("zest", "v0-vault-sbtc", "testnet"), /No contract zest\/v0-vault-sbtc on testnet/);
   });
 
   it("does not treat the npm testnet sBTC principal as canonical", () => {
