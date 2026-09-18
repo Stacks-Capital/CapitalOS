@@ -1,5 +1,13 @@
-import type { MarketRisk, OracleQuoteView } from "@stacks-capital/client";
-import { type Health, ORACLE_MAX_AGE_MS, type OracleQuote, oracleFresh, projectedHealth } from "@stacks-capital/core";
+import type { MarketRisk, OracleQuoteView, Plan, Quote } from "@stacks-capital/client";
+import {
+  type Health,
+  ORACLE_MAX_AGE_MS,
+  type OracleQuote,
+  oracleFresh,
+  projectedHealth,
+  settleRepayAmount,
+  unsignedSteps,
+} from "@stacks-capital/core";
 
 export type BorrowAction = "collateral_add" | "borrow" | "repay" | "collateral_remove";
 
@@ -9,6 +17,9 @@ export type BorrowInputs = {
   amount: string;
   /** What the wallet holds of the asset being sent, when it is known. */
   walletBalance?: string | null;
+  /** Pause and liquidity from a quote snapshot. Missing means not yet checked. */
+  paused?: boolean;
+  availableLiquidity?: string | null;
 };
 
 export type BorrowProjection = {
@@ -60,10 +71,6 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
   const blockers: string[] = [];
   const notes: string[] = [...risk.warnings, ...risk.position.warnings];
 
-  const amount = parseAmount(inputs.amount);
-  if (amount === null) blockers.push("Enter an amount in base units.");
-  else if (amount === 0n) blockers.push("Enter an amount greater than zero.");
-
   const collateralOracle = toOracle(risk.collateralOracle);
   const debtOracle = toOracle(risk.debtOracle);
   if (collateralOracle === null) blockers.push(`No price for ${risk.collateralOracle.feedKey}.`);
@@ -79,6 +86,30 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
     blockers.push("Your current position in this market is unknown, so the result cannot be projected.");
   }
 
+  if (inputs.paused) blockers.push("This market is paused.");
+
+  let amount: bigint | null = null;
+  if (inputs.action === "repay" && debtBefore !== null) {
+    const settled = settleRepayAmount(inputs.amount, debtBefore);
+    if ("error" in settled) blockers.push(settled.error);
+    else amount = settled.amount;
+  } else {
+    amount = parseAmount(inputs.amount);
+    if (amount === null) blockers.push("Enter an amount in base units.");
+    else if (amount === 0n) blockers.push("Enter an amount greater than zero.");
+  }
+
+  if (
+    inputs.action === "borrow" &&
+    amount !== null &&
+    inputs.availableLiquidity !== null &&
+    inputs.availableLiquidity !== undefined &&
+    /^[0-9]+$/.test(inputs.availableLiquidity) &&
+    amount > BigInt(inputs.availableLiquidity)
+  ) {
+    blockers.push("There is not enough USDCx liquidity for this borrow.");
+  }
+
   // Sending more than the wallet holds fails at the wallet, so it is caught before signing.
   const sending = inputs.action === "collateral_add" || inputs.action === "repay";
   if (sending && amount !== null) {
@@ -92,7 +123,9 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
     amount === null ||
     risk.params === null ||
     collateralBefore === null ||
-    debtBefore === null
+    debtBefore === null ||
+    collateralOracle === null ||
+    debtOracle === null
   ) {
     return { health: null, blockers, notes, canProceed: false };
   }
@@ -109,8 +142,8 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
     debtBefore,
     collateralDelta: deltas.collateral,
     debtDelta: deltas.debt,
-    collateral: { decimals: BigInt(risk.params.collateralDecimals), oracle: collateralOracle as OracleQuote },
-    debt: { decimals: BigInt(risk.params.debtDecimals), oracle: debtOracle as OracleQuote },
+    collateral: { decimals: BigInt(risk.params.collateralDecimals), oracle: collateralOracle },
+    debt: { decimals: BigInt(risk.params.debtDecimals), oracle: debtOracle },
     params: {
       ltvBorrowBps: BigInt(risk.params.ltvBorrowBps),
       ltvLiqBps: BigInt(risk.params.ltvLiqBps),
@@ -124,6 +157,40 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
   notes.push(...health.warnings);
 
   return { health, blockers, notes, canProceed: blockers.length === 0 };
+}
+
+export function snapshotValue(snapshots: readonly string[], key: string): string | undefined {
+  const prefix = `${key}:`;
+  const found = snapshots.find((item) => item.startsWith(prefix));
+  return found === undefined ? undefined : found.slice(prefix.length);
+}
+
+/** Quote snapshots the adapter already computed. Pause or missing liquidity cannot be signed. */
+export function quoteSafety(quote: Quote): { paused: boolean; availableLiquidity: string | null; blockers: string[] } {
+  const paused = snapshotValue(quote.snapshots, "pause") === "on";
+  const liquidity = snapshotValue(quote.snapshots, "liquidity");
+  const blockers: string[] = [];
+  if (paused) blockers.push("This market is paused.");
+  if (quote.action === "borrow" && (liquidity === undefined || liquidity === "unknown")) {
+    blockers.push("Borrow liquidity was not read.");
+  }
+  return {
+    paused,
+    availableLiquidity: liquidity === undefined || liquidity === "unknown" ? null : liquidity,
+    blockers,
+  };
+}
+
+export function nextBorrowStep(plan: Plan, confirmedStepIds: readonly string[]) {
+  return unsignedSteps(plan, confirmedStepIds)[0];
+}
+
+/** Oracle source and time the review screen must show before a signature. */
+export function oracleProvenance(risk: MarketRisk): string[] {
+  return [
+    `${risk.collateralOracle.feedKey} ${risk.collateralOracle.source} at ${risk.collateralOracle.publishedAt ?? risk.collateralOracle.observedAt}`,
+    `${risk.debtOracle.feedKey} ${risk.debtOracle.source} at ${risk.debtOracle.publishedAt ?? risk.debtOracle.observedAt}`,
+  ];
 }
 
 /** The action each screen control maps to, so the API is asked for the right quote. */
