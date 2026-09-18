@@ -386,10 +386,12 @@ export const CAPABILITIES: readonly CapabilityRecord[] = [
 
 export const BITFLOW_ALLOWED_POOLS: readonly string[] = [];
 
+export function findContract(protocol: string, label: string, network: StacksNetwork): ContractRef | undefined {
+  return CONTRACTS.find((item) => item.protocol === protocol && item.label === label && item.network === network);
+}
+
 export function contract(protocol: string, label: string, network: StacksNetwork): ContractRef {
-  const found = CONTRACTS.find(
-    (item) => item.protocol === protocol && item.label === label && item.network === network,
-  );
+  const found = findContract(protocol, label, network);
   if (found === undefined) throw new Error(`No contract ${protocol}/${label} on ${network}`);
   return found;
 }
