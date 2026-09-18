@@ -14,6 +14,8 @@ import {
 } from "@stacks-capital/core";
 import {
   createWorkflowRow,
+  latestPositions,
+  latestPrices,
   findAttempt,
   findStoredQuote,
   findWorkflowForTenant,
@@ -269,4 +271,120 @@ function asApiError(error: unknown, fallback: string): ApiError {
     "RATE_LIMITED",
   ];
   return known.includes(code ?? "") ? new ApiError(code as never, message) : new ApiError("INTERNAL", fallback);
+}
+
+export type RiskView = {
+  marketId: string;
+  params: {
+    ltvBorrowBps: string;
+    ltvLiqBps: string;
+    bufferBps: string;
+    collateralDecimals: number;
+    debtDecimals: number;
+  } | null;
+  collateralOracle: OracleView;
+  debtOracle: OracleView;
+  position: { collateral: string | null; debt: string | null; stale: boolean; warnings: string[] };
+  warnings: string[];
+};
+
+export type OracleView = {
+  feedKey: string;
+  price: string | null;
+  scale: number;
+  publishedAt: string | null;
+  observedAt: string;
+  source: string;
+  stale: boolean;
+  warnings: string[];
+};
+
+const FEEDS = { collateral: "BTC/USD", debt: "USDC/USD" } as const;
+
+function oracleView(
+  feedKey: string,
+  row: Awaited<ReturnType<typeof latestPrices>>[number] | undefined,
+  at: Date,
+): OracleView {
+  if (row === undefined) {
+    return {
+      feedKey,
+      price: null,
+      scale: 8,
+      publishedAt: null,
+      observedAt: at.toISOString(),
+      source: "none",
+      stale: true,
+      warnings: [`No price has been read for ${feedKey} yet`],
+    };
+  }
+  return {
+    feedKey,
+    price: row.price,
+    scale: row.priceScale,
+    publishedAt: row.publishedAt === null ? null : row.publishedAt.toISOString(),
+    observedAt: row.observedAt.toISOString(),
+    source: row.source,
+    stale: row.stale,
+    warnings: row.warnings,
+  };
+}
+
+/**
+ * What a screen needs to project health before it asks for a quote: the protocol's risk parameters,
+ * the prices the platform has read, and what the address already holds. Anything missing stays null.
+ */
+export async function marketRisk(
+  deps: { sql: Sql; reads: ReadsLoader; now: () => Date },
+  input: { network: StacksNetwork; marketId: string; owner: string | null },
+): Promise<RiskView> {
+  const at = deps.now();
+  const prices = await latestPrices(deps.sql, input.network, [FEEDS.collateral, FEEDS.debt]);
+  const byFeed = new Map(prices.map((price) => [price.feedKey, price]));
+  const warnings: string[] = [];
+
+  let params: RiskView["params"] = null;
+  try {
+    const reads = await loadReads(deps.reads, input.network, input.owner ?? undefined);
+    const risk = reads.riskParams;
+    if (risk === undefined) warnings.push("The protocol did not return its risk parameters");
+    else {
+      params = {
+        ltvBorrowBps: risk.ltvBorrowBps,
+        ltvLiqBps: risk.ltvLiqBps,
+        bufferBps: risk.bufferBps,
+        collateralDecimals: Number(risk.sbtcDecimals),
+        debtDecimals: Number(risk.usdcxDecimals),
+      };
+    }
+  } catch (error) {
+    warnings.push(`Risk parameters are unavailable: ${(error as Error).message}`);
+  }
+
+  // Positions come from the worker's projections, and stay unknown when no read exists (I11).
+  let position: RiskView["position"] = { collateral: null, debt: null, stale: true, warnings: [] };
+  if (input.owner !== null) {
+    const held = await latestPositions(deps.sql, { network: input.network, owner: input.owner });
+    const forMarket = held.filter((row) => row.marketId === input.marketId);
+    const collateral = forMarket.find((row) => row.kind === "collateral");
+    const debt = forMarket.find((row) => row.kind === "debt");
+    position = {
+      collateral: collateral?.quantity ?? null,
+      debt: debt?.quantity ?? null,
+      stale: (collateral?.stale ?? true) || (debt?.stale ?? true),
+      warnings: [...(collateral?.warnings ?? []), ...(debt?.warnings ?? [])],
+    };
+    if (forMarket.length === 0) position.warnings.push(`No position has been projected for ${input.marketId} yet`);
+  } else {
+    position.warnings.push("Sign in to see your own position");
+  }
+
+  return {
+    marketId: input.marketId,
+    params,
+    collateralOracle: oracleView(FEEDS.collateral, byFeed.get(FEEDS.collateral), at),
+    debtOracle: oracleView(FEEDS.debt, byFeed.get(FEEDS.debt), at),
+    position,
+    warnings,
+  };
 }

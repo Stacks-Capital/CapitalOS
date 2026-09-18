@@ -10,7 +10,7 @@
 
 Deliverables from the task pages. I07: typed responses, request cancellation, retries for safe reads and error taxonomy; no secret in browser bundle. I08: market, position and workflow hooks keyed by network and address; invalidate stale quotes on wallet switch.
 
-Two packages: `@stacks-capital/client` is framework free and talks to the API, `@stacks-capital/react` is a thin layer of hooks over it. The client is separate from `@stacks-capital/sdk` (kenzman's quote and plan surface), which keeps API access and quote math in their own packages; the SDK can re-export the client later.
+Two packages: `@stacks-capital/client` is framework free and talks to the API, `@stacks-capital/react` is a thin layer of hooks over it. The client is separate from `@stacks-capital/sdk`, the quote and plan surface, which keeps API access and quote math in their own packages; the SDK can re-export the client later.
 
 ## Using the client
 
@@ -96,11 +96,11 @@ Why:
 What it means in practice:
 
 - `POST /v1/quotes` and the plan it returns belong to a later task; nothing in I07 or I08 depends on it landing first.
-- The API imports `@stacks-capital/sdk` and calls `createCapitalOS` with server side reads, so the quote math lives in one package, kenzman's.
+- The API imports `@stacks-capital/sdk` and calls `createCapitalOS` with server side reads, so the quote math stays in one package.
 - The `quotes:write` scope on API keys (I05) is what that endpoint will check.
 - The client gains `quote()` when the endpoint exists. The cache already reserves the `quote` resource and drops it on a wallet switch, so the hook is a loader away.
 
-If kenzman prefers quoting in the browser, the change is small on this side: the hook calls `createCapitalOS` instead of the endpoint, and the API grows reads endpoints instead of a quote endpoint.
+If the team prefers quoting in the browser, the change is small on this side: the hook calls `createCapitalOS` instead of the endpoint, and the API grows reads endpoints instead of a quote endpoint.
 
 ## Tests
 

@@ -44,6 +44,7 @@ All three database commands read `DATABASE_URL` from the environment or `.env.lo
 | `0005_snapshots.sql` | `market_snapshots`, `position_snapshots`, `wallet_balance_snapshots` |
 | `0006_identity.sql` (I05) | `partners`, `partner_apps`, `allowed_origins`, `api_keys`, `auth_nonces`, `user_sessions`, plus `app_id` and `owner_address` on `workflows` |
 | `0007_projections.sql` (I06) | `price_snapshots`, `reconciliation_runs` |
+| `0008_rewards.sql` (I11) | `reward_snapshots` |
 
 Values that core restricts (networks, chains, actions, capability states, workflow states, next actions, position kinds) are Postgres domains, so the database rejects anything core does not know.
 
@@ -92,7 +93,7 @@ Ids, hashes and timestamps are fixed, so two fresh databases get identical rows 
 
 CI runs migrations, seeds twice and runs these tests against the Compose PostgreSQL.
 
-## Findings for kenzman
+## Findings
 
 1. **USDCx asset name.** Fixed: adapters and quotes use onchain `usdcx-token`.
 2. **Zest vault receipt name.** Fixed: adapters and quotes use onchain `zft`. Product copy may still say zsBTC.
@@ -105,7 +106,7 @@ The fixtures use the verified onchain names for assets. The quote and plan rows 
 ## Unsupported and deferred
 
 - Partners, apps, origins, API keys and sessions landed with I05. Webhooks, usage and the audit log are not created yet; they belong to later tasks.
-- `price_snapshots` and `reconciliation_runs` landed with I06 (see docs/engineering/ingestion.md). `rate_snapshots`, `liquidity_snapshots`, `reward_events` and `cash_flows` are not created yet; I11 will define what they need.
+- `price_snapshots` and `reconciliation_runs` landed with I06 (see docs/engineering/ingestion.md). `reward_snapshots` landed with I11 (see docs/engineering/positions.md). `rate_snapshots`, `liquidity_snapshots` and `cash_flows` are not created yet.
 - The database does not enforce which workflow state transitions are allowed; that stays in core's `transition`.
 - There is no plan hash column because core's `Plan` has no hash yet (page 03 asks for one).
 - `pnpm services:up` and `pnpm services:down` need Linux or macOS.

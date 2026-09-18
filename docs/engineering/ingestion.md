@@ -97,7 +97,7 @@ A database seeded with the I04 fixtures cannot ingest the live chain: the fixtur
 - Unit (`apps/worker/src/*.test.ts`): Clarity decoding against payloads recorded from mainnet on 2026-09-17, including a pause state tuple, a vault balance, a live DIA price, an empty DIA entry and a real vault deposit event; the Hiro client's key header, rate limit and failure mapping; every rule in the table above for market and price snapshots; and reconciliation match, mismatch and unavailable.
 - Integration (`apps/worker/test/integration`), against a migrated and seeded schema with a chain the test controls: bootstrap with no checkpoint, following the chain forward, projecting a vault market and storing everything else as unknown, storing prices, ingesting contract logs once, reconciling match and mismatch, keeping a failed read out of the projection, rewinding a reorg without deleting evidence, marking an orphaned block's events noncanonical, and skipping a transaction the chain no longer holds.
 
-## Findings for kenzman
+## Findings
 
 1. **Prices are available without Pyth.** See above. This removes the pricing blocker for reads and display. The paid Hermes plan is only needed for writes that carry a price update.
 2. **`get-interest-rate` is stored as the supply rate.** The vault returns a single rate in basis points (130 on 2026-09-17, with utilization 1111). Please confirm it is the supply rate and not the borrow rate, and whether the borrow rate needs a different read.

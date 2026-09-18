@@ -6,7 +6,16 @@ import { FIXTURE_APP, OTHER_APP, seedFixtures } from "@stacks-capital/database/f
 import { MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import { createApp } from "../../src/app.ts";
 import { memoryLimiter } from "../../src/rateLimit.ts";
-import { ErrorBody, QuoteResponse, SignatureResponse, StartedWorkflowResponse } from "../../src/schemas.ts";
+import {
+  EarnOptionsResponse,
+  ErrorBody,
+  MarketRiskResponse,
+  WorkflowsResponse,
+  PositionsResponse,
+  QuoteResponse,
+  SignatureResponse,
+  StartedWorkflowResponse,
+} from "../../src/schemas.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
 // The fixtures are quoted at this instant, so a quote made here is fresh.
@@ -31,7 +40,7 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     app = build(NOW);
     const { token } = await createApiKey(sql, {
       appId: FIXTURE_APP.id,
-      scopes: ["quotes:write", "workflows:write", "markets:read"],
+      scopes: ["quotes:write", "workflows:write", "markets:read", "positions:read"],
     });
     keyHeaders = { authorization: `Bearer ${token}` };
   });
@@ -213,6 +222,122 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     });
     assert.equal(result.response.status, 400);
     assert.equal(ErrorBody.parse(result.body).error.code, "INVALID_REQUEST");
+  });
+
+  it("serves the positions the worker projected, and refuses a key without an owner", async () => {
+    await sql`
+      INSERT INTO position_snapshots (owner, network, deployment_id, market_id, kind, protocol_key, asset_id, quantity,
+                                      stale, warnings, source, observed_at, adapter_version, calculation_version)
+      SELECT ${MAINNET_OWNER}, 'mainnet', c.deployment_id, 'zest.sbtc.vault', 'supplied', 'zest.sbtc.vault:supplied',
+             m.supplied_asset_id, 100054938, false, '{}', 'hiro-read', ${new Date(NOW.getTime() + 3_600_000)},
+             'zest-earn@0.1.0',
+             'position-decoder@0.1.0'
+      FROM markets m
+      JOIN capabilities c ON c.network = m.network AND c.market_id = m.id AND c.action = 'supply'
+      WHERE m.network = 'mainnet' AND m.id = 'zest.sbtc.vault'
+    `;
+
+    const response = await app.request(`/v1/positions?network=mainnet&owner=${MAINNET_OWNER}`, {
+      headers: { ...keyHeaders, "x-scope": "positions" },
+    });
+    assert.equal(response.status, 200);
+    const body = PositionsResponse.parse(await response.json());
+    // The fixtures hold their own position for this market under a different protocol key, and both survive.
+    const supplied = body.data.items.find((item) => item.protocolKey === "zest.sbtc.vault:supplied");
+    assert.equal(supplied?.quantity, "100054938");
+    // The fixtures also hold an unknown position, and unknown stays unknown rather than becoming zero.
+    assert.ok(body.data.items.some((item) => item.quantity === null && item.warnings.length > 0));
+
+    const withoutOwner = await app.request("/v1/positions?network=mainnet", { headers: keyHeaders });
+    assert.equal(withoutOwner.status, 400);
+  });
+
+  it("serves what each earn market pays and allows, with unknowns left unknown", async () => {
+    const response = await app.request("/v1/earn/options?network=mainnet", { headers: keyHeaders });
+    assert.equal(response.status, 200);
+    const body = EarnOptionsResponse.parse(await response.json());
+
+    const vault = body.data.items.find((item) => item.marketId === "zest.sbtc.vault");
+    assert.equal(vault?.supply.state, "enabled");
+    assert.equal(vault?.withdrawal?.state, "enabled");
+    assert.ok(vault?.suppliedAssetId?.endsWith("sbtc-token"));
+    // No worker has run in this schema, so rates and liquidity are unknown rather than zero.
+    assert.equal(vault?.baseRate, null);
+    assert.equal(vault?.availableLiquidity, null);
+    assert.equal(vault?.stale, true);
+
+    // Only markets that can be supplied into are listed at all.
+    assert.ok(body.data.items.every((item) => item.supply.state !== undefined));
+    assert.ok(!body.data.items.some((item) => item.marketId === "sbtc.deposit"));
+  });
+
+  it("serves risk parameters and prices, and leaves what it cannot read unknown", async () => {
+    const unknownPrices = await app.request(
+      `/v1/markets/granite.sbtc.isolated/risk?network=mainnet&owner=${MAINNET_OWNER}`,
+      {
+        headers: keyHeaders,
+      },
+    );
+    assert.equal(unknownPrices.status, 200);
+    const before = MarketRiskResponse.parse(await unknownPrices.json()).data;
+    assert.equal(before.params?.ltvBorrowBps, "7000");
+    // No price has been read in this schema, so the oracle is unknown and stale, not zero.
+    assert.equal(before.collateralOracle.price, null);
+    assert.equal(before.collateralOracle.stale, true);
+    assert.match(before.collateralOracle.warnings.join(" "), /No price has been read/);
+
+    await sql`
+      INSERT INTO price_snapshots (network, feed_key, price, price_scale, published_at, stale, warnings, source,
+                                   observed_at)
+      VALUES ('mainnet', 'BTC/USD', 7000000000000, 8, ${NOW}, false, '{}', 'dia-oracle', ${NOW})
+    `;
+    const withPrice = await app.request(
+      `/v1/markets/granite.sbtc.isolated/risk?network=mainnet&owner=${MAINNET_OWNER}`,
+      {
+        headers: keyHeaders,
+      },
+    );
+    const after = MarketRiskResponse.parse(await withPrice.json()).data;
+    assert.equal(after.collateralOracle.price, "7000000000000");
+    assert.equal(after.collateralOracle.source, "dia-oracle");
+  });
+
+  it("refuses risk to a browser client and answers 404 for a market that does not exist", async () => {
+    const browser = { "x-capital-client-id": FIXTURE_APP.clientId, origin: FIXTURE_APP.origin };
+    const asBrowser = await app.request("/v1/markets/granite.sbtc.isolated/risk?network=mainnet", { headers: browser });
+    assert.equal(asBrowser.status, 403);
+
+    const missing = await app.request("/v1/markets/nope.market/risk?network=mainnet", { headers: keyHeaders });
+    assert.equal(missing.status, 404);
+  });
+
+  it("lists the caller's workflows newest first, and keeps another tenant out", async () => {
+    const { started } = await startedWorkflow();
+    const response = await app.request("/v1/workflows?network=mainnet&limit=100", { headers: keyHeaders });
+    assert.equal(response.status, 200);
+    const body = WorkflowsResponse.parse(await response.json());
+    assert.ok(body.data.items.some((item) => item.id === started.workflowId));
+    const first = body.data.items[0];
+    assert.ok(first !== undefined && first.transitionCount > 0);
+
+    // Every workflow here was created at the same instant, so paging must key on the id as well as the time.
+    const page = await app.request("/v1/workflows?network=mainnet&limit=2", { headers: keyHeaders });
+    const firstPage = WorkflowsResponse.parse(await page.json()).data;
+    assert.equal(firstPage.items.length, 2);
+    assert.ok(firstPage.nextCursor !== null);
+    const second = await app.request(
+      `/v1/workflows?network=mainnet&limit=2&cursor=${encodeURIComponent(firstPage.nextCursor ?? "")}`,
+      { headers: keyHeaders },
+    );
+    const secondPage = WorkflowsResponse.parse(await second.json()).data;
+    const ids = [...firstPage.items, ...secondPage.items].map((item) => item.id);
+    assert.equal(new Set(ids).size, ids.length);
+
+    const { token } = await createApiKey(sql, { appId: OTHER_APP.id, scopes: ["workflows:write"] });
+    const other = await app.request("/v1/workflows?network=mainnet", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    assert.deepEqual(WorkflowsResponse.parse(await other.json()).data.items, []);
   });
 
   it("reports a market it cannot quote without exposing internals", async () => {
