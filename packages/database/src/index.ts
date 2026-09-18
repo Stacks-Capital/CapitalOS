@@ -21,10 +21,12 @@ export {
   findWorkflowForTenant,
   isAllowedOrigin,
   type KeyPrincipal,
+  listWorkflowsForTenant,
   type PendingNonce,
   revokeApiKey,
   type SessionPrincipal,
   type WorkflowRecord,
+  type WorkflowSummary,
 } from "./identity.ts";
 export {
   type AttemptInsert,
@@ -63,6 +65,21 @@ export {
   recordBlock,
   recordReconciliation,
 } from "./ingestion.ts";
+export { type EarnOptionRow, listEarnOptions } from "./earn.ts";
+export {
+  insertPositionSnapshot,
+  insertRewardSnapshot,
+  latestPositions,
+  latestPrices,
+  listKnownOwners,
+  listMarketAssets,
+  type MarketAssets,
+  type OwnerPosition,
+  type PositionKind,
+  type PositionSnapshotRow,
+  type PriceRow,
+  type RewardSnapshotRow,
+} from "./positions.ts";
 export {
   type CapabilityRecord,
   type CapabilityState,

@@ -111,3 +111,88 @@ export type SignatureOutcome = {
   outcome: "BROADCAST" | "SIGNED" | "UNKNOWN";
   txid: string | null;
 };
+
+export type PositionKind =
+  | "wallet"
+  | "supplied"
+  | "debt"
+  | "collateral"
+  | "pending_deposit"
+  | "pending_withdrawal"
+  | "staked";
+
+export type Position = {
+  marketId: string;
+  kind: PositionKind;
+  protocolKey: string;
+  assetId: string;
+  /** Null when unknown. Zero is a real balance. */
+  quantity: string | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string;
+  blockHeight: number | null;
+  rewardRate: string | null;
+  rewardScale: number | null;
+  adapterVersion: string;
+  calculationVersion: string;
+};
+
+export type EarnOption = {
+  marketId: string;
+  protocol: string;
+  suppliedAssetId: string | null;
+  receiptAssetId: string | null;
+  supply: { state: string; reason: string };
+  /** Null when the market lists no withdrawal action at all. */
+  withdrawal: { state: string; reason: string } | null;
+  baseRate: string | null;
+  baseRateScale: number | null;
+  incentiveRate: string | null;
+  incentiveRateScale: number | null;
+  availableLiquidity: string | null;
+  capacity: string | null;
+  paused: boolean | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string | null;
+  adapterVersion: string;
+};
+
+export type OracleQuoteView = {
+  feedKey: string;
+  price: string | null;
+  scale: number;
+  publishedAt: string | null;
+  observedAt: string;
+  source: string;
+  stale: boolean;
+  warnings: string[];
+};
+
+export type MarketRisk = {
+  marketId: string;
+  params: {
+    ltvBorrowBps: string;
+    ltvLiqBps: string;
+    bufferBps: string;
+    collateralDecimals: number;
+    debtDecimals: number;
+  } | null;
+  collateralOracle: OracleQuoteView;
+  debtOracle: OracleQuoteView;
+  position: { collateral: string | null; debt: string | null; stale: boolean; warnings: string[] };
+  warnings: string[];
+};
+
+export type WorkflowSummary = {
+  id: string;
+  network: StacksNetwork;
+  state: string;
+  nextAction: string;
+  quoteId: string | null;
+  planId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  transitionCount: number;
+};

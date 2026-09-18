@@ -1,13 +1,17 @@
 import type { QuotedPlan, StartedWorkflow } from "@stacks-capital/client";
-import { useCapital, useMarkets, useWorkflow } from "@stacks-capital/react";
+import { useCapital, useEarnOptions, useWorkflow } from "@stacks-capital/react";
 import { useEffect, useMemo, useState } from "react";
 import type { WalletId } from "@stacks-capital/wallets";
+import { compareEarn, formatRate } from "./compare.ts";
 import { canSign, clearPending, loadPending, reviewQuote, savePending, stageFor } from "./earn.ts";
 import type { ConnectedWallet } from "./session.ts";
 import { toWalletRequest } from "./signing.ts";
 import { messageFor, panelState } from "./state.ts";
 import { Panel, StateNote } from "./ui.tsx";
 import { findProvider } from "./wallet.ts";
+
+const rateOf = (value: string | null, scale: number | null) =>
+  value === null || scale === null ? null : { value, scale };
 
 const idempotencyKey = () => `idem_${crypto.randomUUID()}`;
 const storage = (): Storage | null => {
@@ -20,7 +24,7 @@ const storage = (): Storage | null => {
 
 export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; signedIn: boolean }) {
   const { client } = useCapital();
-  const markets = useMarkets({ limit: 100 });
+  const earnOptions = useEarnOptions();
   const [marketId, setMarketId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [quoted, setQuoted] = useState<QuotedPlan | null>(null);
@@ -41,9 +45,7 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
     if (scope !== null && (stage === "done" || stage === "recovery")) clearPending(storage(), scope);
   }, [scope, stage]);
 
-  const supplyMarkets = (markets.data?.items ?? []).filter((market) =>
-    market.capabilities.some((capability) => capability.action === "supply" && capability.state === "enabled"),
-  );
+  const comparison = compareEarn(earnOptions.data?.data.items ?? [], new Date());
 
   async function getQuote() {
     if (marketId === null || wallet === null) return;
@@ -109,18 +111,62 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
 
       {stage === "review" ? (
         <Panel title="Compare and review">
-          <StateNote state={panelState(markets, markets.data?.context)} onRetry={() => void markets.refresh()} />
-          <label>
-            Market
-            <select value={marketId ?? ""} onChange={(event) => setMarketId(event.target.value || null)}>
-              <option value="">Choose a vault</option>
-              {supplyMarkets.map((market) => (
-                <option key={market.id} value={market.id}>
-                  {market.id}
-                </option>
-              ))}
-            </select>
-          </label>
+          <StateNote
+            state={panelState(earnOptions, earnOptions.data?.context)}
+            onRetry={() => void earnOptions.refresh()}
+          />
+          <p className="muted">{comparison.note}</p>
+
+          {comparison.groups.map((group) => (
+            <section key={group.suppliedAssetId ?? "unknown"}>
+              <h3>Supplying {group.suppliedAssetId ?? "an asset this app cannot name"}</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Market</th>
+                    <th>Base</th>
+                    <th>Incentive</th>
+                    <th>Together</th>
+                    <th>Liquidity</th>
+                    <th>Withdrawal</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.rows.map((row) => (
+                    <tr key={row.option.marketId} aria-selected={marketId === row.option.marketId}>
+                      <td>{row.rank ?? "not ranked"}</td>
+                      <td>{row.option.marketId}</td>
+                      <td>{formatRate(rateOf(row.option.baseRate, row.option.baseRateScale))}</td>
+                      <td>{formatRate(rateOf(row.option.incentiveRate, row.option.incentiveRateScale))}</td>
+                      <td>{formatRate(row.effectiveRate)}</td>
+                      <td>{row.option.availableLiquidity ?? "unknown"}</td>
+                      <td>{row.option.withdrawal === null ? "none listed" : row.option.withdrawal.state}</td>
+                      <td>
+                        <button
+                          type="button"
+                          disabled={row.option.supply.state !== "enabled"}
+                          onClick={() => setMarketId(row.option.marketId)}
+                        >
+                          Choose
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {group.rows
+                .filter((row) => row.notes.length > 0)
+                .map((row) => (
+                  <p key={row.option.marketId} className="muted">
+                    {row.option.marketId}: {row.notes.join(" ")}
+                  </p>
+                ))}
+            </section>
+          ))}
+
+          <p className="muted">Fees depend on the amount, and are shown with the quote below.</p>
           <label>
             Amount in base units
             <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" />

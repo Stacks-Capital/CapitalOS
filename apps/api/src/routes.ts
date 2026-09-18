@@ -3,14 +3,19 @@ import {
   CapabilitiesResponse,
   ChallengeRequest,
   ChallengeResponse,
+  EarnOptionsResponse,
   ErrorBody,
   ListQuery,
+  MarketRiskResponse,
   MarketsResponse,
   NetworkQuery,
   PlanRequest,
   PlanResponse,
   QuoteRequest,
   QuoteResponse,
+  PositionQuery,
+  PricesResponse,
+  PositionsResponse,
   SessionResponse,
   SignatureRequest,
   SignatureResponse,
@@ -18,7 +23,9 @@ import {
   StartWorkflowRequest,
   VerifyRequest,
   WorkflowParams,
+  WorkflowListQuery,
   WorkflowResponse,
+  WorkflowsResponse,
 } from "./schemas.ts";
 
 const error = (description: string) => ({ description, content: { "application/json": { schema: ErrorBody } } });
@@ -110,6 +117,50 @@ export const signatureRoute = createRoute({
     404: error("No such workflow for the caller"),
     ...errorResponses,
   },
+});
+
+export const earnOptionsRoute = createRoute({
+  method: "get",
+  path: "/v1/earn/options",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: { 200: json("What each earn market pays and allows", EarnOptionsResponse), ...errorResponses },
+});
+
+export const pricesRoute = createRoute({
+  method: "get",
+  path: "/v1/prices",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: { 200: json("Latest price for each feed the platform reads", PricesResponse), ...errorResponses },
+});
+
+export const marketRiskRoute = createRoute({
+  method: "get",
+  path: "/v1/markets/{id}/risk",
+  security: keyOrSession,
+  request: { params: WorkflowParams, query: PositionQuery },
+  responses: {
+    200: json("Risk parameters, prices and the caller's position", MarketRiskResponse),
+    404: error("No such market"),
+    ...errorResponses,
+  },
+});
+
+export const positionsRoute = createRoute({
+  method: "get",
+  path: "/v1/positions",
+  security: keyOrSession,
+  request: { query: PositionQuery },
+  responses: { 200: json("Positions for one address", PositionsResponse), ...errorResponses },
+});
+
+export const workflowsRoute = createRoute({
+  method: "get",
+  path: "/v1/workflows",
+  security: keyOrSession,
+  request: { query: WorkflowListQuery },
+  responses: { 200: json("The caller's workflows, newest first", WorkflowsResponse), ...errorResponses },
 });
 
 export const workflowRoute = createRoute({

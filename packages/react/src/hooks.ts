@@ -1,12 +1,17 @@
 import {
   cacheKey,
   type Entry,
+  type EarnOption,
   type Market,
   type MarketCapability,
+  type MarketRisk,
+  type OracleQuoteView,
   type Page,
   RESOURCES,
+  type Position,
   type Result,
   type Workflow,
+  type WorkflowSummary,
 } from "@stacks-capital/client";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useCapital } from "./context.ts";
@@ -82,6 +87,48 @@ export function useCapabilities(options: PageQuery = {}): QueryResult<Page<Marke
     (signal) => client.capabilities({ limit, cursor, signal }),
     query,
   );
+}
+
+export function useEarnOptions(options: QueryOptions = {}): QueryResult<Result<{ items: EarnOption[] }>> {
+  const { client, scope } = useCapital();
+  const key = cacheKey(scope, "earnOptions");
+  return useCapitalQuery<Result<{ items: EarnOption[] }>>(key, (signal) => client.earnOptions({ signal }), options);
+}
+
+export function usePrices(options: QueryOptions = {}): QueryResult<Result<{ items: OracleQuoteView[] }>> {
+  const { client, scope } = useCapital();
+  return useCapitalQuery<Result<{ items: OracleQuoteView[] }>>(
+    cacheKey(scope, "prices"),
+    (signal) => client.prices({ signal }),
+    options,
+  );
+}
+
+export function useMarketRisk(marketId: string | null, options: QueryOptions = {}): QueryResult<Result<MarketRisk>> {
+  const { client, scope } = useCapital();
+  const key = marketId === null ? null : cacheKey(scope, "risk", { marketId });
+  return useCapitalQuery<Result<MarketRisk>>(key, (signal) => client.marketRisk(marketId ?? "", { signal }), options);
+}
+
+export function usePositions(
+  options: QueryOptions & { owner?: string } = {},
+): QueryResult<Result<{ items: Position[] }>> {
+  const { client, scope } = useCapital();
+  const { owner, ...query } = options;
+  const address = owner ?? scope.address;
+  const key = address === null ? null : cacheKey(scope, RESOURCES.positions, { owner: address });
+  return useCapitalQuery<Result<{ items: Position[] }>>(
+    key,
+    (signal) => client.positions({ ...(owner === undefined ? {} : { owner }), signal }),
+    query,
+  );
+}
+
+export function useWorkflows(options: PageQuery = {}): QueryResult<Page<WorkflowSummary>> {
+  const { client, scope } = useCapital();
+  const { limit, cursor, ...query } = options;
+  const key = cacheKey(scope, "workflows", { limit, cursor });
+  return useCapitalQuery<Page<WorkflowSummary>>(key, (signal) => client.workflows({ limit, cursor, signal }), query);
 }
 
 export function useWorkflow(id: string | null, options: QueryOptions = {}): QueryResult<Result<Workflow>> {

@@ -6,7 +6,11 @@ import {
   exchangeNonceForSession,
   findWorkflowForTenant,
   isAllowedOrigin,
+  latestPositions,
+  latestPrices,
   listCapabilities,
+  listEarnOptions,
+  listWorkflowsForTenant,
   listMarkets,
   type Sql,
 } from "@stacks-capital/database";
@@ -20,19 +24,24 @@ import {
   signatureMatches,
 } from "./auth.ts";
 import { decodeCursor, encodeCursor } from "./cursor.ts";
-import { createQuote, liveReads, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
+import { createQuote, liveReads, marketRisk, type ReadsLoader, recordSignature, startWorkflow } from "./execution.ts";
 import { ApiError, errorBody } from "./errors.ts";
 import { DEFAULT_RATE_LIMITS, type RateLimiter, type RateLimits } from "./rateLimit.ts";
 import {
   capabilitiesRoute,
   challengeRoute,
+  earnOptionsRoute,
+  marketRiskRoute,
   marketsRoute,
   planRoute,
+  positionsRoute,
+  pricesRoute,
   quoteRoute,
   signatureRoute,
   startWorkflowRoute,
   verifyRoute,
   workflowRoute,
+  workflowsRoute,
 } from "./routes.ts";
 import { intentFromBody, mintPlan, quoteOwner, toQuoteWire } from "./quote.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
@@ -176,6 +185,137 @@ export function createApp(deps: AppDependencies) {
     );
   });
 
+  app.openapi(earnOptionsRoute, async (c) => {
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const options = await listEarnOptions(deps.sql, network);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: options.map((option) => ({
+            marketId: option.marketId,
+            protocol: option.protocol,
+            suppliedAssetId: option.suppliedAssetId,
+            receiptAssetId: option.receiptAssetId,
+            supply: { state: option.supplyState, reason: option.supplyReason },
+            withdrawal:
+              option.withdrawState === null
+                ? null
+                : { state: option.withdrawState, reason: option.withdrawReason ?? "" },
+            baseRate: option.baseRate,
+            baseRateScale: option.baseRateScale,
+            incentiveRate: option.incentiveRate,
+            incentiveRateScale: option.incentiveRateScale,
+            availableLiquidity: option.availableLiquidity,
+            capacity: option.capacity,
+            paused: option.paused,
+            stale: option.stale,
+            warnings: option.warnings,
+            observedAt: option.observedAt === null ? null : option.observedAt.toISOString(),
+            adapterVersion: option.adapterVersion,
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(pricesRoute, async (c) => {
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const prices = await latestPrices(deps.sql, network, ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"]);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: prices.map((price) => ({
+            feedKey: price.feedKey,
+            price: price.price,
+            scale: price.priceScale,
+            publishedAt: price.publishedAt === null ? null : price.publishedAt.toISOString(),
+            observedAt: price.observedAt.toISOString(),
+            source: price.source,
+            stale: price.stale,
+            warnings: price.warnings,
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(marketRiskRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const { network, owner } = c.req.valid("query");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Risk needs an API key or a wallet session");
+    requireScope(principal, "positions:read");
+    const address = principal.kind === "session" ? principal.address : (owner ?? null);
+
+    const known = await listMarkets(deps.sql, { network, afterId: null, limit: 100 });
+    if (!known.items.some((market) => market.id === id)) throw new ApiError("NOT_FOUND", "No such market");
+
+    const risk = await marketRisk({ sql: deps.sql, reads, now }, { network, marketId: id, owner: address });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: risk,
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(positionsRoute, async (c) => {
+    const { network, owner } = c.req.valid("query");
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Positions need an API key or a wallet session");
+    requireScope(principal, "positions:read");
+    // A session only ever reads its own address; a key must name whose positions it wants.
+    const address = principal.kind === "session" ? principal.address : owner;
+    if (address === undefined) throw new ApiError("INVALID_REQUEST", "owner is required for an API key");
+    if (principal.kind === "session" && principal.network !== network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+
+    const items = await latestPositions(deps.sql, { network, owner: address });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: items.map((position) => ({
+            marketId: position.marketId,
+            kind: position.kind,
+            protocolKey: position.protocolKey,
+            assetId: position.assetId,
+            quantity: position.quantity,
+            stale: position.stale,
+            warnings: position.warnings,
+            observedAt: position.observedAt.toISOString(),
+            blockHeight: position.blockHeight,
+            rewardRate: position.rewardRate,
+            rewardScale: position.rewardScale,
+            adapterVersion: position.adapterVersion,
+            calculationVersion: position.calculationVersion,
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
   app.openapi(challengeRoute, async (c) => {
     const { network, address } = c.req.valid("json");
     const client = requireClient(await admit(c));
@@ -225,6 +365,42 @@ export function createApp(deps: AppDependencies) {
           sessionId: session.sessionId,
           address: session.address,
           expiresAt: session.expiresAt.toISOString(),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(workflowsRoute, async (c) => {
+    const { network, owner, limit, cursor } = c.req.valid("query");
+    const after = decodeCursor("workflows", cursor, 2);
+    const principal = await admit(c);
+    if (principal.kind === "client") throw new ApiError("FORBIDDEN", "Workflows need an API key or a wallet session");
+    requireScope(principal, "workflows:write");
+    // A session lists only its own; a key lists its app, or one address within it.
+    const ownerAddress = principal.kind === "session" ? principal.address : (owner ?? null);
+
+    const page = await listWorkflowsForTenant(deps.sql, {
+      appId: principal.appId,
+      ownerAddress,
+      network,
+      limit,
+      before: after === null ? undefined : { createdAt: new Date(after[0] ?? ""), id: after[1] ?? "" },
+    });
+    const last = page.items.at(-1);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: page.items.map((workflow) => ({
+            ...workflow,
+            createdAt: workflow.createdAt.toISOString(),
+            updatedAt: workflow.updatedAt.toISOString(),
+          })),
+          nextCursor: page.hasMore && last ? encodeCursor("workflows", [last.createdAt.toISOString(), last.id]) : null,
         },
         context: context(),
       },
