@@ -3,6 +3,13 @@ import type { StacksNetwork } from "@stacks-capital/core";
 
 export const REGISTRY_VERSION = "0.1.0";
 
+/** Onchain SIP-010 names. Post conditions that use a ticker fail on chain. */
+export const FUNGIBLE_ASSET_NAME = {
+  sbtc: "sbtc-token",
+  usdcx: "usdcx-token",
+  zestShares: "zft",
+} as const;
+
 export type ProviderEndpoints = {
   stacksApi: string;
   emily: string;
@@ -116,12 +123,20 @@ export const CONTRACTS: readonly ContractRef[] = [
     role: "sip10",
   },
   {
-    protocol: "zest",
+    protocol: "granite",
     label: "v0-8-market",
     network: "mainnet",
     contractId: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market",
     revision: "8883545",
     role: "market",
+  },
+  {
+    protocol: "dia",
+    label: "dia-oracle",
+    network: "mainnet",
+    contractId: "SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle",
+    revision: "live",
+    role: "oracle",
   },
   {
     protocol: "zest",
