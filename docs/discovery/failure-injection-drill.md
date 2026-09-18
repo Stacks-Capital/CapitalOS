@@ -28,4 +28,4 @@ Signer delay for sBTC deposit stays pending until a canonical mint reconciles (K
 
 ## Not in this drill
 
-I17 (metrics, alerts, feature flags) has not landed. The drill proves protocol and workflow recovery without those signals. Operator dashboards and flags stay IBK.
+I17 (metrics, alerts, feature flags) has since landed. How its alerts and switches map to these failures is in `docs/runbooks/incidents.md`.

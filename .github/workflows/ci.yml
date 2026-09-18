@@ -92,6 +92,9 @@ jobs:
       - name: Database integration tests
         run: pnpm test:integration
 
+      - name: Backup and restore drill
+        run: pnpm db:restore-drill
+
       - name: Browser for end to end tests
         run: pnpm --filter @stacks-capital/e2e exec playwright install --with-deps chromium
 
