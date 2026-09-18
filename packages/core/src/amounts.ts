@@ -1,4 +1,4 @@
-import { sameAsset, type AssetId } from "./ids.ts";
+import { formatAssetId, parseAssetId, sameAsset, type AssetId } from "./ids.ts";
 
 export type AssetAmount = {
   asset: AssetId;
@@ -20,7 +20,11 @@ export function formatQuantity(quantity: bigint): string {
 }
 
 export function jsonAmount(amount: AssetAmount): { asset: string; quantity: string } {
-  return { asset: `${amount.asset.chain}:${amount.asset.network}`, quantity: formatQuantity(amount.quantity) };
+  return { asset: formatAssetId(amount.asset), quantity: formatQuantity(amount.quantity) };
+}
+
+export function parseAmount(value: { asset: string; quantity: string }): AssetAmount {
+  return { asset: parseAssetId(value.asset), quantity: parseQuantity(value.quantity) };
 }
 
 export function amount(asset: AssetId, quantity: string | bigint): AssetAmount {
