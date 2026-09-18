@@ -7,6 +7,7 @@ import {
   formatAssetId,
   parseQuantity,
   projectedHealth,
+  settleRepayAmount,
   sip10,
   validatePlan,
   type Action,
@@ -70,6 +71,7 @@ function asOracle(snapshot: OracleSnapshot): OracleQuote {
 function requireReads(
   ctx: AdapterContext,
   reads: AdapterReads,
+  action: Action,
 ): {
   collateral: Omit<AssetRiskSide, "amount">;
   debt: Omit<AssetRiskSide, "amount">;
@@ -84,6 +86,7 @@ function requireReads(
   const usdcxOracle = asOracle(reads.oracle.usdcx);
   assertOracleFresh(sbtcOracle, ctx.now, "sBTC");
   assertOracleFresh(usdcxOracle, ctx.now, "USDCx");
+  const held = requireKnownPosition(action, reads);
   return {
     collateral: { decimals: parseQuantity(reads.riskParams.sbtcDecimals), oracle: sbtcOracle },
     debt: { decimals: parseQuantity(reads.riskParams.usdcxDecimals), oracle: usdcxOracle },
@@ -92,13 +95,37 @@ function requireReads(
       ltvLiqBps: parseQuantity(reads.riskParams.ltvLiqBps),
       bufferBps: parseQuantity(reads.riskParams.bufferBps),
     },
-    collateralBefore: parseQuantity(reads.position?.collateral ?? "0"),
-    debtBefore: parseQuantity(reads.position?.debt ?? "0"),
+    collateralBefore: held.collateralBefore,
+    debtBefore: held.debtBefore,
   };
 }
 
+function requireKnownPosition(action: Action, reads: AdapterReads): { collateralBefore: bigint; debtBefore: bigint } {
+  if (action === "supply") {
+    return {
+      collateralBefore: parseQuantity(reads.position?.collateral ?? "0"),
+      debtBefore: parseQuantity(reads.position?.debt ?? "0"),
+    };
+  }
+  if (reads.position === undefined) {
+    throw capitalError("PLAN_INVALID", "current position is unknown, so the result cannot be projected");
+  }
+  return {
+    collateralBefore: parseQuantity(reads.position.collateral),
+    debtBefore: parseQuantity(reads.position.debt),
+  };
+}
+
+function normalizeCreditIntent(intent: Intent, reads: AdapterReads): Intent {
+  const held = requireKnownPosition(intent.action, reads);
+  if (intent.action !== "repay") return intent;
+  const settled = settleRepayAmount(intent.amount, held.debtBefore);
+  if ("error" in settled) throw capitalError("INSUFFICIENT_BALANCE", settled.error);
+  return { ...intent, amount: settled.amount.toString(10) };
+}
+
 function healthFor(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Health {
-  const loaded = requireReads(ctx, reads);
+  const loaded = requireReads(ctx, reads, intent.action);
   const bufferBps = intent.bufferBps !== undefined ? parseQuantity(intent.bufferBps) : loaded.params.bufferBps;
   const collateralDelta =
     intent.action === "supply"
@@ -230,19 +257,23 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
       capability?.reason ?? "Granite v0-8-market is not deployed on public Stacks testnet",
     );
   }
-  const qty = parseQuantity(intent.amount);
+  const normalized = normalizeCreditIntent(intent, reads);
+  if (normalized.action === "borrow" && reads.debtVault?.pausedRedeem) {
+    throw capitalError("CAPABILITY_DISABLED", "USDCx vault is paused");
+  }
+  const qty = parseQuantity(normalized.amount);
   const inputAsset =
-    intent.action === "supply" || intent.action === "withdraw_supply" ? sbtc(ctx.network) : usdcx(ctx.network);
+    normalized.action === "supply" || normalized.action === "withdraw_supply" ? sbtc(ctx.network) : usdcx(ctx.network);
   assertPositive(amount(inputAsset, qty), "granite amount");
 
-  const health = healthFor(ctx, intent, reads);
+  const health = healthFor(ctx, normalized, reads);
   if (health.stale) throw capitalError("ORACLE_STALE", health.warnings.join("; ") || "oracle is stale");
-  if ((intent.action === "borrow" || intent.action === "withdraw_supply") && !health.healthy) {
+  if ((normalized.action === "borrow" || normalized.action === "withdraw_supply") && !health.healthy) {
     throw capitalError("CAP_REACHED", "projected health is above borrow LTV");
   }
-  if (intent.action === "borrow") {
-    const loaded = requireReads(ctx, reads);
-    const extraCollateral = intent.collateralAmount !== undefined ? parseQuantity(intent.collateralAmount) : 0n;
+  if (normalized.action === "borrow") {
+    const loaded = requireReads(ctx, reads, "borrow");
+    const extraCollateral = normalized.collateralAmount !== undefined ? parseQuantity(normalized.collateralAmount) : 0n;
     if (loaded.collateralBefore + extraCollateral <= 0n)
       throw capitalError("INSUFFICIENT_BALANCE", "isolated collateral is required before borrow");
     if (loaded.debtBefore + qty > health.maxBorrow)
@@ -252,29 +283,29 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
       throw capitalError("CAP_REACHED", "USDCx vault liquidity is insufficient");
   }
 
-  const collateralIn = intent.collateralAmount !== undefined ? parseQuantity(intent.collateralAmount) : 0n;
+  const collateralIn = normalized.collateralAmount !== undefined ? parseQuantity(normalized.collateralAmount) : 0n;
   const sending =
-    intent.action === "supply"
+    normalized.action === "supply"
       ? [amount(sbtc(ctx.network), qty)]
-      : intent.action === "repay"
+      : normalized.action === "repay"
         ? [amount(usdcx(ctx.network), qty)]
-        : intent.action === "borrow" && collateralIn > 0n
+        : normalized.action === "borrow" && collateralIn > 0n
           ? [amount(sbtc(ctx.network), collateralIn)]
           : [];
   const receiving =
-    intent.action === "borrow"
+    normalized.action === "borrow"
       ? [amount(usdcx(ctx.network), qty)]
-      : intent.action === "withdraw_supply"
+      : normalized.action === "withdraw_supply"
         ? [amount(sbtc(ctx.network), qty)]
-        : intent.action === "supply"
+        : normalized.action === "supply"
           ? [amount(sbtc(ctx.network), qty)]
           : [];
 
   const executable = capability?.state === "enabled";
   const warnings = [...(executable ? [] : [capability?.reason ?? "disabled"]), ...health.warnings];
   const quote: Quote = {
-    id: `q_granite_${intent.action}_${ctx.now.getTime()}`,
-    action: intent.action,
+    id: `q_granite_${normalized.action}_${ctx.now.getTime()}`,
+    action: normalized.action,
     marketId: GRANITE_MARKET_ISOLATED,
     network: ctx.network,
     input: sending,
@@ -284,6 +315,10 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
       `market:${contract("granite", "v0-8-market", ctx.network).contractId}`,
       `ltv:${health.currentLtvBps.toString(10)}`,
       `maxBorrow:${health.maxBorrow.toString(10)}`,
+      `health:${health.healthFactorBps.toString(10)}`,
+      `liquidity:${reads.debtVault?.totalAssets ?? "unknown"}`,
+      `pause:${reads.debtVault?.pausedRedeem ? "on" : "off"}`,
+      `oracle:${reads.oracle?.sbtc.observedAt ?? "unknown"}`,
     ],
     expiresAt: new Date(ctx.now.getTime() + 2 * 60_000).toISOString(),
     executable,
@@ -295,7 +330,8 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
   return quote;
 }
 
-function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _reads: AdapterReads): Plan {
+function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, reads: AdapterReads): Plan {
+  const normalized = normalizeCreditIntent(intent, reads);
   if (!quote.executable)
     throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "granite is not executable");
   const sender = ctx.owner;
@@ -303,11 +339,11 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
   const market = contract("granite", "v0-8-market", ctx.network);
   const sbtcToken = contract("sbtc", "sbtc-token", ctx.network).contractId;
   const usdcxToken = contract("usdcx", "usdcx", ctx.network).contractId;
-  const recipient = intent.recipient;
+  const recipient = normalized.recipient;
   const steps = [];
 
-  if (intent.action === "borrow" && intent.collateralAmount !== undefined) {
-    const collateral = amount(sbtc(ctx.network), intent.collateralAmount);
+  if (normalized.action === "borrow" && normalized.collateralAmount !== undefined) {
+    const collateral = amount(sbtc(ctx.network), normalized.collateralAmount);
     steps.push({
       id: "collateral-add",
       dependsOn: [] as string[],
@@ -318,7 +354,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         functionName: "collateral-add",
         functionArgs: [
           { type: "principal" as const, value: sbtcToken },
-          { type: "uint" as const, value: intent.collateralAmount },
+          { type: "uint" as const, value: normalized.collateralAmount },
           { type: "none" as const },
         ],
         postConditions: [{ principal: sender, mode: "send_lte" as const, amount: collateral }],
@@ -328,8 +364,8 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
     });
   }
 
-  if (intent.action === "supply") {
-    const sending = amount(sbtc(ctx.network), intent.amount);
+  if (normalized.action === "supply") {
+    const sending = amount(sbtc(ctx.network), normalized.amount);
     steps.push({
       id: "collateral-add",
       dependsOn: [],
@@ -340,7 +376,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         functionName: "collateral-add",
         functionArgs: [
           { type: "principal" as const, value: sbtcToken },
-          { type: "uint" as const, value: intent.amount },
+          { type: "uint" as const, value: normalized.amount },
           { type: "none" as const },
         ],
         postConditions: [{ principal: sender, mode: "send_lte" as const, amount: sending }],
@@ -348,8 +384,8 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         network: ctx.network,
       },
     });
-  } else if (intent.action === "withdraw_supply") {
-    const receiving = amount(sbtc(ctx.network), intent.amount);
+  } else if (normalized.action === "withdraw_supply") {
+    const receiving = amount(sbtc(ctx.network), normalized.amount);
     steps.push({
       id: "collateral-remove",
       dependsOn: [],
@@ -360,7 +396,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         functionName: "collateral-remove",
         functionArgs: [
           { type: "principal" as const, value: sbtcToken },
-          { type: "uint" as const, value: intent.amount },
+          { type: "uint" as const, value: normalized.amount },
           optionalPrincipal(recipient),
           { type: "none" as const },
         ],
@@ -369,11 +405,11 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         network: ctx.network,
       },
     });
-  } else if (intent.action === "borrow") {
-    const receiving = amount(usdcx(ctx.network), intent.amount);
+  } else if (normalized.action === "borrow") {
+    const receiving = amount(usdcx(ctx.network), normalized.amount);
     steps.push({
       id: "borrow",
-      dependsOn: intent.collateralAmount !== undefined ? ["collateral-add"] : [],
+      dependsOn: normalized.collateralAmount !== undefined ? ["collateral-add"] : [],
       expectedAssetEffects: [receiving],
       payload: {
         kind: "stacks_contract_call" as const,
@@ -381,7 +417,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         functionName: "borrow",
         functionArgs: [
           { type: "principal" as const, value: usdcxToken },
-          { type: "uint" as const, value: intent.amount },
+          { type: "uint" as const, value: normalized.amount },
           optionalPrincipal(recipient),
           { type: "none" as const },
         ],
@@ -390,8 +426,8 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         network: ctx.network,
       },
     });
-  } else if (intent.action === "repay") {
-    const sending = amount(usdcx(ctx.network), intent.amount);
+  } else if (normalized.action === "repay") {
+    const sending = amount(usdcx(ctx.network), normalized.amount);
     steps.push({
       id: "repay",
       dependsOn: [],
@@ -402,8 +438,8 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
         functionName: "repay",
         functionArgs: [
           { type: "principal" as const, value: usdcxToken },
-          { type: "uint" as const, value: intent.amount },
-          optionalPrincipal(intent.onBehalfOf),
+          { type: "uint" as const, value: normalized.amount },
+          optionalPrincipal(normalized.onBehalfOf),
         ],
         postConditions: [{ principal: sender, mode: "send_lte" as const, amount: sending }],
         postConditionMode: "deny" as const,
@@ -413,7 +449,7 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
   }
 
   if (steps.length === 0) throw capitalError("PLAN_INVALID", "no granite steps");
-  const twoStep = intent.action === "borrow" && intent.collateralAmount !== undefined;
+  const twoStep = normalized.action === "borrow" && normalized.collateralAmount !== undefined;
   return {
     id: `p_granite_${quote.id}`,
     quoteId: quote.id,
@@ -422,8 +458,8 @@ function buildCreditPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _rea
     adapterVersion: GRANITE_CREDIT_VERSION,
     expiresAt: quote.expiresAt,
     reviewSummary: twoStep
-      ? `Add ${intent.collateralAmount} sBTC isolated collateral, then borrow ${intent.amount} USDCx on v0-8-market. price-feeds none because the oracle is fresh.`
-      : `${intent.action} ${intent.amount} on Granite v0-8-market. Isolated collateral is not a Zest receipt. Oracle max age 3 minutes.`,
+      ? `Add ${normalized.collateralAmount} sBTC isolated collateral, then borrow ${normalized.amount} USDCx on v0-8-market. Sign each step separately. price-feeds none because the oracle is fresh.`
+      : `${normalized.action} ${normalized.amount} on Granite v0-8-market. Isolated collateral is not a Zest receipt. Oracle max age 3 minutes.`,
     steps,
   };
 }
