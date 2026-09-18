@@ -45,7 +45,21 @@ module.exports = {
       comment: "Page 01: the web application calls public SDK methods, not adapter transaction builders.",
       severity: "error",
       from: { path: "^apps/web/" },
-      to: { path: "^packages/adapters/" },
+      to: { path: "^packages/(adapters|engine)/" },
+    },
+    {
+      name: "sdk-does-not-import-adapters",
+      comment: "Page 01: the browser SDK validates unsigned plans. Quote and plan minting stays in the engine/API.",
+      severity: "error",
+      from: { path: "^packages/sdk/src/", pathNot: "\\.test\\.ts$" },
+      to: { path: "^packages/(adapters|engine)/" },
+    },
+    {
+      name: "partner-program-does-not-import-engine",
+      comment: "Page 01: the partner program calls the Capital API and the public SDK, not adapters or the engine.",
+      severity: "error",
+      from: { path: "^apps/partner-example/src/program\\.ts$" },
+      to: { path: "^packages/(adapters|engine)/" },
     },
     {
       name: "no-relative-import-into-another-package",
