@@ -51,9 +51,9 @@ export async function listEarnOptions(sql: Sql, network: NetworkName): Promise<E
            snapshot.observed_at AS "observedAt",
            supply.adapter_version AS "adapterVersion"
     FROM markets m
-    JOIN capabilities supply
+    JOIN effective_capabilities supply
       ON supply.network = m.network AND supply.market_id = m.id AND supply.action = 'supply'
-    LEFT JOIN capabilities withdraw
+    LEFT JOIN effective_capabilities withdraw
       ON withdraw.network = m.network AND withdraw.market_id = m.id AND withdraw.action = 'withdraw_supply'
     LEFT JOIN LATERAL (
       SELECT supply_rate, rate_scale, available_liquidity, capacity, paused, stale, warnings, observed_at

@@ -1,5 +1,6 @@
 import type { PlanStep } from "@stacks-capital/client";
 import { parseAssetId, type StacksNetwork } from "@stacks-capital/core";
+import { classifyWalletError, type WalletId } from "@stacks-capital/wallets";
 import { Cl, type ClarityValue as StacksClarityValue, cvToHex } from "@stacks/transactions";
 
 type PlanClarityValue =
@@ -104,4 +105,32 @@ export function toWalletRequest(step: PlanStep): WalletRequest {
       network: payload.network,
     },
   };
+}
+
+export type WalletAnswer =
+  | { kind: "answered"; result: unknown }
+  /** The user said no in the wallet. Nothing was signed or sent, so the step can simply be asked again. */
+  | { kind: "rejected"; message: string }
+  /** The wallet failed in a way that does not say whether anything was sent. That has to be recorded, not retried. */
+  | { kind: "unknown"; result: { error: string } };
+
+/**
+ * Asks the wallet to sign one plan step and sorts the answer into what it means (I02 findings:
+ * Leather rejects with 4001, Xverse with -32000). A rejection is kept out of the workflow, because
+ * recording it as an unknown broadcast would send the user to support for something they chose.
+ */
+export async function askWallet(
+  provider: { request(method: string, params?: unknown): Promise<unknown> },
+  walletId: WalletId,
+  request: WalletRequest,
+): Promise<WalletAnswer> {
+  try {
+    return { kind: "answered", result: await provider.request(request.method, request.params) };
+  } catch (error) {
+    if (classifyWalletError(walletId, error) === "USER_REJECTED") {
+      return { kind: "rejected", message: "You declined in your wallet. Nothing was sent." };
+    }
+    const message = (error as { message?: unknown } | null)?.message;
+    return { kind: "unknown", result: { error: typeof message === "string" ? message : "The wallet did not answer" } };
+  }
 }

@@ -2,5 +2,29 @@
   "name": "@stacks-capital/ui",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test --experimental-strip-types src/*.test.ts"
+  },
+  "dependencies": {
+    "@stacks-capital/client": "workspace:*",
+    "@stacks-capital/core": "workspace:*",
+    "@stacks-capital/react": "workspace:*",
+    "@stacks-capital/wallets": "workspace:*",
+    "@stacks/transactions": "7.6.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "react": "19.3.0"
+  }
 }

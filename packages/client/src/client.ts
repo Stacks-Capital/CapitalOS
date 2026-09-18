@@ -109,7 +109,9 @@ export function createClient(options: ClientOptions): CapitalClient {
 
   const transport: Transport = {
     baseUrl: options.baseUrl.replace(/\/+$/, ""),
-    fetch: options.fetch ?? globalThis.fetch,
+    // Browsers refuse fetch called on anything but the window ("Illegal invocation"), so it is never
+    // stored bare and called as a method of another object.
+    fetch: options.fetch ?? ((input, init) => globalThis.fetch(input, init)),
     timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     retry: { ...DEFAULT_RETRY, ...options.retry },
     sleep: options.sleep ?? defaultSleep,

@@ -52,6 +52,6 @@ Two cases are notes rather than blockers: landing inside the safety buffer, whic
 
 ## Tests
 
-`apps/web/src/borrow.test.ts` (11): the direction each action moves, borrowing projected correctly, a borrow past the limit refused, the buffer warning, repay and collateral improving the position, stale and missing prices, missing risk parameters, an unknown position, invalid amounts, sending more than the wallet holds, an unknown balance noted rather than blocking, and removing more than is held.
+`packages/ui/src/borrow.test.ts` (11): the direction each action moves, borrowing projected correctly, a borrow past the limit refused, the buffer warning, repay and collateral improving the position, stale and missing prices, missing risk parameters, an unknown position, invalid amounts, sending more than the wallet holds, an unknown balance noted rather than blocking, and removing more than is held.
 
 `apps/api/test/integration/execution.test.ts`: the endpoint returns parameters with prices unknown before the worker has run, picks up a price once one exists, refuses a browser client and answers 404 for an unknown market.

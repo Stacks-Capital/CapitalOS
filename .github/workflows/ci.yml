@@ -92,6 +92,22 @@ jobs:
       - name: Database integration tests
         run: pnpm test:integration
 
+      - name: Browser for end to end tests
+        run: pnpm --filter @stacks-capital/e2e exec playwright install --with-deps chromium
+
+      - name: End to end and accessibility tests
+        run: pnpm test:browser
+
+      - name: Keep end to end evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-evidence
+          path: |
+            apps/e2e/playwright-report
+            apps/e2e/test-results
+          retention-days: 30
+
       - name: Stop local services
         if: always()
         run: docker compose down -v

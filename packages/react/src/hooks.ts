@@ -65,7 +65,11 @@ export function useCapitalQuery<T>(
     void run(false);
   }, [run]);
 
-  const refresh = useCallback(() => run(true), [run]);
+  // Callers often hold on to refresh across an await, by which time the key may have changed (a workflow
+  // that did not exist when the handler started). It always acts on the hook's current key, never an old one.
+  const current = useRef(run);
+  current.current = run;
+  const refresh = useCallback(() => current.current(true), []);
   return { ...entry, isLoading: entry.status === "loading", refresh };
 }
 

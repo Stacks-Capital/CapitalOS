@@ -2,13 +2,21 @@ import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, useMarketRisk } from "@stacks-capital/react";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useState } from "react";
-import { type BorrowAction, projectBorrow, QUOTE_ACTION } from "./borrow.ts";
-import { canSign, reviewQuote } from "./earn.ts";
-import type { ConnectedWallet } from "./session.ts";
-import { toWalletRequest } from "./signing.ts";
-import { messageFor, panelState } from "./state.ts";
-import { Panel, StateNote } from "./ui.tsx";
-import { findProvider } from "./wallet.ts";
+import {
+  askWallet,
+  type BorrowAction,
+  canSign,
+  type ConnectedWallet,
+  findProvider,
+  messageFor,
+  Panel,
+  panelState,
+  projectBorrow,
+  QUOTE_ACTION,
+  reviewQuote,
+  StateNote,
+  toWalletRequest,
+} from "@stacks-capital/ui";
 
 const MARKET = "granite.sbtc.isolated";
 const ACTIONS: { id: BorrowAction; label: string }[] = [
@@ -61,10 +69,12 @@ export function Borrow({ wallet, signedIn }: { wallet: ConnectedWallet | null; s
 
       const provider = findProvider(wallet?.id as WalletId);
       if (provider === null) throw new Error("The wallet is no longer available");
-      const request = toWalletRequest(step);
-      const walletResult = await provider
-        .request(request.method, request.params)
-        .catch((error: unknown) => ({ error: messageFor(error).message }));
+      const answer = await askWallet(provider, wallet?.id as WalletId, toWalletRequest(step));
+      if (answer.kind === "rejected") {
+        setProblem(answer.message);
+        return;
+      }
+      const walletResult = answer.result;
       const recorded = await client.recordSignature(started.data.workflowId, { stepId: step.id, walletResult });
       setOutcome(`${recorded.data.state}, next ${recorded.data.nextAction}`);
       await risk.refresh();

@@ -14,6 +14,8 @@ import {
 } from "@stacks-capital/core";
 import {
   createWorkflowRow,
+  effectiveCapability,
+  recordOpsEvent,
   latestPositions,
   latestPrices,
   findAttempt,
@@ -60,7 +62,44 @@ export type QuoteInput = {
 };
 
 /** Quoting runs the engine here, on the server, where the provider keys live. */
+/**
+ * The registry state after operator switches (I17). Every path that could lead to a signed transaction
+ * checks this, so switching a capability off stops new quotes, new plans and new workflows at once.
+ */
+export async function requireEnabled(
+  sql: Sql,
+  input: { network: StacksNetwork; marketId: string; action: string },
+): Promise<void> {
+  const capability = await effectiveCapability(sql, input);
+  if (capability === null) throw new ApiError("UNSUPPORTED_ACTION", `${input.marketId} does not list ${input.action}`);
+  if (capability.state !== "enabled") {
+    throw new ApiError(
+      "CAPABILITY_DISABLED",
+      `${input.marketId} ${input.action} is ${capability.state}: ${capability.reason}`,
+    );
+  }
+}
+
+/** Every quote attempt is counted, success or failure, so operators see failure rates per market. */
 export async function createQuote(
+  deps: { sql: Sql; reads: ReadsLoader; now: () => Date },
+  input: QuoteInput,
+): Promise<{ quote: Quote; plan: Plan }> {
+  const event = { network: input.network, subject: input.marketId, at: deps.now() };
+  try {
+    await requireEnabled(deps.sql, input);
+    const quoted = await quoteUnchecked(deps, input);
+    await recordOpsEvent(deps.sql, { ...event, kind: "quote_succeeded" }).catch(() => {});
+    return quoted;
+  } catch (error) {
+    const code = error instanceof ApiError ? error.code : "INTERNAL";
+    // Losing a metric must never lose the answer to the caller.
+    await recordOpsEvent(deps.sql, { ...event, kind: "quote_failed", code }).catch(() => {});
+    throw error;
+  }
+}
+
+async function quoteUnchecked(
   deps: { sql: Sql; reads: ReadsLoader; now: () => Date },
   input: QuoteInput,
 ): Promise<{ quote: Quote; plan: Plan }> {
@@ -112,6 +151,12 @@ export async function startWorkflow(
 ): Promise<{ workflow: Workflow; plan: Plan; created: boolean }> {
   const stored = await findStoredQuote(deps.sql, { quoteId: input.quoteId, network: input.network });
   if (stored === null) throw new ApiError("NOT_FOUND", "No such quote");
+  // A quote made before an operator switched the capability off must not start a workflow after it.
+  await requireEnabled(deps.sql, {
+    network: input.network,
+    marketId: stored.quote.marketId,
+    action: stored.quote.action,
+  });
   if (quoteExpired(stored.quote, deps.now()))
     throw new ApiError("QUOTE_EXPIRED", "That quote has expired. Ask for a new one");
   if (!stored.quote.executable) {
