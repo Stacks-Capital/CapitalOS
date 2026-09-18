@@ -184,6 +184,20 @@ describe("sBTC and Zest adapters", () => {
     assert.equal(zest.explainRisk(mainnet, "zest.sbtc.vault").variables.rounding, "down");
   });
 
+  it("lists Zest markets as disabled on testnet without a vault receipt", () => {
+    const zest = createZestEarnAdapter(reads);
+    const markets = zest.listMarkets(ctx("testnet"));
+    assert.equal(markets.length, 2);
+    for (const market of markets) {
+      assert.equal(market.state, "disabled");
+      assert.equal(market.receiptAsset, undefined);
+    }
+    assert.match(
+      markets.find((market) => market.action === "supply")?.warnings.join(" ") ?? "",
+      /not deployed on public Stacks testnet/i,
+    );
+  });
+
   it("quotes Granite isolated collateral and USDCx borrow with deny-mode price-feeds none", () => {
     const mainnet = ctx("mainnet");
     const granite = createGraniteCreditAdapter(reads);
@@ -221,5 +235,24 @@ describe("sBTC and Zest adapters", () => {
     const call = plan.steps[0]?.payload;
     assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "swap-x-for-y-simple-range-multi");
     assert.equal(quote.minimumOutput?.quantity, 99002500000n);
+  });
+
+  it("lists every adapter market on mainnet and testnet without requiring undeployed contracts", () => {
+    const adapters = [
+      createSbtcDepositAdapter(reads),
+      createSbtcWithdrawAdapter(reads),
+      createZestEarnAdapter(reads),
+      createGraniteCreditAdapter(reads),
+      createBitflowSwapAdapter(reads),
+    ];
+    for (const network of ["mainnet", "testnet"] as const) {
+      for (const adapter of adapters) {
+        const markets = adapter.listMarkets(ctx(network));
+        assert.ok(markets.length > 0, `${adapter.protocol} ${network}`);
+        for (const market of markets) {
+          assert.equal(market.network, network);
+        }
+      }
+    }
   });
 });
