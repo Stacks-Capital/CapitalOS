@@ -1,9 +1,10 @@
-import { capabilityFor, contract, type CapabilityRecord } from "@stacks-capital/config";
+import { capabilityFor, contract, FUNGIBLE_ASSET_NAME, type CapabilityRecord } from "@stacks-capital/config";
 import {
   amount,
   assertPositive,
   bitcoinNative,
   capitalError,
+  formatAssetId,
   parseQuantity,
   sip10,
   validatePlan,
@@ -18,7 +19,7 @@ export const SBTC_DEPOSIT_VERSION = "sbtc-deposit@0.1.0";
 export const SBTC_MARKET_DEPOSIT = "sbtc.deposit";
 
 function token(network: StacksNetwork) {
-  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, "sbtc-token");
+  return sip10(network, contract("sbtc", "sbtc-token", network).contractId, FUNGIBLE_ASSET_NAME.sbtc);
 }
 
 function market(network: StacksNetwork, capability: CapabilityRecord | undefined): Market {
@@ -27,8 +28,8 @@ function market(network: StacksNetwork, capability: CapabilityRecord | undefined
     protocol: "sbtc",
     action: "deposit_sbtc",
     network,
-    suppliedAsset: "bitcoin native btc",
-    receiptAsset: "sbtc-token",
+    suppliedAsset: formatAssetId(bitcoinNative(network)),
+    receiptAsset: formatAssetId(token(network)),
     state: capability?.state ?? "disabled",
     warnings: capability?.state === "enabled" ? [] : [capability?.reason ?? "deposit is not available"],
   };
@@ -64,7 +65,7 @@ export function createSbtcDepositAdapter(reads: AdapterReads): ProtocolAdapter {
     buildPlan(ctx, quote, intent) {
       return buildDepositPlan(ctx, quote, intent, reads);
     },
-    validatePlan(ctx, plan, quote, signing) {
+    validatePlan(_ctx, plan, quote, signing) {
       return validatePlan(plan, quote, signing);
     },
     decodeEvents(_ctx, raw) {
@@ -132,7 +133,7 @@ function quoteDeposit(ctx: AdapterContext, intent: Intent, reads: AdapterReads):
   return quote;
 }
 
-function buildDepositPlan(ctx: AdapterContext, quote: Quote, intent: Intent, reads: AdapterReads): Plan {
+function buildDepositPlan(ctx: AdapterContext, quote: Quote, intent: Intent, _reads: AdapterReads): Plan {
   if (!quote.executable)
     throw capitalError("CAPABILITY_DISABLED", quote.warnings.join("; ") || "deposit is not executable");
   const recipient = intent.recipient;
