@@ -1,7 +1,11 @@
 import { requireNetwork } from "@stacks-capital/core";
 import {
+  API_SCOPES,
+  type ApiScope,
   clearCapabilityOverride,
   connect,
+  createApiKey,
+  revokeApiKey,
   listCapabilityOverrides,
   metricsSnapshot,
   openAlerts,
@@ -16,6 +20,8 @@ import {
  *   pnpm ops:disable <network> <market> <action> <reason...>
  *   pnpm ops:pause   <network> <market> <action> <reason...>
  *   pnpm ops:enable  <network> <market> <action>
+ *   pnpm keys:create <app id> <scope...>
+ *   pnpm keys:revoke <key id>
  *
  * Switching off takes effect on the next request: market lists, earn options, quotes, plans and new
  * workflows all read the effective state. Switching back on only removes the override; it can never
@@ -24,6 +30,37 @@ import {
 
 const [command, networkArg, marketId, action, ...reasonWords] = process.argv.slice(2);
 const usage = "Usage: ops <status|disable|pause|enable> <network> [market] [action] [reason...]";
+
+// Keys belong to an app, not a network, so they are handled before the network is read.
+if (command === "key-create" || command === "key-revoke") {
+  const sql = connect(requireDatabaseUrl(process.env.DATABASE_URL));
+  try {
+    if (command === "key-create") {
+      const appId = networkArg;
+      const scopes = [marketId, action, ...reasonWords].filter((scope): scope is string => scope !== undefined);
+      const unknown = scopes.filter((scope) => !(API_SCOPES as readonly string[]).includes(scope));
+      if (appId === undefined || scopes.length === 0 || unknown.length > 0) {
+        console.error(`Usage: keys:create <app id> <scope...>. Scopes: ${API_SCOPES.join(", ")}`);
+        process.exitCode = 2;
+      } else {
+        const { keyId, token } = await createApiKey(sql, { appId, scopes: scopes as ApiScope[] });
+        // The secret is shown once and stored only as a hash. It cannot be recovered later.
+        console.log(`Created ${keyId}. Store this now, it is not shown again:\n${token}`);
+      }
+    } else {
+      if (networkArg === undefined) {
+        console.error("Usage: keys:revoke <key id>");
+        process.exitCode = 2;
+      } else {
+        await revokeApiKey(sql, networkArg, new Date());
+        console.log(`Revoked ${networkArg}. Requests with it are refused from now on.`);
+      }
+    }
+  } finally {
+    await sql.end();
+  }
+  process.exit();
+}
 
 if (command === undefined || networkArg === undefined) {
   console.error(usage);

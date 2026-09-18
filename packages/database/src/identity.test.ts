@@ -91,6 +91,16 @@ describe("identity", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : f
       assert.equal(await findApiKey(sql, expiring.token, later(61)), null);
     });
 
+    it("can be created as the first query on a fresh connection, as a command line tool does", async () => {
+      const cold = connect(DATABASE_URL, schema);
+      try {
+        const { token } = await createApiKey(cold, { appId: FIXTURE_APP.id, scopes: ["markets:read", "quotes:write"] });
+        assert.deepEqual((await findApiKey(sql, token, NOW))?.scopes, ["markets:read", "quotes:write"]);
+      } finally {
+        await cold.end();
+      }
+    });
+
     it("refuse scopes outside the contract", async () => {
       await assert.rejects(
         sql`INSERT INTO api_keys (id, app_id, secret_hash, scopes)

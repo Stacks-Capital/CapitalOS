@@ -90,9 +90,14 @@ export async function createApiKey(
 ): Promise<{ keyId: string; token: string }> {
   const keyId = `key_${randomBytes(8).toString("hex")}`;
   const secret = newSecret();
+  // Sent as an array literal rather than through sql.array, which needs the driver to have learned the
+  // array types first and fails when this is the first query on a connection (a command line tool).
+  const unknown = input.scopes.filter((scope) => !(API_SCOPES as readonly string[]).includes(scope));
+  if (unknown.length > 0) throw new Error(`Unknown scopes: ${unknown.join(", ")}`);
+  const scopes = `{${input.scopes.join(",")}}`;
   await sql`
     INSERT INTO api_keys (id, app_id, secret_hash, scopes, expires_at)
-    VALUES (${keyId}, ${input.appId}, ${sha256(secret)}, ${sql.array(input.scopes)}::api_scope[], ${input.expiresAt ?? null})
+    VALUES (${keyId}, ${input.appId}, ${sha256(secret)}, ${scopes}::api_scope[], ${input.expiresAt ?? null})
   `;
   return { keyId, token: `${keyId}.${secret}` };
 }

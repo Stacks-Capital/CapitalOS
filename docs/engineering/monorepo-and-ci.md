@@ -42,7 +42,7 @@ The workflow file was validated with actionlint 1.7.12, which is not added to th
 | `pnpm build` | Builds the wallet prototype |
 | `pnpm secrets:scan` | gitleaks over the full git history (needs gitleaks installed) |
 | `pnpm changeset:status` | Changeset status |
-| `pnpm ci` | lint, boundaries, test and build in one go |
+| `pnpm run ci` | lint, boundaries, test and build in one go |
 | `pnpm services:up` | Starts local PostgreSQL and Redis with `.env.local` and waits until both are healthy |
 | `pnpm services:down` | Stops them and keeps their data volumes |
 
