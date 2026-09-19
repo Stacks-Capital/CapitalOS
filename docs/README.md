@@ -17,6 +17,7 @@
 ## Release
 
 - [Pilot and release checklist](release/pilot-checklist.md): evidence, manual checks and outstanding issues for the go/no-go.
+- [Launch decision](release/launch-decision.md): K20 go/no-go. Production is no-go; sandbox certifies Zest supply only.
 
 ## How it is built
 
@@ -24,4 +25,4 @@
 
 ## Research
 
-`discovery/` has the protocol, provider and wallet research, the threat model and the failure injection drill that the build rests on.
+`discovery/` has the protocol, provider and wallet research, the threat model, the failure injection drill and the SDK compatibility gate that the build rests on.
