@@ -9,8 +9,9 @@ export const BITCOIN_FOR_STACKS: Readonly<Record<StacksNetwork, BitcoinNetworkKi
 };
 
 const C32 = "[0-9A-HJKMNP-TV-Z]";
-const STACKS_MAINNET = new RegExp(`^S[PM]${C32}{38,40}$`);
-const STACKS_TESTNET = new RegExp(`^S[TN]${C32}{38,40}$`);
+// c32check omits leading zeros, so P2PKH addresses are 39–41 characters, not only 40–41.
+const STACKS_MAINNET = new RegExp(`^S[PM]${C32}{36,40}$`);
+const STACKS_TESTNET = new RegExp(`^S[TN]${C32}{36,40}$`);
 
 export function stacksAddressNetwork(address: string): StacksNetwork | null {
   if (STACKS_MAINNET.test(address)) return "mainnet";
