@@ -48,6 +48,9 @@ export async function connectWallet(
   if (address === null) throw new Error(`${id} returned no Stacks address`);
   const walletNetwork = stacksAddressNetwork(address);
   if (walletNetwork === null) throw new Error(`${id} returned an address this app cannot read`);
+  if (walletNetwork !== network) {
+    throw new Error(`${id} is on ${walletNetwork}. Switch the wallet to ${network} and connect again.`);
+  }
   return { id, address, network: walletNetwork };
 }
 

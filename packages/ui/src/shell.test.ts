@@ -70,6 +70,24 @@ describe("connecting", () => {
     assert.deepEqual(calls[0], { method: "wallet_connect", params: { addresses: ["stacks"], network: "Mainnet" } });
   });
 
+  it("asks Xverse for Testnet when the app is on testnet", async () => {
+    const calls: { method: string; params: unknown }[] = [];
+    const provider = {
+      request: async (method: string, params?: unknown) => {
+        calls.push({ method, params });
+        return { addresses: [{ address: TESTNET_ADDRESS }] };
+      },
+    };
+    const wallet = await connectWallet("xverse", "testnet", provider);
+    assert.deepEqual(wallet, { id: "xverse", address: TESTNET_ADDRESS, network: "testnet" });
+    assert.deepEqual(calls[0], { method: "wallet_connect", params: { addresses: ["stacks"], network: "Testnet" } });
+  });
+
+  it("refuses a mainnet address while the app is on testnet", async () => {
+    const provider = { request: async () => ({ addresses: [{ address: MAINNET_ADDRESS }] }) };
+    await assert.rejects(connectWallet("leather", "testnet", provider), /Switch the wallet to testnet/);
+  });
+
   it("asks Leather with getAddresses", async () => {
     const calls: string[] = [];
     const provider = {

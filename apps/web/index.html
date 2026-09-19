@@ -9,16 +9,17 @@
       body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 68rem; padding: 1.5rem 1rem; }
       header.shell { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
       header.shell h1 { font-size: 1.25rem; margin: 0; }
+      .networks { display: flex; gap: 0.25rem; border: 0; margin: 0; padding: 0; }
+      .networks legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
       .network { border: 1px solid currentColor; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.8rem; }
+      .network[aria-pressed="true"] { font-weight: 600; }
       nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
       nav button[aria-current="true"] { font-weight: 600; text-decoration: underline; }
       .wallet { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-      .panel { border: 1px solid #8884; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+      h2, h3, p, td, dd { overflow-wrap: anywhere; }
+      .panel { border: 1px solid #8884; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; overflow-x: auto; }
       .panel header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
       .panel h2 { font-size: 1rem; margin: 0 0 0.5rem; }
-      /* Wide tables scroll inside their panel on a phone rather than pushing the page sideways. */
-      .panel { overflow-x: auto; }
-      h2, h3, p, td, dd { overflow-wrap: anywhere; }
       table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
       th, td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid #8883; }
       .muted { opacity: 0.7; }

@@ -66,7 +66,9 @@ export async function installWallet(page: Page): Promise<FakeWallet> {
     }
     if (method === "stx_callContract") {
       if (wallet.transactions === "reject") return { __error: REJECTED };
-      if (wallet.transactions === "hang") return new Promise(() => {});
+      // Hang in the page, not here. A never-settling exposeFunction call blocks the next
+      // getAddresses after reload (seen on Pixel 7 as "leather returned no Stacks address").
+      if (wallet.transactions === "hang") return { __hang: true };
       if (wallet.transactions === "no-txid") return { transaction: `0x${randomBytes(16).toString("hex")}` };
       return { txid: `0x${randomBytes(32).toString("hex")}` };
     }
@@ -78,8 +80,9 @@ export async function installWallet(page: Page): Promise<FakeWallet> {
       .__capitalFakeWallet;
     (window as unknown as Record<string, unknown>).LeatherProvider = {
       async request(method: string, params: unknown) {
-        const answer = (await bridge(method, params)) as { __error?: unknown } | null;
+        const answer = (await bridge(method, params)) as { __error?: unknown; __hang?: boolean } | null;
         if (answer !== null && typeof answer === "object" && "__error" in answer) throw answer.__error;
+        if (answer !== null && typeof answer === "object" && "__hang" in answer) return new Promise(() => {});
         return answer;
       },
     };

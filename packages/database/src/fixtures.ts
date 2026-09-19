@@ -52,12 +52,19 @@ export const FIXTURE_IDEMPOTENCY_KEY = "fixture:zest-supply";
 export const FIXTURE_ZEST_SUPPLY = { action: "supply", marketId: "zest.sbtc.vault", amount: "99999000" } as const;
 
 // Two tenants: the fixture workflow belongs to the first, so the second proves cross tenant reads are refused.
+// 5173 is Playwright. 5180 is local `pnpm web:dev` so a taken 5173 does not land on the other tenant.
 export const FIXTURE_APP = {
   id: "app_fixture",
   clientId: "pk_fixture_sandbox",
   origin: "http://localhost:5173",
+  origins: ["http://127.0.0.1:5173", "http://127.0.0.1:5180", "http://localhost:5173", "http://localhost:5180"],
 } as const;
-export const OTHER_APP = { id: "app_other", clientId: "pk_other_sandbox", origin: "http://localhost:5174" } as const;
+export const OTHER_APP = {
+  id: "app_other",
+  clientId: "pk_other_sandbox",
+  origin: "http://localhost:5174",
+  origins: ["http://127.0.0.1:5174", "http://localhost:5174"],
+} as const;
 
 type Row = Record<string, unknown>;
 
@@ -463,7 +470,7 @@ function identityRows() {
       client_id: app.clientId,
       created_at: at(0),
     })),
-    allowed_origins: apps.map((app) => ({ app_id: app.id, origin: app.origin })),
+    allowed_origins: apps.flatMap((app) => app.origins.map((origin) => ({ app_id: app.id, origin }))),
   };
 }
 
