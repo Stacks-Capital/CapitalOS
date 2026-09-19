@@ -9,7 +9,10 @@
       body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 68rem; padding: 1.5rem 1rem; }
       header.shell { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
       header.shell h1 { font-size: 1.25rem; margin: 0; }
+      .networks { display: flex; gap: 0.25rem; border: 0; margin: 0; padding: 0; }
+      .networks legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
       .network { border: 1px solid currentColor; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.8rem; }
+      .network[aria-pressed="true"] { font-weight: 600; }
       nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
       nav button[aria-current="true"] { font-weight: 600; text-decoration: underline; }
       .wallet { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
