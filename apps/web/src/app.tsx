@@ -1,29 +1,30 @@
 import { type CapitalClient, createClient } from "@stacks-capital/client";
-import type { CapitalError } from "@stacks-capital/core";
+import type { CapitalError, StacksNetwork } from "@stacks-capital/core";
 import { CapitalProvider } from "@stacks-capital/react";
+import { type ConnectedWallet, connectWallet, installedWallets, messageSigner, signIn } from "@stacks-capital/ui";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useMemo, useState } from "react";
-import type { WebConfig } from "./config.ts";
 import { Borrow } from "./borrowScreen.tsx";
+import { NETWORKS, testnetNote, type WebConfig } from "./config.ts";
 import { Earn } from "./earnScreen.tsx";
 import { Risk } from "./riskScreen.tsx";
 import { Activity, Markets, Portfolio } from "./screens.tsx";
 import { Swap } from "./swapScreen.tsx";
-import { type ConnectedWallet, connectWallet, installedWallets, messageSigner, signIn } from "@stacks-capital/ui";
 
 const TABS = ["Portfolio", "Earn", "Borrow", "Swap", "Risk", "Markets", "Activity"] as const;
 type Tab = (typeof TABS)[number];
 
 export function App({ config }: { config: WebConfig }) {
   const [tab, setTab] = useState<Tab>("Portfolio");
+  const [network, setNetwork] = useState<StacksNetwork>(config.network);
   const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [problem, setProblem] = useState<CapitalError | Error | null>(null);
   const wallets = useMemo(() => installedWallets(), []);
 
   const base = useMemo(
-    () => createClient({ baseUrl: config.apiBaseUrl, network: config.network, clientId: config.clientId }),
-    [config],
+    () => createClient({ baseUrl: config.apiBaseUrl, network, clientId: config.clientId }),
+    [config, network],
   );
   // The session token turns the same client into one that speaks for the signed in address.
   const client: CapitalClient = useMemo(
@@ -31,10 +32,18 @@ export function App({ config }: { config: WebConfig }) {
     [base, sessionToken],
   );
 
+  function selectNetwork(next: StacksNetwork) {
+    if (next === network) return;
+    setNetwork(next);
+    setWallet(null);
+    setSessionToken(null);
+    setProblem(null);
+  }
+
   async function connect(id: WalletId) {
     setProblem(null);
     try {
-      const connected = await connectWallet(id, config.network);
+      const connected = await connectWallet(id, network);
       setWallet(connected);
       // A new wallet cannot inherit the previous one's session.
       setSessionToken(null);
@@ -52,11 +61,26 @@ export function App({ config }: { config: WebConfig }) {
     setProblem(null);
   }
 
+  const testnet = testnetNote(network);
+
   return (
     <CapitalProvider client={client} address={wallet?.address ?? null}>
       <header className="shell">
         <h1>Capital OS</h1>
-        <span className="network">{config.network}</span>
+        <fieldset className="networks">
+          <legend>Network</legend>
+          {NETWORKS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className="network"
+              aria-pressed={network === name}
+              onClick={() => selectNetwork(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </fieldset>
         <nav>
           {TABS.map((name) => (
             <button key={name} type="button" aria-current={tab === name} onClick={() => setTab(name)}>
@@ -88,6 +112,8 @@ export function App({ config }: { config: WebConfig }) {
           )}
         </div>
       </header>
+
+      {testnet === null ? null : <p className="muted">{testnet}</p>}
 
       {problem === null ? null : (
         <p className="error" role="alert">
