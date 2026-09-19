@@ -47,7 +47,7 @@ describe("identity", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : f
     it("resolve a publishable client id to its app and allowed origins", async () => {
       assert.deepEqual(await findClientApp(sql, FIXTURE_APP.clientId), {
         appId: FIXTURE_APP.id,
-        origins: [FIXTURE_APP.origin],
+        origins: [...FIXTURE_APP.origins],
       });
       assert.equal(await findClientApp(sql, "pk_unknown"), null);
     });
