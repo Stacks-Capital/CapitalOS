@@ -12,11 +12,9 @@ import {
   loadPending,
   messageFor,
   Panel,
-  panelState,
   reviewQuote,
   savePending,
   stageFor,
-  StateNote,
   toWalletRequest,
 } from "@stacks-capital/ui";
 
