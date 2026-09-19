@@ -17,6 +17,8 @@ describe("stacksAddressNetwork", () => {
     assert.equal(stacksAddressNetwork(LEATHER_TESTNET_STX), "testnet");
     assert.equal(stacksAddressNetwork(XVERSE_TESTNET_STX), "testnet");
     assert.equal(stacksAddressNetwork(MAINNET_STX), "mainnet");
+    assert.equal(stacksAddressNetwork("STW7FVTAF3MD8C5WG2VH45SWWS34KBJNR8D04ZD"), "testnet");
+    assert.equal(stacksAddressNetwork("SPJ8TAFSGD7FYAHQ3WQ7BTN8A4BVAGQEH8VM39B"), "mainnet");
   });
 
   it("rejects malformed addresses", () => {

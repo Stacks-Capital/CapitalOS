@@ -6,7 +6,7 @@
 | Requirements | PMF-01, OPS-01 |
 | Owner / reviewer | IBK / kenzman |
 | Depends on | I18 end to end tests, I19 docs and runbooks |
-| Feeds | K20 pilot and launch decision |
+| Feeds | [K20 pilot and launch decision](launch-decision.md) |
 | Date | 2026-09-18, at commit `0e09f96` |
 
 Deliverable from the task page: run pilot checklist, classify failures, verify rollback/restore evidence and document outstanding issues for go/no-go.
@@ -48,7 +48,7 @@ This document records evidence. It does not make the go/no-go call; that is K20.
 | Backup restore and deployment rollback drilled | Met | Both drills above. There is no hosted deployment yet, so the rollback drill runs locally |
 | Terms, privacy, risk disclosures and support ownership ready | Not met | Nothing in the repo. Needs owners outside engineering |
 | On call owner and protocol emergency contacts documented | Not met | Runbooks exist ([incidents](../runbooks/incidents.md)); names and contacts do not |
-| Clean partner integration passes certification | Partly | `apps/embed-example` uses public packages only, enforced by a boundary rule. Packages are not published, and the reproduction run from the quickstart is pending. Certification belongs with K19 |
+| Clean partner integration passes certification | Partly | K19 gate (`pnpm sdk:compat`) passes: public exports, schemaVersion 1.0, packable source, no adapters in partner packages. Packages are not published to a registry (N9). Webhooks are not certified. |
 
 ## Product definition of done (page 02)
 

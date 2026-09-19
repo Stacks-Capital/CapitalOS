@@ -30,6 +30,7 @@ export {
   type PageOptions,
 } from "./client.ts";
 export { DEFAULT_RETRY, DEFAULT_TIMEOUT_MS, type RetryPolicy } from "./http.ts";
+export { SCHEMA_VERSION } from "./types.ts";
 export type {
   AssetAmount,
   Capability,

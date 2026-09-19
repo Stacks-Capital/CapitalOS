@@ -65,6 +65,9 @@ jobs:
       - name: Public SDK smoke
         run: pnpm sdk:check
 
+      - name: SDK release compatibility
+        run: pnpm sdk:compat
+
       - name: Sandbox end to end fixtures
         run: pnpm test:e2e
 

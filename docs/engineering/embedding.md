@@ -83,5 +83,5 @@ Run it with `pnpm embed:dev`. It serves on port 5174, which is the allowed origi
 
 - Borrow and swap widgets are not exported as single components yet. Their rules are (`projectBorrow`, `swapView`); the screens around them still live in `apps/web`.
 - No styling contract: widgets use plain class names (`panel`, `muted`, `warn`, `error`, `unavailable`). A theming API is a later decision.
-- Packages are private workspace packages. Publishing them to a registry belongs to the release work (I19, I20).
+- Packages are private workspace packages. K19 proves they pack (`pnpm sdk:compat`). Publishing to a registry remains I20 N9.
 - Registering apps and issuing client ids still has no route; it is done in the database today.
