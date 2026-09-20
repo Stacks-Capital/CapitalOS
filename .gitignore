@@ -18,3 +18,5 @@ embedded-sbtc-sdk-everything-stacks-technical-architecture.pdf
 # Browser test output. CI keeps it as an artifact instead.
 playwright-report/
 test-results/
+
+AGENTS.md
