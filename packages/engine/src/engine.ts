@@ -18,7 +18,7 @@ import {
   type Reconciliation,
   type RiskExplanation,
 } from "@stacks-capital/adapters";
-import { REGISTRY_VERSION, capabilityFor, type CapabilityRecord } from "@stacks-capital/config";
+import { REGISTRY_VERSION, capabilityFor, executableContractIds, type CapabilityRecord } from "@stacks-capital/config";
 import {
   capitalError,
   requireNetwork,
@@ -96,6 +96,7 @@ export function createExecutionEngine(options: ExecutionEngineOptions): Executio
       now: signing?.now ?? ctx().now,
       network,
       registryVersion: REGISTRY_VERSION,
+      allowedContracts: executableContractIds(network),
     };
     const sender = signing?.sender ?? options.owner;
     if (sender !== undefined) context.sender = sender;
