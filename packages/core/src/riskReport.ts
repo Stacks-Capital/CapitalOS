@@ -1,4 +1,11 @@
-import { computeHealth, type AssetRiskSide, type Health, type OracleQuote, type RiskParams, oracleFresh } from "./risk.ts";
+import {
+  computeHealth,
+  type AssetRiskSide,
+  type Health,
+  type OracleQuote,
+  type RiskParams,
+  oracleFresh,
+} from "./risk.ts";
 
 /** Bumps when health, scenario or action semantics change. */
 export const RISK_CALCULATION_VERSION = "risk@1.0.0";
