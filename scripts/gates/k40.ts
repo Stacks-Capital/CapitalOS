@@ -112,12 +112,7 @@ record(
   LAUNCH_DECISION.rollbackTriggers.length >= 3,
   `${LAUNCH_DECISION.rollbackTriggers.length} triggers`,
 );
-record(
-  "decision",
-  "production-no-go",
-  LAUNCH_DECISION.production === "no-go",
-  LAUNCH_DECISION.production,
-);
+record("decision", "production-no-go", LAUNCH_DECISION.production === "no-go", LAUNCH_DECISION.production);
 record(
   "decision",
   "closed-earn-pilot-no-go",
@@ -159,7 +154,12 @@ record(
 // --- External partner sandbox certification ---
 run("partner:example", "pnpm", ["partner:example"], "partner");
 run("sdk:compat", "pnpm", ["sdk:compat"], "partner");
-run("launch-tests", process.execPath, ["--test", "--experimental-strip-types", "packages/sdk/src/launch.test.ts"], "partner");
+run(
+  "launch-tests",
+  process.execPath,
+  ["--test", "--experimental-strip-types", "packages/sdk/src/launch.test.ts"],
+  "partner",
+);
 
 // --- Prior P0 gate evidence present ---
 for (const gate of ["k38", "k39"] as const) {
