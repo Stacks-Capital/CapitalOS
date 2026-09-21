@@ -39,6 +39,25 @@ export function createSbtcDepositAdapter(reads: AdapterReads): ProtocolAdapter {
   return {
     protocol: "sbtc",
     version: SBTC_DEPOSIT_VERSION,
+    semantics: {
+      amountEncoding: "base_10_integer_base_units",
+      unsupportedFieldPolicy: "omit",
+      positionModel: "A deposit remains pending until a canonical sBTC mint is observed.",
+      assets: [
+        { unit: "satoshi", decimals: 8, evidence: "Bitcoin consensus unit" },
+        { unit: "sBTC base unit", decimals: 8, evidence: "sbtc-token SIP-010 deployment" },
+      ],
+      actions: [
+        {
+          action: "deposit_sbtc",
+          inputUnit: "satoshi",
+          outputUnit: "sBTC base unit",
+          rounding: "exact",
+          completionEvidence: "canonical sBTC mint",
+          postConditionPolicy: "bitcoin_script",
+        },
+      ],
+    },
     describeCapabilities(ctx) {
       const found = capabilityFor("deposit_sbtc", ctx.network, "sbtc");
       return found ? [found] : [];
@@ -52,11 +71,13 @@ export function createSbtcDepositAdapter(reads: AdapterReads): ProtocolAdapter {
     },
     readPositions(ctx, owner) {
       return {
-        value: [{ owner, marketId: SBTC_MARKET_DEPOSIT, kind: "pending_deposit", quantity: "0" }],
+        // Pending deposits are transaction-specific evidence. A market adapter cannot infer one from
+        // an address, and zero is not a position, so the lifecycle watcher owns this projection.
+        value: [],
         observedAt: ctx.now.toISOString(),
         source: reads.source ?? "fixture",
         stale: false,
-        warnings: [],
+        warnings: [`No pending deposit is inferred for ${owner}; use transaction lifecycle evidence`],
       };
     },
     quote(ctx, intent) {
@@ -102,8 +123,8 @@ function quoteDeposit(ctx: AdapterContext, intent: Intent, reads: AdapterReads):
   const min = parseQuantity(reads.emilyLimits.perDepositMinimum);
   if (btc.quantity < min) throw capitalError("CAP_REACHED", `below perDepositMinimum ${min}`);
   const maxSigner = intent.maxFee !== undefined ? parseQuantity(intent.maxFee) : 0n;
-  if (btc.quantity <= maxSigner) throw capitalError("INSUFFICIENT_BALANCE", "amount must cover the maximum signer fee");
-  const sbtcOut = amount(token(ctx.network), btc.quantity - maxSigner);
+  const boundedFee = maxSigner > btc.quantity ? btc.quantity : maxSigner;
+  const sbtcOut = amount(token(ctx.network), btc.quantity - boundedFee);
   const executable = capability?.state === "enabled";
   const quote: Quote = {
     id: `q_dep_${ctx.now.getTime()}`,
@@ -125,7 +146,14 @@ function quoteDeposit(ctx: AdapterContext, intent: Intent, reads: AdapterReads):
     snapshots: [`emily:${reads.emilyLimits.perDepositMinimum}`],
     expiresAt: new Date(ctx.now.getTime() + 10 * 60_000).toISOString(),
     executable,
-    warnings: executable ? [] : [capability?.reason ?? "disabled"],
+    warnings: [
+      ...(executable ? [] : [capability?.reason ?? "disabled"]),
+      ...(maxSigner > 0n
+        ? [
+            "Minimum output uses the configured maximum signer fee; actual output is reconciled from fulfillment and mint evidence.",
+          ]
+        : []),
+    ],
     registryVersion: ctx.registryVersion,
     adapterVersion: SBTC_DEPOSIT_VERSION,
     minimumOutput: sbtcOut,
