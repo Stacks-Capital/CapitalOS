@@ -11,6 +11,10 @@
 - [sBTC deposit certification](engineering/sbtc-deposit.md): Bitcoin, signer, mint and reclaim lifecycle evidence.
 - [sBTC withdrawal certification](engineering/sbtc-withdrawal.md): request, signer, fee refund and Bitcoin payout reconciliation.
 - [Zest earn certification](engineering/zest-earn.md): supply, redeem, APR semantics and receipt valuation.
+- [Zest credit availability](engineering/zest-credit.md): why Zest has no user borrow path and where Granite takes over.
+- [Granite credit certification](engineering/granite-credit.md): collateral, borrow, repay-all and oracle boundaries.
+- [Bitflow swap certification](engineering/bitflow-swap.md): exact-input routing, expiry and min-out reconciliation.
+- [Staking routes](engineering/staking-routes.md): why native PoX staking stays unavailable.
 
 ## Operating it
 
