@@ -4,7 +4,6 @@ import {
   assertPositive,
   capitalError,
   formatAssetId,
-  mulDiv,
   parseQuantity,
   sip10,
   validatePlan,
@@ -15,6 +14,7 @@ import {
 } from "@stacks-capital/core";
 import type { AdapterReads } from "../reads.ts";
 import type { AdapterContext, Intent, Market, ProtocolAdapter } from "../types.ts";
+import { assetsForShares as claimForShares, sharesForAssets as previewShares, zestSupplyApr } from "./earnLifecycle.ts";
 
 export const ZEST_EARN_VERSION = "zest-earn@0.1.0";
 export const ZEST_MARKET_SBTC = "zest.sbtc.vault";
@@ -89,12 +89,24 @@ export function createZestEarnAdapter(reads: AdapterReads): ProtocolAdapter {
       return vaultMarket(ctx, "supply");
     },
     readPositions(ctx, owner) {
+      const shares = reads.balances?.zsbtc ?? "0";
+      const warnings: string[] = [];
+      let quantity = shares;
+      if (reads.vault === undefined) {
+        warnings.push("zsBTC is held in receipt units; the share rate was unavailable");
+      } else {
+        // Supplied positions are underlying sBTC claims. Receipt units never stand in as a second balance.
+        quantity = claimForShares(shares, {
+          shareRateNumerator: reads.vault.shareRateNumerator,
+          shareRateDenominator: reads.vault.shareRateDenominator,
+        });
+      }
       return {
-        value: [{ owner, marketId: ZEST_MARKET_SBTC, kind: "supplied", quantity: reads.balances?.zsbtc ?? "0" }],
+        value: [{ owner, marketId: ZEST_MARKET_SBTC, kind: "supplied", quantity }],
         observedAt: ctx.now.toISOString(),
         source: reads.source ?? (reads.vault ? "vault-snapshot" : "fixture"),
-        stale: false,
-        warnings: [],
+        stale: warnings.length > 0,
+        warnings,
       };
     },
     quote(ctx, intent) {
@@ -124,17 +136,21 @@ export function createZestEarnAdapter(reads: AdapterReads): ProtocolAdapter {
     },
     explainRisk(ctx) {
       const vault = reads.vault;
+      const apr = zestSupplyApr(vault?.interestRateBps ?? null);
       return {
         disclosures: [
           "zsBTC is a receipt claim on supplied sBTC, not a second asset in portfolio value.",
           "Share conversion rounds down; min-out is enforced onchain.",
+          apr.meaning,
           "Pyth/Lazer prices are required for borrow health, not for this vault supply path.",
         ],
-        stale: capabilityFor("supply", ctx.network, "zest")?.state !== "enabled",
+        stale: capabilityFor("supply", ctx.network, "zest")?.state !== "enabled" || !apr.rankingAllowed,
         variables: {
           pausedDeposit: String(vault?.pausedDeposit ?? false),
           pausedRedeem: String(vault?.pausedRedeem ?? false),
           rounding: "down",
+          supplyRateBps: apr.rateBps ?? "unknown",
+          supplyRateScale: String(apr.scale),
         },
         alerts: [],
       };
@@ -145,13 +161,23 @@ export function createZestEarnAdapter(reads: AdapterReads): ProtocolAdapter {
 function sharesForAssets(assets: bigint, reads: AdapterReads): bigint {
   const vault = reads.vault;
   if (vault === undefined) return assets;
-  return mulDiv(assets, parseQuantity(vault.shareRateNumerator), parseQuantity(vault.shareRateDenominator), "down");
+  return parseQuantity(
+    previewShares(assets.toString(10), {
+      shareRateNumerator: vault.shareRateNumerator,
+      shareRateDenominator: vault.shareRateDenominator,
+    }),
+  );
 }
 
 function assetsForShares(shares: bigint, reads: AdapterReads): bigint {
   const vault = reads.vault;
   if (vault === undefined) return shares;
-  return mulDiv(shares, parseQuantity(vault.shareRateDenominator), parseQuantity(vault.shareRateNumerator), "down");
+  return parseQuantity(
+    claimForShares(shares.toString(10), {
+      shareRateNumerator: vault.shareRateNumerator,
+      shareRateDenominator: vault.shareRateDenominator,
+    }),
+  );
 }
 
 function quoteEarn(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Quote {
