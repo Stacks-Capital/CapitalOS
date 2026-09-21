@@ -120,6 +120,38 @@ describe("what is never ranked", () => {
     ["the observation time is missing", { observedAt: null }, /no observation timestamp/],
     ["the observation time is invalid", { observedAt: "not-a-date" }, /timestamp is invalid/],
     ["the observation time is in the future", { observedAt: "2026-09-18T12:00:01.000Z" }, /in the future/],
+    ["capacity is exhausted (0)", { capacity: "0" }, /exhausted/],
+    ["available liquidity is exhausted (0)", { availableLiquidity: "0" }, /exhausted/],
+    [
+      "evidence confidence is low",
+      {
+        evidence: {
+          ageSeconds: 60,
+          blockHeight: 12345,
+          blockHash: "0x123",
+          source: "zest",
+          disagreement: null,
+          confidence: "low",
+          isIndependentRead: false,
+        },
+      },
+      /confidence is low/,
+    ],
+    [
+      "evidence indicates onchain disagreement",
+      {
+        evidence: {
+          ageSeconds: 60,
+          blockHeight: 12345,
+          blockHash: "0x123",
+          source: "zest",
+          disagreement: "mismatch",
+          confidence: "medium",
+          isIndependentRead: false,
+        },
+      },
+      /disagree/,
+    ],
   ];
 
   for (const [name, overrides, reason] of cases) {
