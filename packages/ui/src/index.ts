@@ -143,3 +143,18 @@ export {
   messageSigner,
   type WalletProvider,
 } from "./wallet.ts";
+export {
+  assertDistinctBalances,
+  calculateDepositAccounting,
+  calculateWithdrawalAccounting,
+  type DepositAccounting,
+  findLatestSbtcWorkflow,
+  isAttemptBroadcastUnknown,
+  type RecipientValidation,
+  type SbtcBridgeMode,
+  type SbtcBridgeStage,
+  stageForDeposit,
+  stageForWithdrawal,
+  validateBtcRecipient,
+  type WithdrawalAccounting,
+} from "./sbtc.ts";

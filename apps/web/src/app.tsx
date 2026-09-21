@@ -21,6 +21,7 @@ import type { WalletId } from "@stacks-capital/wallets";
 import { useMemo, useState } from "react";
 import { Borrow } from "./borrowScreen.tsx";
 import { NETWORKS, testnetNote, type WebConfig } from "./config.ts";
+import { DepositBtcScreen } from "./depositBtcScreen.tsx";
 import { Earn } from "./earnScreen.tsx";
 import { Risk } from "./riskScreen.tsx";
 import { Activity, Markets, Portfolio } from "./screens.tsx";
@@ -164,19 +165,12 @@ function AppShell({
         {tab === "Deposit BTC" && (
           <>
             <ScreenHeader
-              title="Deposit Bitcoin"
-              subtitle="Move native Bitcoin to sBTC on Stacks."
+              title="Deposit & Withdraw Bitcoin"
+              subtitle="Move native Bitcoin to sBTC on Stacks or withdraw sBTC back to Bitcoin."
               mode={mode}
               onModeChange={setMode}
             />
-            <UnsupportedStateView
-              state={{
-                kind: "unsupported",
-                assetOrProtocol: "Bitcoin (BTC) to sBTC Deposit",
-                reason:
-                  "Native Bitcoin deposit flow and Emily/Bitcoin ingestion are not enabled in this release (Pilot Blocker B2).",
-              }}
-            />
+            <DepositBtcScreen wallet={wallet} signedIn={signedIn} />
           </>
         )}
 

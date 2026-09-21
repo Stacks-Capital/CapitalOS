@@ -58,6 +58,7 @@ export type QuoteInput = {
   action: string;
   amount: string;
   owner: string;
+  recipient?: string | undefined;
   slippageBps?: string | undefined;
   maxFee?: string | undefined;
 };
@@ -115,7 +116,7 @@ async function quoteUnchecked(
     action: input.action as Intent["action"],
     marketId: input.marketId,
     amount: input.amount,
-    recipient: input.owner,
+    recipient: input.recipient ?? input.owner,
   };
   if (input.slippageBps !== undefined) intent.slippageBps = input.slippageBps;
   if (input.maxFee !== undefined) intent.maxFee = input.maxFee;

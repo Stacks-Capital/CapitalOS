@@ -76,7 +76,15 @@ export type CapitalClient = {
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
   quote(
-    input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
+    input: {
+      marketId: string;
+      action: string;
+      amount: string;
+      owner?: string;
+      slippageBps?: string;
+      maxFee?: string;
+      recipient?: string;
+    },
     options?: CallOptions,
   ): Promise<Result<QuotedPlan>>;
   /** The same idempotency key always names the same workflow, so a retry never starts a second one. */
