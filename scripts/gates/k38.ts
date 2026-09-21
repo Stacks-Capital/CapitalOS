@@ -66,9 +66,7 @@ for (const report of golden) {
     "golden",
     `golden:${report.id}`,
     report.matched,
-    report.matched
-      ? `matched via ${report.source}; registry ${report.registryVersion}`
-      : report.mismatches.join("; "),
+    report.matched ? `matched via ${report.source}; registry ${report.registryVersion}` : report.mismatches.join("; "),
   );
 }
 record(
