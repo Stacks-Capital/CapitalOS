@@ -9,6 +9,8 @@ export type SigningContext = {
   now: Date;
   network: StacksNetwork;
   registryVersion: string;
+  /** Contract principals verified by the active signed deployment registry. */
+  allowedContracts?: readonly string[];
   sender?: string;
   bitcoinAddresses?: string[];
 };
@@ -56,6 +58,11 @@ export function validatePlan(plan: Plan, quote: Quote, ctx: SigningContext): Pla
       reasons.push(error instanceof Error ? error.message : String(error));
     }
     if (step.payload.kind === "stacks_contract_call") {
+      if (ctx.allowedContracts === undefined) {
+        reasons.push("trusted contract registry is unavailable");
+      } else if (!ctx.allowedContracts.includes(step.payload.contractId)) {
+        reasons.push(`contract is not approved by the active registry: ${step.payload.contractId}`);
+      }
       const reasonsForCall = stacksCallReasons(step.payload);
       reasons.push(...reasonsForCall);
     }
