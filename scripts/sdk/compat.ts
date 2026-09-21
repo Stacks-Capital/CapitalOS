@@ -102,7 +102,12 @@ try {
   record(
     "pnpm pack @stacks-capital/sdk",
     packed.status === 0,
-    packed.status === 0 ? "tarball written" : packed.stderr.trim(),
+    packed.status === 0
+      ? "tarball written"
+      : (packed.error?.message ??
+          packed.stderr?.trim() ??
+          packed.stdout?.trim() ??
+          `exit ${packed.status ?? "unknown"}`),
   );
 } finally {
   rmSync(packDir, { recursive: true, force: true });

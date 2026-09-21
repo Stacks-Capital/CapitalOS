@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  ASSETS,
   CAPABILITIES,
   CONTRACTS,
   FUNGIBLE_ASSET_NAME,
   assertExecutable,
   capabilityFor,
   contract,
+  executableContractIds,
   findContract,
 } from "./deployments.ts";
 
@@ -54,6 +56,25 @@ describe("capability registry", () => {
   it("does not treat the npm testnet sBTC principal as canonical", () => {
     assert.equal(
       CONTRACTS.some((item) => item.contractId.startsWith("SNGWPN3XDAQE673MXYXF81016M50NHF5X5PWWM70")),
+      false,
+    );
+  });
+
+  it("keeps reads and exits available while safe-exit-only mode pauses new risk", () => {
+    assert.ok(ASSETS.some((asset) => asset.protocol === "sbtc" && asset.network === "mainnet"));
+    assert.equal(capabilityFor("supply", "mainnet", "zest", "safe_exit_only")?.state, "paused");
+    assert.equal(capabilityFor("borrow", "mainnet", "granite", "safe_exit_only")?.state, "paused");
+    assert.equal(capabilityFor("withdraw_supply", "mainnet", "zest", "safe_exit_only")?.state, "enabled");
+    assert.equal(capabilityFor("repay", "mainnet", "granite", "safe_exit_only")?.state, "enabled");
+    assert.equal(contract("zest", "v0-vault-sbtc", "mainnet").role, "earn_vault");
+  });
+
+  it("derives signing targets only from reviewed non-disabled capabilities", () => {
+    const mainnet = executableContractIds("mainnet");
+    assert.ok(mainnet.includes("SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc"));
+    assert.equal(mainnet.includes("SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-4-market"), false);
+    assert.equal(
+      mainnet.some((contractId) => contractId.startsWith("ST") || contractId.startsWith("SN")),
       false,
     );
   });

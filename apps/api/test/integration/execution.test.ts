@@ -24,6 +24,7 @@ import {
   QuoteResponse,
   SignatureResponse,
   StartedWorkflowResponse,
+  WorkflowResponse,
 } from "../../src/schemas.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "";
@@ -150,6 +151,23 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     `;
     assert.deepEqual(attempt, { outcome: "BROADCAST", txid });
 
+    const resumedResponse = await app.request(`/v1/workflows/${started.workflowId}?network=mainnet`, {
+      headers: keyHeaders,
+    });
+    assert.equal(resumedResponse.status, 200);
+    const resumed = WorkflowResponse.parse(await resumedResponse.json()).data;
+    assert.equal(resumed.action, "supply");
+    assert.deepEqual(
+      resumed.attempts.map(({ stepId: id, chain, outcome, txid: recorded }) => ({
+        stepId: id,
+        chain,
+        outcome,
+        txid: recorded,
+      })),
+      [{ stepId, chain: "stacks", outcome: "BROADCAST", txid }],
+    );
+    assert.equal(resumed.state, "SUBMITTED");
+
     // Reporting the same step again changes nothing.
     const replay = await post(`/v1/workflows/${started.workflowId}/signature`, {
       network: "mainnet",
@@ -174,6 +192,14 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     assert.equal(data.outcome, "SIGNED");
     assert.equal(data.state, "BROADCAST_UNKNOWN");
     assert.equal(data.txid, null);
+    const resumedResponse = await app.request(`/v1/workflows/${started.workflowId}?network=mainnet`, {
+      headers: keyHeaders,
+    });
+    assert.equal(resumedResponse.status, 200);
+    const resumed = WorkflowResponse.parse(await resumedResponse.json()).data;
+    assert.equal(resumed.state, "BROADCAST_UNKNOWN");
+    assert.equal(resumed.attempts[0]?.outcome, "SIGNED");
+    assert.equal(resumed.attempts[0]?.txid, null);
   });
 
   it("refuses a quote that has expired instead of executing it", async () => {
@@ -197,14 +223,25 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
 
   it("keeps another tenant out of the workflow", async () => {
     const { started } = await startedWorkflow();
+    const stepId = started.plan.steps[0]?.id ?? "";
+    await post(`/v1/workflows/${started.workflowId}/signature`, {
+      network: "mainnet",
+      stepId,
+      walletResult: { txid: `0x${randomBytes(32).toString("hex")}` },
+    });
     const { token } = await createApiKey(sql, { appId: OTHER_APP.id, scopes: ["workflows:write"] });
     const result = await post(
       `/v1/workflows/${started.workflowId}/signature`,
-      { network: "mainnet", stepId: started.plan.steps[0]?.id ?? "", walletResult: { txid: "0xabc" } },
+      { network: "mainnet", stepId, walletResult: { txid: "0xabc" } },
       { authorization: `Bearer ${token}` },
     );
     assert.equal(result.response.status, 404);
     assert.equal(ErrorBody.parse(result.body).error.code, "NOT_FOUND");
+    const hidden = await app.request(`/v1/workflows/${started.workflowId}?network=mainnet`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    assert.equal(hidden.status, 404);
+    assert.equal(ErrorBody.parse(await hidden.json()).error.code, "NOT_FOUND");
   });
 
   it("refuses a browser client and a key without the scope", async () => {
@@ -325,7 +362,7 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     const response = await app.request("/v1/workflows?network=mainnet&limit=100", { headers: keyHeaders });
     assert.equal(response.status, 200);
     const body = WorkflowsResponse.parse(await response.json());
-    assert.ok(body.data.items.some((item) => item.id === started.workflowId));
+    assert.equal(body.data.items.find((item) => item.id === started.workflowId)?.action, "supply");
     const first = body.data.items[0];
     assert.ok(first !== undefined && first.transitionCount > 0);
 

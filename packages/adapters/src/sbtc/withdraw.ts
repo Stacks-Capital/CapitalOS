@@ -14,6 +14,7 @@ import {
 } from "@stacks-capital/core";
 import type { AdapterReads } from "../reads.ts";
 import type { AdapterContext, Intent, ProtocolAdapter } from "../types.ts";
+import { withdrawalRecipientScript } from "./withdrawalLifecycle.ts";
 
 export const SBTC_WITHDRAW_VERSION = "sbtc-withdraw@0.1.0";
 export const SBTC_MARKET_WITHDRAW = "sbtc.withdraw";
@@ -27,6 +28,25 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
   return {
     protocol: "sbtc",
     version: SBTC_WITHDRAW_VERSION,
+    semantics: {
+      amountEncoding: "base_10_integer_base_units",
+      unsupportedFieldPolicy: "omit",
+      positionModel: "A withdrawal remains pending until signer acceptance and canonical Bitcoin payout.",
+      assets: [
+        { unit: "sBTC base unit", decimals: 8, evidence: "sbtc-token SIP-010 deployment" },
+        { unit: "satoshi", decimals: 8, evidence: "Bitcoin consensus unit" },
+      ],
+      actions: [
+        {
+          action: "withdraw_sbtc",
+          inputUnit: "sBTC base unit",
+          outputUnit: "satoshi",
+          rounding: "exact",
+          completionEvidence: "canonical Bitcoin payout",
+          postConditionPolicy: "deny_mode",
+        },
+      ],
+    },
     describeCapabilities(ctx) {
       const found = capabilityFor("withdraw_sbtc", ctx.network, "sbtc");
       return found ? [found] : [];
@@ -53,11 +73,13 @@ export function createSbtcWithdrawAdapter(reads: AdapterReads): ProtocolAdapter 
     },
     readPositions(ctx, owner) {
       return {
-        value: [{ owner, marketId: SBTC_MARKET_WITHDRAW, kind: "pending_withdrawal", quantity: "0" }],
+        // A request id and canonical registry evidence are required to identify a pending withdrawal.
+        // Never turn the absence of transaction evidence into a synthetic zero-value position.
+        value: [],
         observedAt: ctx.now.toISOString(),
         source: reads.source ?? "fixture",
         stale: false,
-        warnings: [],
+        warnings: [`No pending withdrawal is inferred for ${owner}; use request lifecycle evidence`],
       };
     },
     quote(ctx, intent) {
@@ -102,13 +124,12 @@ function decodeRecipient(recipient: string): { version: string; hashbytes: strin
   const [version, hashbytes] = recipient.split(":");
   if (version === undefined || hashbytes === undefined)
     throw capitalError("PLAN_INVALID", "invalid Bitcoin recipient encoding");
-  const versionInt = Number.parseInt(version, 16);
-  const bytes = hashbytes.length / 2;
-  if (versionInt <= 4 && bytes !== 20)
-    throw capitalError("PLAN_INVALID", "hashbytes must be 20 bytes for version <= 4");
-  if (versionInt >= 5 && bytes !== 32)
-    throw capitalError("PLAN_INVALID", "hashbytes must be 32 bytes for version 5 or 6");
-  return { version, hashbytes };
+  try {
+    withdrawalRecipientScript(version, hashbytes);
+  } catch (error) {
+    throw capitalError("PLAN_INVALID", error instanceof Error ? error.message : "invalid Bitcoin recipient encoding");
+  }
+  return { version: version.toLowerCase(), hashbytes: hashbytes.toLowerCase() };
 }
 
 function quoteWithdraw(ctx: AdapterContext, intent: Intent, reads: AdapterReads): Quote {

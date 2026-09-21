@@ -157,6 +157,50 @@ export function createGraniteCreditAdapter(reads: AdapterReads): ProtocolAdapter
   return {
     protocol: "granite",
     version: GRANITE_CREDIT_VERSION,
+    semantics: {
+      amountEncoding: "base_10_integer_base_units",
+      unsupportedFieldPolicy: "omit",
+      positionModel:
+        "Isolated sBTC collateral and USDCx debt are separate signed quantities; neither is inferred from net value.",
+      assets: [
+        { unit: "sBTC base unit", decimals: 8, evidence: "sbtc-token SIP-010 deployment" },
+        { unit: "USDCx base unit", decimals: 6, evidence: "usdcx SIP-010 deployment" },
+      ],
+      actions: [
+        {
+          action: "supply",
+          inputUnit: "sBTC base unit",
+          outputUnit: "isolated collateral base unit",
+          rounding: "exact",
+          completionEvidence: "canonical collateral-add and position delta",
+          postConditionPolicy: "deny_mode",
+        },
+        {
+          action: "withdraw_supply",
+          inputUnit: "isolated collateral base unit",
+          outputUnit: "sBTC base unit",
+          rounding: "exact",
+          completionEvidence: "canonical collateral-remove and sBTC delta",
+          postConditionPolicy: "deny_mode",
+        },
+        {
+          action: "borrow",
+          inputUnit: "USDCx debt base unit",
+          outputUnit: "USDCx base unit",
+          rounding: "down",
+          completionEvidence: "canonical borrow and debt/balance deltas",
+          postConditionPolicy: "deny_mode",
+        },
+        {
+          action: "repay",
+          inputUnit: "USDCx base unit",
+          outputUnit: "USDCx debt base unit",
+          rounding: "down",
+          completionEvidence: "canonical repay and debt delta",
+          postConditionPolicy: "deny_mode",
+        },
+      ],
+    },
     describeCapabilities(ctx) {
       return ACTIONS.map((action) => capabilityFor(action, ctx.network, "granite")).filter(
         (item): item is NonNullable<typeof item> => item !== undefined,

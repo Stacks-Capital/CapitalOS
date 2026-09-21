@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { executableContractIds } from "@stacks-capital/config";
 import { parsePlan, parseQuote, serializePlan, serializeQuote, validatePlan } from "@stacks-capital/core";
 import { FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS, TESTNET_OWNER, TESTNET_READS } from "@stacks-capital/fixtures";
 import { createExecutionEngine, executable } from "./engine.ts";
@@ -25,6 +26,7 @@ describe("execution engine", () => {
         now: new Date(FIXTURE_NOW),
         network: "mainnet",
         registryVersion: engine.registryVersion,
+        allowedContracts: executableContractIds("mainnet"),
         sender: MAINNET_OWNER,
       }).ok,
       true,

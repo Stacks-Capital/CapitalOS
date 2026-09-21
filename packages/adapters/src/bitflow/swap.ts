@@ -91,6 +91,26 @@ export function createBitflowSwapAdapter(reads: AdapterReads): ProtocolAdapter {
   return {
     protocol: "bitflow",
     version: BITFLOW_SWAP_VERSION,
+    semantics: {
+      amountEncoding: "base_10_integer_base_units",
+      unsupportedFieldPolicy: "omit",
+      positionModel:
+        "Swaps reconcile from canonical input and output asset deltas; ticker output is quote evidence only.",
+      assets: [
+        { unit: "sBTC base unit", decimals: 8, evidence: "sbtc-token SIP-010 deployment" },
+        { unit: "USDCx base unit", decimals: 6, evidence: "usdcx SIP-010 deployment" },
+      ],
+      actions: [
+        {
+          action: "swap",
+          inputUnit: "route input base unit",
+          outputUnit: "route output base unit",
+          rounding: "down",
+          completionEvidence: "canonical swap event and output balance delta at or above min-out",
+          postConditionPolicy: "deny_mode",
+        },
+      ],
+    },
     describeCapabilities(ctx) {
       const found = capabilityFor("swap", ctx.network, "bitflow");
       return found ? [found] : [];

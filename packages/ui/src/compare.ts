@@ -22,7 +22,8 @@ export type Comparison = { groups: ComparisonGroup[]; note: string };
 export const GROUPING_NOTE =
   "Options are ranked only against others that supply the same asset. Anything else is listed, not ranked.";
 
-const MAX_AGE_MS = 15 * 60 * 1000;
+/** Market evidence older than five minutes cannot drive a ranking or allocation. */
+export const EARN_OPTION_MAX_AGE_MS = 5 * 60 * 1000;
 
 // Whether an option can be ranked is decided once, next to the reason, never by reading the notes back.
 type Candidate = ComparisonRow & { rankable: boolean };
@@ -36,7 +37,10 @@ function toScale(rate: Rate, scale: number): bigint {
 export function addRates(left: Rate, right: Rate | null): Rate {
   if (right === null) return left;
   const scale = Math.max(left.scale, right.scale);
-  return { value: (toScale(left, scale) + toScale(right, scale)).toString(10), scale };
+  return {
+    value: (toScale(left, scale) + toScale(right, scale)).toString(10),
+    scale,
+  };
 }
 
 function rateOf(value: string | null, scale: number | null): Rate | null {
@@ -83,10 +87,25 @@ export function compareEarn(options: EarnOption[], now: Date): Comparison {
       notes.push("The last reading is stale.");
       rankable = false;
     }
-    const ageMs = option.observedAt === null ? null : now.getTime() - new Date(option.observedAt).getTime();
-    if (ageMs !== null && ageMs > MAX_AGE_MS) {
-      notes.push(`Last read ${Math.round(ageMs / 60_000)} minutes ago.`);
+    const observedAtMs = option.observedAt === null ? null : Date.parse(option.observedAt);
+    if (observedAtMs === null) {
+      notes.push("The reading has no observation timestamp.");
       rankable = false;
+    } else if (!Number.isFinite(observedAtMs)) {
+      notes.push("The observation timestamp is invalid.");
+      rankable = false;
+    } else {
+      const ageMs = now.getTime() - observedAtMs;
+      if (!Number.isFinite(ageMs)) {
+        notes.push("The observation timestamp is invalid.");
+        rankable = false;
+      } else if (ageMs < 0) {
+        notes.push("The observation timestamp is in the future.");
+        rankable = false;
+      } else if (ageMs > EARN_OPTION_MAX_AGE_MS) {
+        notes.push(`Last read ${Math.ceil(ageMs / 1000)} seconds ago; the limit is 300 seconds.`);
+        rankable = false;
+      }
     }
     // A missing incentive rate is not the same as no incentive, so the caveat stays visible.
     if (base !== null && incentive === null) notes.push("Incentive rate unknown, so only the base rate is counted.");

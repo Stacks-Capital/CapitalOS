@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { connect, requireDatabaseUrl } from "@stacks-capital/database";
+import { verifyBuiltinRegistry } from "@stacks-capital/engine";
 import { createApp } from "./app.ts";
 import { redisClient, redisLimiter } from "./rateLimit.ts";
 
@@ -8,6 +9,8 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("API_P
 
 const redisUrl = process.env.REDIS_URL;
 if (redisUrl === undefined || redisUrl === "") throw new Error("REDIS_URL is not set. Rate limits need Redis.");
+
+await verifyBuiltinRegistry();
 
 const redis = redisClient(redisUrl);
 await Promise.race([

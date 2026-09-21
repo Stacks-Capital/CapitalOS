@@ -32,6 +32,7 @@ export {
   type AttemptInsert,
   createWorkflowRow,
   findAttempt,
+  findWorkflowStepKind,
   findStoredQuote,
   insertPlan,
   insertQuote,
@@ -39,6 +40,7 @@ export {
   stepKey,
   type StoredQuote,
   type WorkflowInsert,
+  type WorkflowStepKind,
 } from "./execution.ts";
 export {
   type ActivityRow,

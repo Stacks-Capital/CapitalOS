@@ -59,10 +59,18 @@ export type Workflow = {
   nextAction: string;
   quoteId: string | null;
   planId: string | null;
+  action: string | null;
   ownerAddress: string | null;
   createdAt: string;
   updatedAt: string;
   transitions: WorkflowTransition[];
+  attempts: {
+    stepId: string;
+    chain: "bitcoin" | "stacks";
+    outcome: "BROADCAST" | "SIGNED" | "UNKNOWN";
+    txid: string | null;
+    recordedAt: string;
+  }[];
 };
 
 export type AssetAmount = { asset: string; quantity: string };
@@ -192,6 +200,7 @@ export type WorkflowSummary = {
   nextAction: string;
   quoteId: string | null;
   planId: string | null;
+  action: string | null;
   createdAt: string;
   updatedAt: string;
   transitionCount: number;

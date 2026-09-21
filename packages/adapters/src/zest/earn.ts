@@ -49,6 +49,33 @@ export function createZestEarnAdapter(reads: AdapterReads): ProtocolAdapter {
   return {
     protocol: "zest",
     version: ZEST_EARN_VERSION,
+    semantics: {
+      amountEncoding: "base_10_integer_base_units",
+      unsupportedFieldPolicy: "omit",
+      positionModel: "zsBTC is a receipt claim on supplied sBTC and must not be counted as a second asset.",
+      assets: [
+        { unit: "sBTC base unit", decimals: 8, evidence: "sbtc-token SIP-010 deployment" },
+        { unit: "zsBTC share base unit", decimals: 8, evidence: "v0-vault-sbtc zft metadata" },
+      ],
+      actions: [
+        {
+          action: "supply",
+          inputUnit: "sBTC base unit",
+          outputUnit: "zsBTC share base unit",
+          rounding: "down",
+          completionEvidence: "canonical vault deposit and receipt-share delta",
+          postConditionPolicy: "deny_mode",
+        },
+        {
+          action: "withdraw_supply",
+          inputUnit: "zsBTC share base unit",
+          outputUnit: "sBTC base unit",
+          rounding: "down",
+          completionEvidence: "canonical vault redeem and sBTC delta",
+          postConditionPolicy: "deny_mode",
+        },
+      ],
+    },
     describeCapabilities(ctx) {
       return ["supply", "withdraw_supply"]
         .map((action) => capabilityFor(action as Action, ctx.network, "zest"))

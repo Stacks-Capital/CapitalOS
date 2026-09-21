@@ -19,6 +19,7 @@ import {
   latestPositions,
   latestPrices,
   findAttempt,
+  findWorkflowStepKind,
   findStoredQuote,
   findWorkflowForTenant,
   insertPlan,
@@ -244,6 +245,12 @@ export async function recordSignature(
     };
   }
 
+  const stepKind = await findWorkflowStepKind(deps.sql, {
+    workflowId: input.workflowId,
+    stepId: input.stepId,
+  });
+  if (stepKind === null) throw new ApiError("NOT_FOUND", "No such workflow step");
+
   const outcome = walletOutcome(input.walletResult);
   const txid =
     outcome === "BROADCAST" && typeof (input.walletResult as { txid?: unknown }).txid === "string"
@@ -287,7 +294,7 @@ export async function recordSignature(
       workflowId: record.id,
       stepId: input.stepId,
       network: record.network,
-      chain: "stacks",
+      chain: stepKind === "bitcoin_deposit" ? "bitcoin" : "stacks",
       outcome,
       txid,
       evidence: `wallet result recorded at ${at}`,

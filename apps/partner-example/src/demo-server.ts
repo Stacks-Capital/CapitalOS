@@ -28,12 +28,20 @@ function readBody(req: IncomingMessage): Promise<string> {
 }
 
 function errorJson(requestId: string, code: string, message: string) {
-  return JSON.stringify({ schemaVersion: SCHEMA_VERSION, requestId, error: { code, message } });
+  return JSON.stringify({
+    schemaVersion: SCHEMA_VERSION,
+    requestId,
+    error: { code, message },
+  });
 }
 
 function asIntent(value: { action?: string; marketId?: string; amount?: string } | undefined): Intent | null {
   if (value?.action === undefined || value.marketId === undefined || value.amount === undefined) return null;
-  return { action: value.action as Intent["action"], marketId: value.marketId, amount: value.amount };
+  return {
+    action: value.action as Intent["action"],
+    marketId: value.marketId,
+    amount: value.amount,
+  };
 }
 
 export async function startDemoCapitalApi(input: { live: boolean; now?: Date }): Promise<DemoServer> {
@@ -79,7 +87,10 @@ export async function startDemoCapitalApi(input: { live: boolean; now?: Date }):
             return;
           }
           const minted = engine.quoteAndPlan(intent);
-          data = { quote: serializeQuote(minted.quote), plan: serializePlan(minted.plan) };
+          data = {
+            quote: serializeQuote(minted.quote),
+            plan: serializePlan(minted.plan),
+          };
         } else if (req.url === "/v1/plans") {
           const intent = asIntent(payload.intent);
           if (intent === null || payload.quote === undefined) {
@@ -98,7 +109,11 @@ export async function startDemoCapitalApi(input: { live: boolean; now?: Date }):
             requestId,
             network: "stacks:mainnet",
             data,
-            context: { observedAt: now.toISOString(), stale: false, warnings: [] },
+            context: {
+              observedAt: now.toISOString(),
+              stale: false,
+              warnings: [],
+            },
           }),
         );
       } catch (error) {
@@ -120,6 +135,9 @@ export async function startDemoCapitalApi(input: { live: boolean; now?: Date }):
     url: `http://127.0.0.1:${address.port}`,
     close: () =>
       new Promise((resolve, reject) => {
+        // Node fetch keeps HTTP connections alive. Drain those idle sockets first so the
+        // example test and a real embedding host can shut down deterministically.
+        server.closeIdleConnections();
         server.close((error) => (error ? reject(error) : resolve()));
       }),
   };

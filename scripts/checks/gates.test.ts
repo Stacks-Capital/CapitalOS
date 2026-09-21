@@ -35,19 +35,30 @@ after(() => {
 
 describe("lint gate", () => {
   it("passes strict equality", () => {
-    const dir = tempTree({ "ok.ts": "export const same = (a: number, b: number): boolean => a === b;\n" });
+    const dir = tempTree({
+      "ok.ts": "export const same = (a: number, b: number): boolean => a === b;\n",
+    });
     assert.equal(run(join(BIN, "biome"), ["lint", "ok.ts"], dir).status, 0);
   });
 
   it("fails loose equality", () => {
-    const dir = tempTree({ "bad.ts": "export const same = (a: number, b: number): boolean => a == b;\n" });
+    const dir = tempTree({
+      "bad.ts": "export const same = (a: number, b: number): boolean => a == b;\n",
+    });
     const result = run(join(BIN, "biome"), ["lint", "bad.ts"], dir);
     assert.notEqual(result.status, 0);
     assert.match(result.stdout + result.stderr, /noDoubleEquals/);
   });
 });
 
-describe("package boundary gate", () => {
+const dependencyCruiserSupported = (() => {
+  const major = Number(process.versions.node.split(".")[0]);
+  return major === 22 || major === 24 || major >= 26;
+})();
+
+describe("package boundary gate", {
+  skip: dependencyCruiserSupported ? false : "dependency-cruiser does not support this Node release",
+}, () => {
   const cruise = (dir: string) =>
     run(
       join(BIN, "depcruise"),
@@ -98,7 +109,9 @@ describe("secret scanning gate", {
 
   it("fails a folder with a token", () => {
     // Built at runtime so this file never contains a token itself.
-    const dir = tempTree({ "config.ts": `export const token = "ghp_${randomBytes(18).toString("hex")}";\n` });
+    const dir = tempTree({
+      "config.ts": `export const token = "ghp_${randomBytes(18).toString("hex")}";\n`,
+    });
     assert.equal(run("gitleaks", ["dir", dir, "--no-banner", "--redact"], dir).status, 1);
   });
 });
@@ -120,7 +133,9 @@ describe("local services", {
     });
     assert.equal(result.status, 0, result.stderr);
     type Port = { published?: string; host_ip?: string };
-    const config = JSON.parse(result.stdout) as { services: Record<string, { ports?: Port[] }> };
+    const config = JSON.parse(result.stdout) as {
+      services: Record<string, { ports?: Port[] }>;
+    };
     assert.deepEqual(config.services.postgres?.ports?.[0], {
       ...config.services.postgres?.ports?.[0],
       published: "15432",

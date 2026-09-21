@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { EarnOption } from "@stacks-capital/client";
-import { addRates, compareEarn, compareRates, formatRate } from "./compare.ts";
+import { addRates, compareEarn, compareRates, EARN_OPTION_MAX_AGE_MS, formatRate } from "./compare.ts";
 
 const SBTC = "stacks:mainnet:contract:SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token:sbtc-token";
 const USDCX = "stacks:mainnet:contract:SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token:usdcx-token";
@@ -37,7 +37,10 @@ describe("rates", () => {
   it("add across different scales and keep the finer one", () => {
     assert.deepEqual(addRates({ value: "130", scale: 4 }, { value: "50", scale: 4 }), { value: "180", scale: 4 });
     assert.deepEqual(addRates({ value: "130", scale: 4 }, { value: "5", scale: 2 }), { value: "630", scale: 4 });
-    assert.deepEqual(addRates({ value: "130", scale: 4 }, null), { value: "130", scale: 4 });
+    assert.deepEqual(addRates({ value: "130", scale: 4 }, null), {
+      value: "130",
+      scale: 4,
+    });
   });
 
   it("compare across scales, and refuse to compare an unknown one", () => {
@@ -57,7 +60,12 @@ describe("ranking", () => {
     const comparison = compareEarn(
       [
         option({ marketId: "a.vault", baseRate: "130" }),
-        option({ marketId: "b.vault", baseRate: "90", incentiveRate: "100", incentiveRateScale: 4 }),
+        option({
+          marketId: "b.vault",
+          baseRate: "90",
+          incentiveRate: "100",
+          incentiveRateScale: 4,
+        }),
         option({ marketId: "c.vault", baseRate: "150" }),
       ],
       NOW,
@@ -72,7 +80,10 @@ describe("ranking", () => {
       ],
     );
     // 0.90% base plus 1.00% incentive beats 1.50% base alone.
-    assert.deepEqual(rowFor(comparison, "b.vault")?.effectiveRate, { value: "190", scale: 4 });
+    assert.deepEqual(rowFor(comparison, "b.vault")?.effectiveRate, {
+      value: "190",
+      scale: 4,
+    });
   });
 
   it("never ranks options that supply different assets against each other", () => {
@@ -105,7 +116,10 @@ describe("what is never ranked", () => {
     ],
     ["no rate has been read", { baseRate: null, baseRateScale: null }, /No rate has been read/],
     ["the reading is stale", { stale: true }, /last reading is stale/],
-    ["the reading is old", { observedAt: "2026-09-18T11:00:00.000Z" }, /Last read 60 minutes ago/],
+    ["the reading is old", { observedAt: "2026-09-18T11:00:00.000Z" }, /limit is 300 seconds/],
+    ["the observation time is missing", { observedAt: null }, /no observation timestamp/],
+    ["the observation time is invalid", { observedAt: "not-a-date" }, /timestamp is invalid/],
+    ["the observation time is in the future", { observedAt: "2026-09-18T12:00:01.000Z" }, /in the future/],
   ];
 
   for (const [name, overrides, reason] of cases) {
@@ -142,5 +156,15 @@ describe("what is never ranked", () => {
     const row = rowFor(comparison, "zest.sbtc.vault");
     assert.equal(row?.rank, 1);
     assert.ok(row?.notes.some((note) => note.includes("liquidity is unknown")));
+  });
+
+  it("accepts exactly 300-second-old evidence and rejects it at 301 seconds", () => {
+    const atBoundary = new Date(NOW.getTime() - EARN_OPTION_MAX_AGE_MS).toISOString();
+    const pastBoundary = new Date(NOW.getTime() - EARN_OPTION_MAX_AGE_MS - 1_000).toISOString();
+
+    assert.equal(rowFor(compareEarn([option({ observedAt: atBoundary })], NOW), "zest.sbtc.vault")?.rank, 1);
+    const expired = rowFor(compareEarn([option({ observedAt: pastBoundary })], NOW), "zest.sbtc.vault");
+    assert.equal(expired?.rank, null);
+    assert.match(expired?.notes.join(" ") ?? "", /301 seconds ago/);
   });
 });
