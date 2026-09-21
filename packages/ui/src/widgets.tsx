@@ -5,6 +5,7 @@ import { reviewQuote } from "./earn.ts";
 import { buildPortfolio, type Position } from "./holdings.ts";
 import { Panel, StateNote, Unavailable } from "./primitives.tsx";
 import { panelState, UNAVAILABLE } from "./state.ts";
+import { ResponsiveTable } from "./table.tsx";
 
 /*
  * Widgets a partner drops into their own page. Each one reads through the hooks, so it only needs a
@@ -34,44 +35,42 @@ export function EarnComparison({
       {comparison.groups.map((group) => (
         <section key={group.suppliedAssetId ?? "unknown"}>
           <h3>Supplying {group.suppliedAssetId ?? "an asset this page cannot name"}</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Market</th>
-                <th>Base</th>
-                <th>Incentive</th>
-                <th>Together</th>
-                <th>Liquidity</th>
-                <th>Withdrawal</th>
-                {onChoose === undefined ? null : <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {group.rows.map((row) => (
-                <tr key={row.option.marketId} aria-selected={selectedMarketId === row.option.marketId}>
-                  <td>{row.rank ?? "not ranked"}</td>
-                  <td>{row.option.marketId}</td>
-                  <td>{formatRate(rateOf(row.option.baseRate, row.option.baseRateScale))}</td>
-                  <td>{formatRate(rateOf(row.option.incentiveRate, row.option.incentiveRateScale))}</td>
-                  <td>{formatRate(row.effectiveRate)}</td>
-                  <td>{row.option.availableLiquidity ?? "unknown"}</td>
-                  <td>{row.option.withdrawal === null ? "none listed" : row.option.withdrawal.state}</td>
-                  {onChoose === undefined ? null : (
-                    <td>
-                      <button
-                        type="button"
-                        disabled={row.option.supply.state !== "enabled"}
-                        onClick={() => onChoose(row.option.marketId)}
-                      >
-                        Choose
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ResponsiveTable
+            rows={group.rows}
+            rowKey={(row) => row.option.marketId}
+            rowSelected={(row) => selectedMarketId === row.option.marketId}
+            columns={[
+              { header: "Rank", cell: (row) => row.rank ?? "not ranked" },
+              { header: "Market", cell: (row) => row.option.marketId },
+              { header: "Base", cell: (row) => formatRate(rateOf(row.option.baseRate, row.option.baseRateScale)) },
+              {
+                header: "Incentive",
+                cell: (row) => formatRate(rateOf(row.option.incentiveRate, row.option.incentiveRateScale)),
+              },
+              { header: "Together", cell: (row) => formatRate(row.effectiveRate) },
+              { header: "Liquidity", cell: (row) => row.option.availableLiquidity ?? "unknown" },
+              {
+                header: "Withdrawal",
+                cell: (row) => (row.option.withdrawal === null ? "none listed" : row.option.withdrawal.state),
+              },
+              ...(onChoose === undefined
+                ? []
+                : [
+                    {
+                      header: "Action",
+                      cell: (row: (typeof group.rows)[number]) => (
+                        <button
+                          type="button"
+                          disabled={row.option.supply.state !== "enabled"}
+                          onClick={() => onChoose(row.option.marketId)}
+                        >
+                          Choose
+                        </button>
+                      ),
+                    },
+                  ]),
+            ]}
+          />
           {group.rows
             .filter((row) => row.notes.length > 0)
             .map((row) => (
@@ -133,18 +132,16 @@ export function PositionsSummary({ signedIn }: { signedIn: boolean }) {
       {portfolio.rows.length === 0 ? (
         <p className="muted">No positions yet.</p>
       ) : (
-        <table>
-          <tbody>
-            {portfolio.rows.map((row) => (
-              <tr key={row.key}>
-                <td>{row.kind}</td>
-                <td>{row.marketId}</td>
-                <td>{row.quantity ?? "unknown"}</td>
-                <td>{row.countsTowardTotal ? "" : "not counted"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ResponsiveTable
+          rows={portfolio.rows}
+          rowKey={(row) => row.key}
+          columns={[
+            { header: "Kind", cell: (row) => row.kind },
+            { header: "Market", cell: (row) => row.marketId },
+            { header: "Quantity", cell: (row) => row.quantity ?? "unknown" },
+            { header: "Counted", cell: (row) => (row.countsTowardTotal ? "counted" : "not counted") },
+          ]}
+        />
       )}
     </Panel>
   );
@@ -161,18 +158,16 @@ export function WorkflowHistory({ signedIn }: { signedIn: boolean }) {
       {items.length === 0 ? (
         <p className="muted">Nothing yet.</p>
       ) : (
-        <table>
-          <tbody>
-            {items.map((workflow) => (
-              <tr key={workflow.id}>
-                <td>{workflow.createdAt}</td>
-                <td>{workflow.id}</td>
-                <td>{workflow.state}</td>
-                <td>{workflow.nextAction}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ResponsiveTable
+          rows={items}
+          rowKey={(workflow) => workflow.id}
+          columns={[
+            { header: "Started", cell: (workflow) => workflow.createdAt },
+            { header: "Workflow", cell: (workflow) => workflow.id },
+            { header: "State", cell: (workflow) => workflow.state },
+            { header: "Next", cell: (workflow) => workflow.nextAction },
+          ]}
+        />
       )}
     </Panel>
   );

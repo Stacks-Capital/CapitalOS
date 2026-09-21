@@ -62,3 +62,127 @@ export function panelState<T>(query: QueryLike<T>, context?: ResponseContext | u
     observedAt: context?.observedAt ?? null,
   };
 }
+
+/* =========================================================================
+ * The Eight Centralized States (Task 2 / I31)
+ *
+ * Enforces the cross-cutting screen contract from AGENTS.md:
+ * Loading, Empty, Partial, Unsupported, Stale/Disputed, Review, Submitted,
+ * Failed/Delayed.
+ * ========================================================================= */
+
+export type LoadingState = {
+  kind: "loading";
+  what: string;
+  canCancel?: boolean;
+  onCancel?: () => void;
+  canRetry?: boolean;
+  onRetry?: () => void;
+  priorVerified?: {
+    timestamp: string;
+    description: string;
+  };
+};
+
+export type EmptyState = {
+  kind: "empty";
+  instruction: string;
+  allowAddressInput?: boolean;
+  onAddressSubmit?: (address: string) => void;
+  onConnectWallet?: () => void;
+  nextAction?: {
+    label: string;
+    onClick: () => void;
+  };
+};
+
+export type PartialState = {
+  kind: "partial";
+  /** May already carry its unit, for a subtotal that spans several assets. */
+  verifiedSubtotal: string;
+  assetUnit?: string;
+  excludedPositions: Array<{
+    name: string;
+    reason: string;
+  }>;
+  notice?: string;
+};
+
+export type UnsupportedState = {
+  kind: "unsupported";
+  assetOrProtocol: string;
+  reason: string;
+};
+
+export type StaleDisputedState = {
+  kind: "stale_disputed";
+  ageDescription: string;
+  sources: string[];
+  disagreement?: string;
+  onRefresh?: () => void;
+  onRequote?: () => void;
+};
+
+export type ReviewState = {
+  kind: "review";
+  /** Amounts may already carry their unit, as reviewQuote formats them. The asset fields are for the ones that do not. */
+  giveAmount: string;
+  giveAsset?: string;
+  receiveAmount: string;
+  receiveAsset?: string;
+  fees: Array<{ kind: string; amount: string; asset?: string }>;
+  minimumOutput?: string;
+  debtChange?: string;
+  healthFactor?: string;
+  protocol: string;
+  contract: string;
+  planValidated: boolean;
+  validationError?: string;
+  onConfirm?: () => void;
+};
+
+export type SubmittedState = {
+  kind: "submitted";
+  txId: string;
+  explorerUrl: string;
+  /** The real workflow state. Confirming and mint_pending are not done, so the badge never says so. */
+  workflowState?: string;
+  differenceNote?: string;
+  nextAction?: string;
+};
+
+export type FailedDelayedRecovery = {
+  type: "resume" | "requote" | "switch_network" | "provide_fee" | "reclaim" | "support";
+  label: string;
+  action: () => void;
+};
+
+export type FailedDelayedState = {
+  kind: "failed_delayed";
+  cause: string;
+  fundsLocation: string;
+  recovery: FailedDelayedRecovery[];
+};
+
+export type CanonicalState =
+  | LoadingState
+  | EmptyState
+  | PartialState
+  | UnsupportedState
+  | StaleDisputedState
+  | ReviewState
+  | SubmittedState
+  | FailedDelayedState;
+
+export const CANONICAL_STATE_KINDS = [
+  "loading",
+  "empty",
+  "partial",
+  "unsupported",
+  "stale_disputed",
+  "review",
+  "submitted",
+  "failed_delayed",
+] as const;
+
+export type CanonicalStateKind = (typeof CANONICAL_STATE_KINDS)[number];

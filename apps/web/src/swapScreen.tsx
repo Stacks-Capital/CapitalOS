@@ -6,17 +6,31 @@ import {
   askWallet,
   canApprove,
   type ConnectedWallet,
+  contractOf,
+  EmptyStateView,
+  explorerTxUrl,
+  FailedDelayedStateView,
   findProvider,
   messageFor,
   Panel,
   panelState,
+  ReviewStateView,
+  StaleDisputedStateView,
   StateNote,
+  SubmittedStateView,
   swapView,
   toWalletRequest,
 } from "@stacks-capital/ui";
 
 const MARKET = "bitflow.sbtc-usdcx";
 const ASSETS = { sentFeed: "BTC/USD", receivedFeed: "USDC/USD", sentDecimals: 8, receivedDecimals: 6 };
+
+type SubmissionOutcome = {
+  workflowId: string;
+  state: string;
+  nextAction: string;
+  txid: string | null;
+};
 
 export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; signedIn: boolean }) {
   const { client } = useCapital();
@@ -25,7 +39,7 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   const [slippageBps, setSlippageBps] = useState("50");
   const [quoted, setQuoted] = useState<QuotedPlan | null>(null);
   const [now, setNow] = useState(() => new Date());
-  const [outcome, setOutcome] = useState<string | null>(null);
+  const [submission, setSubmission] = useState<SubmissionOutcome | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -38,7 +52,7 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   if (!signedIn || wallet === null) {
     return (
       <Panel title="Swap">
-        <p className="muted">Connect a wallet and sign in to swap.</p>
+        <EmptyStateView state={{ kind: "empty", instruction: "Connect a wallet and sign in to swap." }} />
       </Panel>
     );
   }
@@ -80,7 +94,12 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       }
       const walletResult = answer.result;
       const recorded = await client.recordSignature(started.data.workflowId, { stepId: step.id, walletResult });
-      setOutcome(`${recorded.data.state}, next ${recorded.data.nextAction}`);
+      setSubmission({
+        workflowId: started.data.workflowId,
+        state: recorded.data.state,
+        nextAction: recorded.data.nextAction,
+        txid: recorded.data.txid,
+      });
       setQuoted(null);
     } catch (error) {
       setProblem(messageFor(error).message);
@@ -105,7 +124,7 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
         {quoted === null ? "Get a quote" : "Refresh the quote"}
       </button>
 
-      {view === null ? null : (
+      {view === null || quoted === null ? null : (
         <div className="quote">
           <h3>Route</h3>
           <ol>
@@ -115,17 +134,6 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
               </li>
             ))}
           </ol>
-
-          <dl>
-            <dt>Sending</dt>
-            <dd>{view.sending}</dd>
-            <dt>Expected</dt>
-            <dd>{view.expectedReceived}</dd>
-            <dt>At least</dt>
-            <dd>{view.minimumReceived ?? "no floor in this quote"}</dd>
-            <dt>Price impact</dt>
-            <dd>{view.impactBps === null ? "unknown" : `${(Number(view.impactBps) / 100).toFixed(2)}%`}</dd>
-          </dl>
 
           {view.impactNote === null ? null : <p className="warn">{view.impactNote}</p>}
           {view.warnings.map((warning) => (
@@ -142,13 +150,62 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
                 : `Valid for ${view.expiresInSeconds}s.`}
           </p>
 
-          <button type="button" disabled={busy || !approvable} onClick={() => void approve()}>
-            Approve in your wallet
-          </button>
+          {view.expired || view.needsRefresh ? (
+            <StaleDisputedStateView
+              state={{
+                kind: "stale_disputed",
+                ageDescription: view.expired ? "past its expiry" : `only ${view.expiresInSeconds}s remaining`,
+                sources: [MARKET],
+                onRequote: () => void refresh(),
+              }}
+            />
+          ) : (
+            <ReviewStateView
+              state={{
+                kind: "review",
+                giveAmount: view.sending,
+                receiveAmount: view.expectedReceived,
+                fees: [],
+                ...(view.minimumReceived === null ? {} : { minimumOutput: view.minimumReceived }),
+                protocol: "Bitflow",
+                contract: contractOf(quoted.plan.steps),
+                planValidated: approvable && !busy,
+                ...(approvable ? {} : { validationError: view.warnings.join(" ") || "This quote cannot be approved." }),
+                onConfirm: () => void approve(),
+              }}
+            />
+          )}
         </div>
       )}
 
-      {outcome === null ? null : <p>Submitted: {outcome}</p>}
+      {submission === null ? null : submission.txid === null ? (
+        <FailedDelayedStateView
+          state={{
+            kind: "failed_delayed",
+            cause:
+              "The wallet did not return a transaction id, or the broadcast state is unknown. Nothing is retried automatically.",
+            fundsLocation: `Whether anything was broadcast is unknown. State ${submission.state}, workflow ${submission.workflowId}.`,
+            recovery: [
+              {
+                type: "support",
+                label: "Copy workflow id",
+                action: () => void navigator.clipboard?.writeText(submission.workflowId),
+              },
+            ],
+          }}
+        />
+      ) : (
+        <SubmittedStateView
+          state={{
+            kind: "submitted",
+            txId: submission.txid,
+            explorerUrl: explorerTxUrl(submission.txid, wallet.network),
+            workflowState: submission.state,
+            nextAction: submission.nextAction,
+          }}
+        />
+      )}
+
       {problem === null ? null : (
         <p className="error" role="alert">
           {problem}

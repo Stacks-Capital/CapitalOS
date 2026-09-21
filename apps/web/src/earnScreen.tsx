@@ -4,17 +4,25 @@ import { useEffect, useMemo, useState } from "react";
 import type { WalletId } from "@stacks-capital/wallets";
 import {
   askWallet,
+  attemptTxid,
   canSign,
   clearPending,
+  contractOf,
   EarnComparison,
+  EmptyStateView,
+  explorerTxUrl,
+  FailedDelayedStateView,
   type ConnectedWallet,
   findProvider,
   loadPending,
   messageFor,
   Panel,
   reviewQuote,
+  ReviewStateView,
   savePending,
+  StaleDisputedStateView,
   stageFor,
+  SubmittedStateView,
   toWalletRequest,
 } from "@stacks-capital/ui";
 
@@ -43,6 +51,8 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   const workflowId = started?.workflowId ?? pending?.workflowId ?? null;
   const workflow = useWorkflow(workflowId, { staleMs: 5_000 });
   const stage = stageFor(workflow.data?.data.state ?? (started === null ? null : started.state));
+  const workflowState = workflow.data?.data.state ?? started?.state ?? "unknown";
+  const txid = attemptTxid(workflow.data?.data.attempts ?? []);
 
   // A finished flow is not pending any more, so a reload starts fresh.
   useEffect(() => {
@@ -115,7 +125,9 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   if (wallet === null || !signedIn) {
     return (
       <Panel title="Earn">
-        <p className="muted">Connect a wallet and sign in to supply into a vault.</p>
+        <EmptyStateView
+          state={{ kind: "empty", instruction: "Connect a wallet and sign in to supply into a vault." }}
+        />
       </Panel>
     );
   }
@@ -146,27 +158,41 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
             Get a quote
           </button>
 
-          {view === null ? null : (
+          {view === null || quoted === null ? null : (
             <div className="quote">
-              <p>
-                You supply {view.input}, expecting {view.expected}.
-              </p>
-              <ul>
-                {view.fees.map((fee) => (
-                  <li key={fee.kind}>
-                    {fee.kind} fee: {fee.amount}
-                  </li>
-                ))}
-              </ul>
-              {view.minimumOutput === null ? null : <p>At least {view.minimumOutput}.</p>}
-              {view.warnings.length > 0 ? <p className="warn">{view.warnings.join(" ")}</p> : null}
               <p className={view.expired ? "error" : "muted"}>
                 {view.expired ? "This quote has expired. Ask for a new one." : `Valid for ${view.expiresInSeconds}s.`}
               </p>
-              <p className="muted">{quoted?.plan.reviewSummary}</p>
-              <button type="button" disabled={busy || !canSign(view)} onClick={() => void signAndSubmit()}>
-                Sign in your wallet
-              </button>
+              {/* An expired or disputed quote is the stale state, and it cannot be signed from. */}
+              {view.expired ? (
+                <StaleDisputedStateView
+                  state={{
+                    kind: "stale_disputed",
+                    ageDescription: "past its expiry",
+                    sources: quoted.quote.snapshots.length > 0 ? quoted.quote.snapshots : [quoted.quote.marketId],
+                    onRequote: () => void getQuote(),
+                  }}
+                />
+              ) : (
+                <ReviewStateView
+                  state={{
+                    kind: "review",
+                    giveAmount: view.input,
+                    receiveAmount: view.expected,
+                    fees: view.fees,
+                    ...(view.minimumOutput === null ? {} : { minimumOutput: view.minimumOutput }),
+                    protocol: quoted.quote.marketId,
+                    contract: contractOf(quoted.plan.steps),
+                    planValidated: canSign(view) && !busy,
+                    ...(canSign(view)
+                      ? {}
+                      : { validationError: view.warnings.join(" ") || "This quote cannot be signed." }),
+                    onConfirm: () => void signAndSubmit(),
+                  }}
+                />
+              )}
+              {view.warnings.length > 0 ? <p className="warn">{view.warnings.join(" ")}</p> : null}
+              <p className="muted">{quoted.plan.reviewSummary}</p>
             </div>
           )}
         </Panel>
@@ -192,23 +218,45 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
             </button>
           }
         >
-          <p>
-            Submitted. State: <strong>{workflow.data?.data.state ?? started?.state}</strong>.
-          </p>
-          <p className="muted">Next: {workflow.data?.data.nextAction ?? started?.nextAction}</p>
+          {txid === null ? (
+            <p>
+              Submitted. State: <strong>{workflowState}</strong>. Next:{" "}
+              {workflow.data?.data.nextAction ?? started?.nextAction}
+            </p>
+          ) : (
+            <SubmittedStateView
+              state={{
+                kind: "submitted",
+                txId: txid,
+                explorerUrl: explorerTxUrl(txid, wallet.network),
+                workflowState,
+                nextAction: workflow.data?.data.nextAction ?? started?.nextAction ?? "Wait for confirmation.",
+              }}
+            />
+          )}
         </Panel>
       ) : null}
 
       {stage === "recovery" ? (
         <Panel title="Needs a look">
-          <p className="warn">
-            The wallet did not return a transaction id, or the workflow needs attention. Nothing is retried
-            automatically, because that could move your money twice.
-          </p>
-          <p className="muted">
-            State: {workflow.data?.data.state ?? "unknown"}. Next: {workflow.data?.data.nextAction ?? "CONTACT_SUPPORT"}
-            . Workflow {workflowId}.
-          </p>
+          <FailedDelayedStateView
+            state={{
+              kind: "failed_delayed",
+              cause:
+                "The wallet did not return a transaction id, or the workflow needs attention. Nothing is retried automatically, because that could move your money twice.",
+              fundsLocation:
+                txid === null
+                  ? `Whether anything was broadcast is unknown, so this workflow is being investigated rather than sent again. State ${workflowState}, workflow ${workflowId}.`
+                  : `A transaction was broadcast as ${txid}. State ${workflowState}, workflow ${workflowId}.`,
+              recovery: [
+                {
+                  type: "support",
+                  label: "Copy workflow id",
+                  action: () => void navigator.clipboard?.writeText(workflowId ?? ""),
+                },
+              ],
+            }}
+          />
         </Panel>
       ) : null}
 

@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./app.tsx";
 import { readConfig } from "./config.ts";
+import "./styles.css";
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("index.html has no #root");
