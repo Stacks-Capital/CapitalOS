@@ -74,6 +74,7 @@ const ctx: SigningContext = {
   now,
   network: "mainnet",
   registryVersion: "0.1.0",
+  allowedContracts: ["SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc"],
   sender: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
 };
 
@@ -92,6 +93,16 @@ describe("K17 transaction threat controls", () => {
       validatePlan(plan(), quote(), { ...ctx, sender: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0" }).ok,
       false,
     );
+  });
+
+  it("rejects an attacker-substituted contract principal", () => {
+    const substituted = plan();
+    const payload = substituted.steps[0]?.payload;
+    if (payload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    payload.contractId = "SP000000000000000000002Q6VF78.attacker";
+    const checked = validatePlan(substituted, quote(), ctx);
+    assert.equal(checked.ok, false);
+    assert.match(checked.reasons.join(" "), /not approved/);
   });
 
   it("never retries a write after an unknown broadcast", () => {
