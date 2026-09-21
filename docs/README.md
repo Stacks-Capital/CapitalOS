@@ -20,6 +20,8 @@
 - [Risk engine](engineering/risk-engine.md): Granite health interpretation, stress scenarios, concentration and protective actions.
 - [Threat model K37](engineering/threat-model-k37.md): signing, slippage, oracle, reorg and write-path abuse coverage with launch blocks.
 - [Release gates K38](engineering/release-gates-k38.md): sandbox/mainnet-shadow matrices, golden-address reconcile, failure injection and evidence.
+- [SDK release K39](engineering/sdk-release-k39.md): 0.1.0 release-candidate pack, clean-install and partner compatibility (no registry publish).
+- [SDK migration 0.1](guides/sdk-migration-0.1.md): breaking changes and supported Node/React/wallet combinations.
 
 ## Operating it
 

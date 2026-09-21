@@ -48,6 +48,7 @@
     "sdk:check:live": "node --experimental-strip-types scripts/sdk/check.ts --live",
     "sdk:compat": "node --experimental-strip-types scripts/sdk/compat.ts",
     "gate:k38": "node --experimental-strip-types scripts/gates/k38.ts",
+    "gate:k39": "node --experimental-strip-types scripts/gates/k39.ts",
     "partner:example": "node --experimental-strip-types apps/partner-example/src/run.ts",
     "partner:example:live": "node --experimental-strip-types apps/partner-example/src/run.ts --live"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@stacks-capital/config",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "@stacks-capital/core": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

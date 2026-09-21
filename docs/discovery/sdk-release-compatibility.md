@@ -41,11 +41,11 @@ Error recovery is part of the same gate: `QUOTE_EXPIRED` / `ORACLE_STALE` are `r
 
 - `packages/sdk/src/surface.ts` — frozen export names, forbidden partner dependencies, launch rows used by K20
 - `packages/sdk/src/surface.test.ts`, `packages/sdk/src/launch.test.ts`
-- `pnpm sdk:compat` — the CI gate, including `pnpm pack @stacks-capital/sdk`
-- Existing: embed-example boundary, partner-example Zest supply to `AWAITING_SIGNATURE`, `pnpm sdk:check`
+- `pnpm sdk:compat` — the CI gate, including `pnpm pack` of every release package at `0.1.0`
+- `pnpm gate:k39` — K39 release-candidate pack, clean-install smoke, partner example, evidence
 
 ## Still owned elsewhere
 
-- Publishing to a registry (I20 N9). This gate proves the tarball can be built; it does not publish.
+- Publishing to a registry (I20 N9). This gate proves the tarball can be built and installed; it does not publish.
 - Partner webhooks.
 - Hosted production deployment.

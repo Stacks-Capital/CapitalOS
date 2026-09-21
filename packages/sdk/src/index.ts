@@ -1,10 +1,14 @@
 export { createCapitalOS, executable, marketsComparable, parsePlan, parseQuote } from "./client.ts";
 export type { CapitalOS, CapitalOSOptions, SigningInput } from "./client.ts";
 export {
+  COMPATIBILITY_MATRIX,
   LAUNCH_DECISION,
   PARTNER_FORBIDDEN_PACKAGES,
   PUBLIC_PACKAGES,
   PUBLIC_VALUE_EXPORTS,
+  RELEASE_CANDIDATE_VERSION,
+  RELEASE_PACKAGES,
+  RELEASE_PACKAGE_FOLDERS,
   SCHEMA_VERSION_LOCK,
   launchRow,
   missingExports,

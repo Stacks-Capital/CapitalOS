@@ -7,8 +7,11 @@ import type { Action, StacksNetwork } from "@stacks-capital/core";
 export const PUBLIC_VALUE_EXPORTS = {
   "@stacks-capital/sdk": [
     "BITCOIN_FOR_STACKS",
+    "COMPATIBILITY_MATRIX",
     "LAUNCH_DECISION",
     "REGISTRY_VERSION",
+    "RELEASE_CANDIDATE_VERSION",
+    "RELEASE_PACKAGES",
     "RISK_CALCULATION_VERSION",
     "allowsWriteRetry",
     "assertReadyToSign",
@@ -102,6 +105,42 @@ export const PUBLIC_PACKAGES = [
 ] as const;
 
 export const SCHEMA_VERSION_LOCK = "1.0";
+
+/** First partner release-candidate line. Registry publish stays out of scope (packages remain private). */
+export const RELEASE_CANDIDATE_VERSION = "0.1.0";
+
+/**
+ * Every package that must appear in a clean install from packed artifacts.
+ * `@stacks-capital/config` is transitive for the SDK (capabilities / registry version), not a partner-facing import.
+ */
+export const RELEASE_PACKAGES = [
+  "@stacks-capital/core",
+  "@stacks-capital/config",
+  "@stacks-capital/wallets",
+  "@stacks-capital/sdk",
+  "@stacks-capital/client",
+  "@stacks-capital/react",
+  "@stacks-capital/ui",
+] as const;
+
+export const RELEASE_PACKAGE_FOLDERS = {
+  "@stacks-capital/core": "core",
+  "@stacks-capital/config": "config",
+  "@stacks-capital/wallets": "wallets",
+  "@stacks-capital/sdk": "sdk",
+  "@stacks-capital/client": "client",
+  "@stacks-capital/react": "react",
+  "@stacks-capital/ui": "ui",
+} as const satisfies Record<(typeof RELEASE_PACKAGES)[number], string>;
+
+/** Supported combinations certified by the K39 gate (not every possible consumer stack). */
+export const COMPATIBILITY_MATRIX = {
+  nodeMajor: [22, 24] as const,
+  react: "^19.0.0",
+  wallets: ["leather", "xverse"] as const,
+  schemaVersion: SCHEMA_VERSION_LOCK,
+  releaseCandidate: RELEASE_CANDIDATE_VERSION,
+} as const;
 
 export function missingExports(exported: object, required: readonly string[]): string[] {
   return required.filter((name) => !Object.hasOwn(exported, name));
