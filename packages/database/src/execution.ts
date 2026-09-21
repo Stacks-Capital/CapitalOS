@@ -158,3 +158,16 @@ export async function findAttempt(
   `;
   return row ?? null;
 }
+
+export type WorkflowStepKind = "bitcoin_deposit" | "stacks_contract_call";
+
+export async function findWorkflowStepKind(
+  sql: Sql,
+  input: { workflowId: string; stepId: string },
+): Promise<WorkflowStepKind | null> {
+  const [row] = await sql<{ kind: WorkflowStepKind }[]>`
+    SELECT kind FROM workflow_steps
+    WHERE workflow_id = ${input.workflowId} AND id = ${stepKey(input.workflowId, input.stepId)}
+  `;
+  return row?.kind ?? null;
+}
