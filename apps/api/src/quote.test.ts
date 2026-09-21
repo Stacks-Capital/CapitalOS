@@ -34,6 +34,7 @@ describe("quote service", () => {
         now,
         network: "mainnet",
         registryVersion: quote.registryVersion,
+        allowedContracts: ["SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc"],
         sender: MAINNET_OWNER,
       }).ok,
       true,
