@@ -30,6 +30,7 @@ export type WorkflowRecord = {
   nextAction: string;
   quoteId: string | null;
   planId: string | null;
+  action: string | null;
   ownerAddress: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +42,13 @@ export type WorkflowRecord = {
     actor: string;
     evidence: string;
     at: string;
+  }[];
+  attempts: {
+    stepId: string;
+    chain: "bitcoin" | "stacks";
+    outcome: "BROADCAST" | "SIGNED" | "UNKNOWN";
+    txid: string | null;
+    recordedAt: string;
   }[];
 };
 
@@ -198,6 +206,7 @@ export async function findWorkflowForTenant(
            w.next_action AS "nextAction",
            w.quote_id AS "quoteId",
            w.plan_id AS "planId",
+           q.action,
            w.owner_address AS "ownerAddress",
            w.created_at AS "createdAt",
            w.updated_at AS "updatedAt",
@@ -209,8 +218,19 @@ export async function findWorkflowForTenant(
                        ) ORDER BY t.sequence)
               FROM state_transitions t WHERE t.workflow_id = w.id),
              '[]'
-           ) AS transitions
+           ) AS transitions,
+           coalesce(
+             (SELECT json_agg(
+                       json_build_object(
+                         'stepId', substr(a.step_id, char_length(w.id) + 2),
+                         'chain', a.chain, 'outcome', a.outcome, 'txid', a.txid,
+                         'recordedAt', a.recorded_at
+                       ) ORDER BY a.id)
+              FROM transaction_attempts a WHERE a.workflow_id = w.id),
+             '[]'
+           ) AS attempts
     FROM workflows w
+    LEFT JOIN quotes q ON q.id = w.quote_id AND q.network = w.network
     WHERE w.id = ${input.id}
       AND w.app_id = ${input.appId}
       AND (${input.ownerAddress}::text IS NULL OR w.owner_address = ${input.ownerAddress}::text)
@@ -225,6 +245,7 @@ export type WorkflowSummary = {
   nextAction: string;
   quoteId: string | null;
   planId: string | null;
+  action: string | null;
   createdAt: Date;
   updatedAt: Date;
   transitionCount: number;
@@ -244,9 +265,11 @@ export async function listWorkflowsForTenant(
 ): Promise<{ items: WorkflowSummary[]; hasMore: boolean }> {
   const rows = await sql<WorkflowSummary[]>`
     SELECT w.id, w.network, w.state, w.next_action AS "nextAction", w.quote_id AS "quoteId", w.plan_id AS "planId",
+           q.action,
            w.created_at AS "createdAt", w.updated_at AS "updatedAt",
            (SELECT count(*)::int FROM state_transitions t WHERE t.workflow_id = w.id) AS "transitionCount"
     FROM workflows w
+    LEFT JOIN quotes q ON q.id = w.quote_id AND q.network = w.network
     WHERE w.app_id = ${input.appId}
       AND w.network = ${input.network}
       AND (${input.ownerAddress}::text IS NULL OR w.owner_address = ${input.ownerAddress}::text)
