@@ -165,7 +165,10 @@ describe("K38 failure-injection matrix", () => {
           let flow = createWorkflow({ id: "wf_k38_db", network: "mainnet", idempotencyKey: "db" });
           flow = transition(flow, "QUOTED", { reason: "q", actor: "sdk", evidence: "q" });
           assert.ok(flow.transitions.length >= 1);
-          assert.equal(flow.transitions.every((row) => typeof row.at === "string"), true);
+          assert.equal(
+            flow.transitions.every((row) => typeof row.at === "string"),
+            true,
+          );
         },
       },
       {
