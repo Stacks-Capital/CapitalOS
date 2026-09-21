@@ -41,6 +41,8 @@ const reads: AdapterReads = {
     capSupply: "500000000000",
     shareRateNumerator: "2",
     shareRateDenominator: "3",
+    availableAssets: "66022279734",
+    interestRateBps: "130",
   },
   debtVault: {
     pausedDeposit: false,
@@ -269,7 +271,7 @@ export const ADAPTER_CERTIFICATION_FIXTURES: readonly AdapterCertificationFixtur
     read: {
       owner: OWNER,
       expected: {
-        value: [{ owner: OWNER, marketId: "zest.sbtc.vault", kind: "supplied", quantity: "77" }],
+        value: [{ owner: OWNER, marketId: "zest.sbtc.vault", kind: "supplied", quantity: "115" }],
         observedAt: NOW,
         source: "adapter-certification-fixture",
         stale: false,
@@ -319,6 +321,66 @@ export const ADAPTER_CERTIFICATION_FIXTURES: readonly AdapterCertificationFixtur
       expected: [{ id: "zest-1", kind: "zest_deposit", blockHash: BLOCK_HASH, canonical: true }],
     },
     reconciliation: { expected: "66", observed: "66", mismatchedObserved: "65" },
+  },
+  {
+    id: "zest-redeem-mainnet-v1",
+    adapter: createZestEarnAdapter(reads),
+    context,
+    intent: { action: "withdraw_supply", marketId: "zest.sbtc.vault", amount: "66", minOut: "99" },
+    evidence: { ...commonEvidence, deployment: ZEST_VAULT, deploymentRevision: "6162063" },
+    read: {
+      owner: OWNER,
+      expected: {
+        value: [{ owner: OWNER, marketId: "zest.sbtc.vault", kind: "supplied", quantity: "115" }],
+        observedAt: NOW,
+        source: "adapter-certification-fixture",
+        stale: false,
+        warnings: [],
+      },
+    },
+    quote: {
+      action: "withdraw_supply",
+      marketId: "zest.sbtc.vault",
+      network: "mainnet",
+      input: [{ asset: ZSBTC, quantity: "66" }],
+      expectedOutput: [{ asset: SBTC, quantity: "99" }],
+      fees: [],
+      snapshots: ["vault:66022279734"],
+      executable: true,
+      registryVersion: REGISTRY_VERSION,
+      adapterVersion: "zest-earn@0.1.0",
+      minimumOutput: { asset: SBTC, quantity: "99" },
+    },
+    plan: {
+      network: "mainnet",
+      registryVersion: REGISTRY_VERSION,
+      adapterVersion: "zest-earn@0.1.0",
+      steps: [
+        {
+          id: "redeem",
+          dependsOn: [],
+          expectedAssetEffects: [{ asset: SBTC, quantity: "99" }],
+          payload: {
+            kind: "stacks_contract_call",
+            contractId: ZEST_VAULT,
+            functionName: "redeem",
+            functionArgs: [
+              { type: "uint", value: "66" },
+              { type: "uint", value: "99" },
+              { type: "principal", value: OWNER },
+            ],
+            postConditions: [{ principal: OWNER, mode: "send_lte", amount: { asset: ZSBTC, quantity: "66" } }],
+            postConditionMode: "deny",
+            network: "mainnet",
+          },
+        },
+      ],
+    },
+    events: {
+      raw: [rawEvent("zest-2", "redeem")],
+      expected: [{ id: "zest-2", kind: "zest_redeem", blockHash: BLOCK_HASH, canonical: true }],
+    },
+    reconciliation: { expected: "99", observed: "99", mismatchedObserved: "98" },
   },
   {
     id: "granite-borrow-mainnet-v1",
