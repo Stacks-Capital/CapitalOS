@@ -79,7 +79,7 @@ export const FIXTURE_GOLDEN_ADDRESSES: readonly GoldenAddress[] = [
     ],
     limitations: [
       "Fixture snapshot only. Live Granite position reads remain a launch block (I20-B3).",
-      "Missing adapter reads still coerce to \"0\"; golden expectations must be explicit quantities.",
+      'Missing adapter reads still coerce to "0"; golden expectations must be explicit quantities.',
     ],
   },
   {
@@ -88,9 +88,7 @@ export const FIXTURE_GOLDEN_ADDRESSES: readonly GoldenAddress[] = [
     address: contract("zest", "v0-vault-sbtc", "mainnet").contractId,
     kind: "protocol",
     expectations: [],
-    limitations: [
-      "Protocol principal identity is reconciled against the signed registry, not user balances.",
-    ],
+    limitations: ["Protocol principal identity is reconciled against the signed registry, not user balances."],
   },
   {
     id: "protocol-granite-market",
