@@ -37,4 +37,16 @@ describe("K20 launch decision", () => {
     assert.equal(executable("stake", "testnet"), false);
     assert.equal(executable("swap", "testnet", "bitflow"), false);
   });
+
+  it("records K40 ownership, rollback triggers and go-live requirements", () => {
+    assert.equal(LAUNCH_DECISION.ownership.productOwner, "Kenzman");
+    assert.equal(LAUNCH_DECISION.ownership.incidentOwner, "IBK");
+    assert.equal(LAUNCH_DECISION.ownership.supportOwner, "Kenzman");
+    assert.equal(LAUNCH_DECISION.ownership.reviewer, "IBK");
+    assert.ok(LAUNCH_DECISION.rollbackTriggers.some((row) => /SEV-0/.test(row)));
+    assert.ok(LAUNCH_DECISION.goLiveRequirements.some((row) => /P0/.test(row)));
+    assert.deepEqual([...LAUNCH_DECISION.p0Gates], ["K38", "K39", "K40"]);
+    assert.equal(LAUNCH_DECISION.production, "no-go");
+    assert.equal(LAUNCH_DECISION.closedEarnPilot, "no-go");
+  });
 });

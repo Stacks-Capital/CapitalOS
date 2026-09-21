@@ -1,0 +1,224 @@
+{
+  "task": "K40",
+  "generatedAt": "2026-09-21T17:44:16.303Z",
+  "decision": {
+    "production": "no-go",
+    "closedEarnPilot": "no-go",
+    "sandboxCertification": "go",
+    "ownership": {
+      "productOwner": "Kenzman",
+      "incidentOwner": "IBK",
+      "supportOwner": "Kenzman",
+      "reviewer": "IBK"
+    },
+    "rollbackTriggers": [
+      "SEV-0 suspected fund loss or compromised registry",
+      "SEV-1 wrong plan/risk or cross-tenant exposure",
+      "Rollback drill failure against the chosen target",
+      "Operator switch ignored after deploy (pre-I17 target)",
+      "Signed registry activation fails verification"
+    ],
+    "goLiveRequirements": [
+      "All P0 release gates pass (K38 matrices, K39 RC pack, K40 pilot evidence)",
+      "I20 blockers B1, B4 and B5 resolved for any closed earn pilot with funds",
+      "Named product, incident and support owners recorded and reachable",
+      "Manual pilot checks M1–M10 recorded with real wallets",
+      "Rollback drill passes against the previous release tag"
+    ],
+    "p0Gates": [
+      "K38",
+      "K39",
+      "K40"
+    ]
+  },
+  "pilots": [
+    {
+      "pilotId": "pilot-01",
+      "owner": "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      "workflowId": "wf_pilot-01",
+      "entryState": "AWAITING_SIGNATURE",
+      "exitState": "USER_REJECTED",
+      "entryOk": true,
+      "exitOk": true,
+      "limitations": [
+        "Fixture sandbox only; no mainnet broadcast.",
+        "Exit is wallet rejection (USER_REJECTED). On-chain exit needs ingestion past SUBMITTED (I20-B1)."
+      ]
+    },
+    {
+      "pilotId": "pilot-02",
+      "owner": "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      "workflowId": "wf_pilot-02",
+      "entryState": "AWAITING_SIGNATURE",
+      "exitState": "USER_REJECTED",
+      "entryOk": true,
+      "exitOk": true,
+      "limitations": [
+        "Fixture sandbox only; no mainnet broadcast.",
+        "Exit is wallet rejection (USER_REJECTED). On-chain exit needs ingestion past SUBMITTED (I20-B1)."
+      ]
+    },
+    {
+      "pilotId": "pilot-03",
+      "owner": "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      "workflowId": "wf_pilot-03",
+      "entryState": "AWAITING_SIGNATURE",
+      "exitState": "USER_REJECTED",
+      "entryOk": true,
+      "exitOk": true,
+      "limitations": [
+        "Fixture sandbox only; no mainnet broadcast.",
+        "Exit is wallet rejection (USER_REJECTED). On-chain exit needs ingestion past SUBMITTED (I20-B1)."
+      ]
+    },
+    {
+      "pilotId": "pilot-04",
+      "owner": "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      "workflowId": "wf_pilot-04",
+      "entryState": "AWAITING_SIGNATURE",
+      "exitState": "USER_REJECTED",
+      "entryOk": true,
+      "exitOk": true,
+      "limitations": [
+        "Fixture sandbox only; no mainnet broadcast.",
+        "Exit is wallet rejection (USER_REJECTED). On-chain exit needs ingestion past SUBMITTED (I20-B1)."
+      ]
+    },
+    {
+      "pilotId": "pilot-05",
+      "owner": "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      "workflowId": "wf_pilot-05",
+      "entryState": "AWAITING_SIGNATURE",
+      "exitState": "USER_REJECTED",
+      "entryOk": true,
+      "exitOk": true,
+      "limitations": [
+        "Fixture sandbox only; no mainnet broadcast.",
+        "Exit is wallet rejection (USER_REJECTED). On-chain exit needs ingestion past SUBMITTED (I20-B1)."
+      ]
+    }
+  ],
+  "limitations": [
+    "Production and closed earn pilot remain no-go.",
+    "Five pilot sessions are fixture sandbox entry→reject exit; real-wallet M1–M10 remain unrun.",
+    "On-chain confirmed exit is blocked until ingestion links txs past SUBMITTED (I20-B1).",
+    "Partner certification is the in-repo partner-example + sdk:compat path (packages still private).",
+    "Go-live still requires B4/B5 disclosures and reachable on-call contacts outside this gate."
+  ],
+  "checks": [
+    {
+      "id": "named-owners",
+      "ok": true,
+      "detail": "product=Kenzman; incident=IBK; support=Kenzman",
+      "category": "ownership"
+    },
+    {
+      "id": "rollback-triggers",
+      "ok": true,
+      "detail": "5 triggers",
+      "category": "ownership"
+    },
+    {
+      "id": "production-no-go",
+      "ok": true,
+      "detail": "no-go",
+      "category": "decision"
+    },
+    {
+      "id": "closed-earn-pilot-no-go",
+      "ok": true,
+      "detail": "no-go",
+      "category": "decision"
+    },
+    {
+      "id": "sandbox-cert-go",
+      "ok": true,
+      "detail": "go",
+      "category": "decision"
+    },
+    {
+      "id": "go-live-requirements",
+      "ok": true,
+      "detail": "K38,K39,K40",
+      "category": "decision"
+    },
+    {
+      "id": "pilot:pilot-01",
+      "ok": true,
+      "detail": "AWAITING_SIGNATURE → USER_REJECTED (wf_pilot-01)",
+      "category": "pilot"
+    },
+    {
+      "id": "pilot:pilot-02",
+      "ok": true,
+      "detail": "AWAITING_SIGNATURE → USER_REJECTED (wf_pilot-02)",
+      "category": "pilot"
+    },
+    {
+      "id": "pilot:pilot-03",
+      "ok": true,
+      "detail": "AWAITING_SIGNATURE → USER_REJECTED (wf_pilot-03)",
+      "category": "pilot"
+    },
+    {
+      "id": "pilot:pilot-04",
+      "ok": true,
+      "detail": "AWAITING_SIGNATURE → USER_REJECTED (wf_pilot-04)",
+      "category": "pilot"
+    },
+    {
+      "id": "pilot:pilot-05",
+      "ok": true,
+      "detail": "AWAITING_SIGNATURE → USER_REJECTED (wf_pilot-05)",
+      "category": "pilot"
+    },
+    {
+      "id": "pilot:five-sessions",
+      "ok": true,
+      "detail": "5/5",
+      "category": "pilot"
+    },
+    {
+      "id": "partner:example",
+      "ok": true,
+      "detail": "pass",
+      "category": "partner"
+    },
+    {
+      "id": "sdk:compat",
+      "ok": true,
+      "detail": "pass",
+      "category": "partner"
+    },
+    {
+      "id": "launch-tests",
+      "ok": true,
+      "detail": "pass",
+      "category": "partner"
+    },
+    {
+      "id": "evidence:k38",
+      "ok": true,
+      "detail": "prior evidence pass",
+      "category": "gates"
+    },
+    {
+      "id": "evidence:k39",
+      "ok": true,
+      "detail": "prior evidence pass",
+      "category": "gates"
+    },
+    {
+      "id": "launch-decision-doc",
+      "ok": true,
+      "detail": "/Users/apple/Desktop/capitalos/CapitalOS/docs/release/launch-decision.md",
+      "category": "decision"
+    }
+  ],
+  "summary": {
+    "total": 18,
+    "passed": 18,
+    "failed": 0,
+    "failedIds": []
+  }
+}
