@@ -15,6 +15,7 @@
 - [Granite credit certification](engineering/granite-credit.md): collateral, borrow, repay-all and oracle boundaries.
 - [Bitflow swap certification](engineering/bitflow-swap.md): exact-input routing, expiry and min-out reconciliation.
 - [Staking routes](engineering/staking-routes.md): why native PoX staking stays unavailable.
+- [Plan hardening](engineering/plan-hardening.md): quote/plan binding, exact arithmetic and the wallet validation gate.
 
 ## Operating it
 

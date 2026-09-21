@@ -23,7 +23,13 @@ export function jsonAmount(amount: AssetAmount): { asset: string; quantity: stri
   return { asset: formatAssetId(amount.asset), quantity: formatQuantity(amount.quantity) };
 }
 
-export function parseAmount(value: { asset: string; quantity: string }): AssetAmount {
+export function parseAmount(value: { asset: string; quantity: unknown }): AssetAmount {
+  if (typeof value.quantity === "number") {
+    throw new Error("Quantity cannot use a JavaScript number");
+  }
+  if (typeof value.quantity !== "string") {
+    throw new Error(`Quantity must be a base-10 integer string, got ${JSON.stringify(value.quantity)}`);
+  }
   return { asset: parseAssetId(value.asset), quantity: parseQuantity(value.quantity) };
 }
 

@@ -123,6 +123,7 @@ describe("review", () => {
 });
 
 describe("what the wallet is asked to sign", () => {
+  const allowed = { ok: true, reasons: [] as string[] };
   const step: PlanStep = {
     id: "step_1",
     payload: {
@@ -144,7 +145,7 @@ describe("what the wallet is asked to sign", () => {
   };
 
   it("passes the plan through unchanged, with encoded arguments", () => {
-    const request = toWalletRequest(step);
+    const request = toWalletRequest(step, allowed);
     assert.equal(request.method, "stx_callContract");
     assert.equal(request.params.contract, "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc");
     assert.equal(request.params.functionName, "deposit");
@@ -178,15 +179,20 @@ describe("what the wallet is asked to sign", () => {
 
   it("refuses a step it cannot sign rather than sending something else", () => {
     const bitcoin: PlanStep = { ...step, payload: { kind: "bitcoin_deposit" } };
-    assert.throws(() => toWalletRequest(bitcoin), /only sign Stacks contract calls/);
+    assert.throws(() => toWalletRequest(bitcoin, allowed), /only sign Stacks contract calls/);
+  });
+
+  it("refuses to build a wallet request when SDK validation failed", () => {
+    assert.throws(() => toWalletRequest(step, { ok: false, reasons: ["tampered"] }), /failed SDK validation/);
   });
 });
 
 describe("asking the wallet", () => {
   const request = { method: "stx_callContract" as const, params: {} as never };
+  const allowed = { ok: true, reasons: [] as string[] };
 
   it("passes an answer through", async () => {
-    const answer = await askWallet({ request: async () => ({ txid: "0xabc" }) }, "leather", request);
+    const answer = await askWallet({ request: async () => ({ txid: "0xabc" }) }, "leather", request, allowed);
     assert.deepEqual(answer, { kind: "answered", result: { txid: "0xabc" } });
   });
 
@@ -199,6 +205,7 @@ describe("asking the wallet", () => {
       },
       "leather",
       request,
+      allowed,
     );
     assert.equal(leather.kind, "rejected");
     const xverse = await askWallet(
@@ -209,6 +216,7 @@ describe("asking the wallet", () => {
       },
       "xverse",
       request,
+      allowed,
     );
     assert.equal(xverse.kind, "rejected");
   });
@@ -222,7 +230,19 @@ describe("asking the wallet", () => {
       },
       "leather",
       request,
+      allowed,
     );
     assert.deepEqual(answer, { kind: "unknown", result: { error: "extension crashed" } });
+  });
+
+  it("refuses to open the wallet when SDK validation failed", async () => {
+    await assert.rejects(
+      () =>
+        askWallet({ request: async () => ({ txid: "0xabc" }) }, "leather", request, {
+          ok: false,
+          reasons: ["tampered"],
+        }),
+      /failed SDK validation/,
+    );
   });
 });

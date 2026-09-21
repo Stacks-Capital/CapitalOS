@@ -1,5 +1,5 @@
 export { createCapitalOS, executable, marketsComparable, parsePlan, parseQuote } from "./client.ts";
-export type { CapitalOS, CapitalOSOptions } from "./client.ts";
+export type { CapitalOS, CapitalOSOptions, SigningInput } from "./client.ts";
 export {
   LAUNCH_DECISION,
   PARTNER_FORBIDDEN_PACKAGES,
@@ -33,6 +33,7 @@ export type {
 export {
   BITCOIN_FOR_STACKS,
   allowsWriteRetry,
+  assertReadyToSign,
   canSubmitWrite,
   capitalError,
   isRetryableRead,

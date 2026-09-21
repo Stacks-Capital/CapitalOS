@@ -1,6 +1,6 @@
 import { jsonAmount, parseAmount } from "./amounts.ts";
 import { ACTIONS, type Action, type Fee, type Quote } from "./quote.ts";
-import type { Plan, PlanStep, PostCondition, UnsignedPayload } from "./plan.ts";
+import type { ClarityValue, Plan, PlanStep, PostCondition, UnsignedPayload } from "./plan.ts";
 
 export type AmountWire = { asset: string; quantity: string };
 
@@ -92,8 +92,26 @@ function serializePayload(payload: UnsignedPayload): PayloadWire {
   };
 }
 
+function assertWireQuantity(value: unknown, label: string): void {
+  if (typeof value === "number") throw new Error(`${label} cannot use a JavaScript number`);
+  if (typeof value !== "string") throw new Error(`${label} must be a base-10 integer string`);
+}
+
+function assertWireClarityArgs(args: readonly ClarityValue[]): void {
+  for (const arg of args) {
+    if (arg.type === "uint") assertWireQuantity(arg.value, "function argument");
+    if (arg.type === "some") assertWireClarityArgs([arg.value]);
+    if (arg.type === "tuple") assertWireClarityArgs(Object.values(arg.value));
+  }
+}
+
 function parsePayload(payload: PayloadWire): UnsignedPayload {
-  if (payload.kind === "bitcoin_deposit") return payload;
+  if (payload.kind === "bitcoin_deposit") {
+    assertWireQuantity(payload.amountSats, "bitcoin deposit amount");
+    assertWireQuantity(payload.maxSignerFeeSats, "max signer fee");
+    return payload;
+  }
+  assertWireClarityArgs(payload.functionArgs);
   return {
     kind: "stacks_contract_call",
     contractId: payload.contractId,

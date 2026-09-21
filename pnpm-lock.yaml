@@ -316,6 +316,9 @@ importers:
       '@stacks-capital/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@stacks-capital/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@stacks-capital/ui':
         specifier: workspace:*
         version: link:../../packages/ui

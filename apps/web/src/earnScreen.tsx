@@ -1,5 +1,6 @@
 import type { QuotedPlan, StartedWorkflow } from "@stacks-capital/client";
 import { useCapital, useWorkflow } from "@stacks-capital/react";
+import { createCapitalOS, parsePlan, parseQuote, type PlanWire, type QuoteWire } from "@stacks-capital/sdk";
 import { useEffect, useMemo, useState } from "react";
 import type { WalletId } from "@stacks-capital/wallets";
 import {
@@ -26,6 +27,11 @@ const storage = (): Storage | null => {
     return null;
   }
 };
+
+function sdkValidation(plan: QuotedPlan["plan"], quote: QuotedPlan["quote"], sender: string) {
+  const os = createCapitalOS({ network: plan.network });
+  return os.validate(parsePlan(plan as PlanWire), parseQuote(quote as QuoteWire), { sender });
+}
 
 export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; signedIn: boolean }) {
   const { client } = useCapital();
@@ -64,14 +70,15 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   }
 
   // Asks the wallet for one step. A rejection leaves the workflow waiting, so the user can simply try again.
-  async function requestSignature(start: StartedWorkflow) {
+  async function requestSignature(start: StartedWorkflow, quote: QuotedPlan["quote"]) {
     if (wallet === null) return;
     const step = start.plan.steps[0];
     if (step === undefined) throw new Error("The plan has no step to sign");
     const provider = findProvider(wallet.id as WalletId);
     if (provider === null) throw new Error(`${wallet.id} is not available any more`);
 
-    const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step));
+    const validation = sdkValidation(start.plan, quote, wallet.address);
+    const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step, validation), validation);
     if (answer.kind === "rejected") {
       setProblem(answer.message);
       return;
@@ -91,7 +98,7 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       const step = start.data.plan.steps[0];
       if (step === undefined) throw new Error("The plan has no step to sign");
       savePending(storage(), scope, { workflowId: start.data.workflowId, stepId: step.id });
-      await requestSignature(start.data);
+      await requestSignature(start.data, quoted.quote);
     } catch (error) {
       setProblem(messageFor(error).message);
     } finally {
@@ -100,11 +107,11 @@ export function Earn({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   }
 
   async function askAgain() {
-    if (started === null) return;
+    if (started === null || quoted === null) return;
     setBusy(true);
     setProblem(null);
     try {
-      await requestSignature(started);
+      await requestSignature(started, quoted.quote);
     } catch (error) {
       setProblem(messageFor(error).message);
     } finally {

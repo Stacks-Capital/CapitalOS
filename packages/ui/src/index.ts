@@ -64,6 +64,7 @@ export {
 export { type ConnectedWallet, type MessageSigner, type SignInResult, signIn } from "./session.ts";
 export {
   askWallet,
+  assertWalletAllowed,
   type WalletAnswer,
   encodeArgument,
   encodePostCondition,

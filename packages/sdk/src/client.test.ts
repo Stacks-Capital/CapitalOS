@@ -50,13 +50,21 @@ describe("public SDK", () => {
       owner: MAINNET_OWNER,
       now: new Date(FIXTURE_NOW),
     });
-    const os = createCapitalOS({ network: "mainnet" });
+    const os = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
     const { quote, plan } = engine.quoteAndPlan({ action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" });
     let flow = os.startWorkflow({ id: "wf_sdk", idempotencyKey: "sdk" });
     flow = os.recordQuote(flow, quote);
-    flow = os.recordPlan(flow, plan);
+    flow = os.recordPlan(flow, plan, quote, { sender: MAINNET_OWNER });
     assert.equal(flow.state, "AWAITING_SIGNATURE");
     assert.equal(canSubmitWrite(flow.state), true);
     assert.equal(os.inspectWalletResult({ txid: "" }), "UNKNOWN");
+
+    const tampered = { ...plan, quoteId: "not-this-quote" };
+    assert.throws(
+      () => os.recordPlan(flow, tampered, quote, { sender: MAINNET_OWNER }),
+      (error: unknown) =>
+        typeof error === "object" && error !== null && "code" in error && error.code === "PLAN_INVALID",
+    );
+    assert.doesNotThrow(() => os.assertReadyToSign(plan, quote, { sender: MAINNET_OWNER }));
   });
 });

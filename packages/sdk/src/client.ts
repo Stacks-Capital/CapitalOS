@@ -1,5 +1,6 @@
 import { REGISTRY_VERSION, capabilityFor, executableContractIds, type CapabilityRecord } from "@stacks-capital/config";
 import {
+  assertReadyToSign,
   capitalError,
   createWorkflow,
   marketsComparable,
@@ -25,17 +26,21 @@ export type CapitalOSOptions = {
   now?: Date;
 };
 
+export type SigningInput = Omit<SigningContext, "network" | "registryVersion" | "now"> & { now?: Date };
+
 export type CapitalOS = {
   network: StacksNetwork;
   registryVersion: string;
-  validate(
-    plan: Plan,
-    quote: Quote,
-    signing?: Omit<SigningContext, "network" | "registryVersion" | "now"> & { now?: Date },
-  ): PlanValidation;
+  validate(plan: Plan, quote: Quote, signing?: SigningInput): PlanValidation;
+  /** Throws unless the plan is safe to present to a wallet. */
+  assertReadyToSign(plan: Plan, quote: Quote, signing?: SigningInput): void;
   startWorkflow(input: { id: string; idempotencyKey: string }): Workflow;
   recordQuote(workflow: Workflow, quote: Quote): Workflow;
-  recordPlan(workflow: Workflow, plan: Plan): Workflow;
+  /**
+   * Advances to AWAITING_SIGNATURE only after local plan validation passes.
+   * The wallet must not open for a plan that fails this gate.
+   */
+  recordPlan(workflow: Workflow, plan: Plan, quote: Quote, signing?: SigningInput): Workflow;
   inspectWalletResult(result: unknown): WalletOutcome;
   classifyWalletError(wallet: WalletId, error: unknown): ErrorCode;
   networkGuard(addresses: { stx?: string; btc?: string[] }): CapitalError | null;
@@ -45,7 +50,7 @@ export type CapitalOS = {
 export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
   const network = requireNetwork(options.network);
 
-  function signingContext(signing: Parameters<CapitalOS["validate"]>[2]): SigningContext {
+  function signingContext(signing: SigningInput | undefined): SigningContext {
     const context: SigningContext = {
       now: signing?.now ?? options.now ?? new Date(),
       network,
@@ -66,6 +71,12 @@ export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
       }
       return validatePlan(plan, quote, signingContext(signing));
     },
+    assertReadyToSign(plan, quote, signing) {
+      if (plan.network !== network || quote.network !== network) {
+        throw capitalError("NETWORK_MISMATCH", "plan or quote network does not match the SDK network");
+      }
+      assertReadyToSign(plan, quote, signingContext(signing));
+    },
     startWorkflow(input) {
       return createWorkflow({ id: input.id, network, idempotencyKey: input.idempotencyKey });
     },
@@ -75,10 +86,11 @@ export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
       }
       return transition(workflow, "QUOTED", { reason: "quote", actor: "sdk", evidence: quote.id });
     },
-    recordPlan(workflow, plan) {
-      if (workflow.network !== network || plan.network !== network) {
+    recordPlan(workflow, plan, quote, signing) {
+      if (workflow.network !== network || plan.network !== network || quote.network !== network) {
         throw capitalError("NETWORK_MISMATCH", "workflow network does not match the SDK network");
       }
+      assertReadyToSign(plan, quote, signingContext(signing));
       return transition(workflow, "AWAITING_SIGNATURE", { reason: "plan", actor: "sdk", evidence: plan.id });
     },
     inspectWalletResult(result) {

@@ -71,4 +71,56 @@ describe("quote and plan wire format", () => {
     );
     assert.equal(parsePlan(plan).steps[0]?.payload.kind, "stacks_contract_call");
   });
+
+  it("rejects JavaScript numbers in wire quantities and Clarity uints", () => {
+    const quote = serializeQuote({
+      id: "q_1",
+      action: "supply",
+      marketId: "zest.sbtc.vault",
+      network: "mainnet",
+      input: [amount(sbtc, "100000000")],
+      expectedOutput: [amount(zft, "100000000")],
+      fees: [],
+      snapshots: [],
+      expiresAt: "2026-09-15T12:02:00.000Z",
+      executable: true,
+      warnings: [],
+      registryVersion: "0.1.0",
+      adapterVersion: "zest-earn@0.1.0",
+    });
+    assert.throws(
+      () => parseQuote({ ...quote, input: [{ asset: quote.input[0]!.asset, quantity: 100000000 as unknown as string }] }),
+      /JavaScript number/,
+    );
+
+    const plan = serializePlan({
+      id: "p_1",
+      quoteId: "q_1",
+      network: "mainnet",
+      registryVersion: "0.1.0",
+      adapterVersion: "zest-earn@0.1.0",
+      expiresAt: quote.expiresAt,
+      reviewSummary: "supply",
+      steps: [
+        {
+          id: "deposit",
+          dependsOn: [],
+          expectedAssetEffects: [],
+          payload: {
+            kind: "stacks_contract_call",
+            contractId: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc",
+            functionName: "deposit",
+            functionArgs: [{ type: "uint", value: "1" }],
+            postConditions: [],
+            postConditionMode: "deny",
+            network: "mainnet",
+          },
+        },
+      ],
+    });
+    const step = plan.steps[0]!;
+    if (step.payload.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    step.payload.functionArgs = [{ type: "uint", value: 1 as unknown as string }];
+    assert.throws(() => parsePlan(plan), /JavaScript number/);
+  });
 });

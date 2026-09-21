@@ -91,7 +91,7 @@ export type {
 export { applyBlock, applyReorg, emptyIngestion } from "./ingestion.ts";
 
 export type { SigningContext, WalletOutcome } from "./signing.ts";
-export { assertValidPlan, validatePlan, walletOutcome } from "./signing.ts";
+export { assertReadyToSign, assertValidPlan, validatePlan, walletOutcome } from "./signing.ts";
 
 export type { AssetRiskSide, Health, OracleQuote, RiskParams } from "./risk.ts";
 export {

@@ -105,6 +105,23 @@ describe("K17 transaction threat controls", () => {
     assert.match(checked.reasons.join(" "), /not approved/);
   });
 
+  it("rejects a plan whose expiry drifted from the quote or whose step network was swapped", () => {
+    const drifted = { ...plan(), expiresAt: "2026-09-15T12:05:00.000Z" };
+    assert.match(validatePlan(drifted, quote(), ctx).reasons.join(" "), /expiry must match/);
+
+    const swapped = plan();
+    const payload = swapped.steps[0]?.payload;
+    if (payload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    payload.network = "testnet";
+    assert.equal(validatePlan(swapped, quote(), ctx).ok, false);
+
+    const wrongSender = plan();
+    const wrongPayload = wrongSender.steps[0]?.payload;
+    if (wrongPayload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    wrongPayload.postConditions[0]!.principal = "SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE";
+    assert.match(validatePlan(wrongSender, quote(), ctx).reasons.join(" "), /send post-condition principal/);
+  });
+
   it("never retries a write after an unknown broadcast", () => {
     let flow = createWorkflow({ id: "wf_dup", network: "mainnet", idempotencyKey: "dup" });
     flow = transition(flow, "QUOTED", { reason: "q", actor: "sdk", evidence: "q" });
