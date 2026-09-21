@@ -163,7 +163,7 @@ record("SDK validates the JSON quote/plan wire format", roundTrip.ok, roundTrip.
 
 let flow = os.startWorkflow({ id: "sdk-check", idempotencyKey: "sdk-check" });
 flow = os.recordQuote(flow, supply.quote);
-flow = os.recordPlan(flow, supply.plan);
+flow = os.recordPlan(flow, supply.plan, supply.quote, signing);
 record(
   "workflow stops at AWAITING_SIGNATURE",
   flow.state === "AWAITING_SIGNATURE" && canSubmitWrite(flow.state),

@@ -75,7 +75,7 @@ export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuc
 
   let flow = os.startWorkflow({ id: "partner-example", idempotencyKey: "partner-example-zest-supply" });
   flow = os.recordQuote(flow, parseQuote(quote));
-  flow = os.recordPlan(flow, parsePlan(plan));
+  flow = os.recordPlan(flow, parsePlan(plan), parseQuote(quote), { sender: options.owner });
   if (flow.state !== "AWAITING_SIGNATURE" || !canSubmitWrite(flow.state)) {
     throw new Error(`workflow stopped at ${flow.state}, not AWAITING_SIGNATURE`);
   }

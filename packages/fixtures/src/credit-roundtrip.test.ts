@@ -129,6 +129,93 @@ describe("K11-K14 credit, swap and risk", () => {
     );
   });
 
+  it("plans a healthy Granite collateral remove and fail-closes unhealthy or stale withdraws", () => {
+    const ctx = adapterContext("mainnet");
+    const { granite } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({ ...base, position: { collateral: "100000000", debt: "10000000000" } })),
+    );
+    const intent = {
+      action: "withdraw_supply" as const,
+      marketId: "granite.sbtc.isolated",
+      amount: "10000000",
+    };
+    const quote = granite.quote(ctx, intent);
+    const plan = granite.buildPlan(ctx, quote, intent);
+    assertValidPlan(plan, quote, {
+      now: ctx.now,
+      network: "mainnet",
+      registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
+      sender: MAINNET_OWNER,
+    });
+    const call = plan.steps[0]?.payload;
+    assert.ok(call?.kind === "stacks_contract_call" && call.functionName === "collateral-remove");
+    assert.equal(call.postConditionMode, "deny");
+    assert.equal(call.postConditions[0]?.mode, "receive_gte");
+
+    const { granite: stressed } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({ ...base, position: { collateral: "100000000", debt: "69000000000" } })),
+    );
+    assert.throws(
+      () =>
+        stressed.quote(ctx, {
+          action: "withdraw_supply",
+          marketId: "granite.sbtc.isolated",
+          amount: "50000000",
+        }),
+      (error: unknown) => codeOf(error) === "CAP_REACHED",
+    );
+
+    const oracle = MAINNET_READS.oracle;
+    assert.ok(oracle);
+    const { granite: stale } = sandboxAdapters(
+      "mainnet",
+      withReads((base) => ({
+        ...base,
+        position: { collateral: "100000000", debt: "10000000000" },
+        oracle: { sbtc: { ...oracle.sbtc, stale: true }, usdcx: oracle.usdcx },
+      })),
+    );
+    assert.throws(
+      () =>
+        stale.quote(ctx, {
+          action: "withdraw_supply",
+          marketId: "granite.sbtc.isolated",
+          amount: "10000000",
+        }),
+      (error: unknown) => codeOf(error) === "ORACLE_STALE",
+    );
+  });
+
+  it("rejects Bitflow quotes that request abusive slippage or a zero min-out floor breach", () => {
+    const ctx = adapterContext("mainnet");
+    const { bitflow } = sandboxAdapters("mainnet");
+    assert.throws(
+      () =>
+        bitflow.quote(ctx, {
+          action: "swap",
+          marketId: "bitflow.sbtc-usdcx",
+          amount: "100000000",
+          routePool: FIXTURE_BITFLOW_POOL,
+          slippageBps: "9999",
+        }),
+      (error: unknown) => codeOf(error) === "PLAN_INVALID",
+    );
+    assert.throws(
+      () =>
+        bitflow.quote(ctx, {
+          action: "swap",
+          marketId: "bitflow.sbtc-usdcx",
+          amount: "100000000",
+          routePool: FIXTURE_BITFLOW_POOL,
+          minOut: "1",
+        }),
+      (error: unknown) => codeOf(error) === "PLAN_INVALID",
+    );
+  });
+
   it("plans an allowlisted Bitflow sBTC to USDCx swap with onchain min-out", () => {
     const ctx = adapterContext("mainnet");
     const { bitflow } = sandboxAdapters("mainnet");

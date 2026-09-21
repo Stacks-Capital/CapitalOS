@@ -60,14 +60,35 @@ export type {
   UnsignedPayload,
 } from "./plan.ts";
 
-export type { NextAction, Transition, Workflow, WorkflowState } from "./workflow.ts";
+export type {
+  NextAction,
+  ResumeHint,
+  ReconciliationResult,
+  Transition,
+  UnknownBroadcastResolution,
+  Workflow,
+  WorkflowState,
+} from "./workflow.ts";
 export {
   applyReorgToWorkflow,
+  assertWriteAllowed,
+  beginConfirming,
+  beginReconciling,
   canSubmitWrite,
+  completeFromReconciliation,
   createWorkflow,
   errorFromState,
+  isResumableState,
+  isTerminalState,
+  markStepConfirmed,
   nextActionFor,
+  recordBroadcast,
+  recordProviderOutage,
+  recordRejection,
   recordUnknownBroadcast,
+  resolveUnknownBroadcast,
+  resumeAfterReorg,
+  resumeHint,
   transition,
 } from "./workflow.ts";
 
@@ -91,7 +112,7 @@ export type {
 export { applyBlock, applyReorg, emptyIngestion } from "./ingestion.ts";
 
 export type { SigningContext, WalletOutcome } from "./signing.ts";
-export { assertValidPlan, validatePlan, walletOutcome } from "./signing.ts";
+export { assertReadyToSign, assertValidPlan, validatePlan, walletOutcome } from "./signing.ts";
 
 export type { AssetRiskSide, Health, OracleQuote, RiskParams } from "./risk.ts";
 export {
@@ -108,3 +129,30 @@ export {
   projectedHealth,
   usdNotional,
 } from "./risk.ts";
+
+export type {
+  ConcentrationReport,
+  ConcentrationSlice,
+  CreditProtectiveActionId,
+  GraniteHealthInterpretation,
+  LiquidityGate,
+  ProtectiveAction,
+  ProtectiveActionReport,
+  RiskProtocol,
+  StressAssumptions,
+  StressScenarioReport,
+  StressScenarioRow,
+  UnsupportedCreditRisk,
+} from "./riskReport.ts";
+export {
+  GRANITE_HEALTH_LIMITATIONS,
+  RISK_CALCULATION_VERSION,
+  borrowLiquidityGate,
+  concentrationByQuantity,
+  graniteProtectiveActions,
+  interpretGraniteHealth,
+  shiftOraclePrice,
+  stressGraniteCollateral,
+  unsupportedCreditRisk,
+  wouldLiquidateAtLtv,
+} from "./riskReport.ts";

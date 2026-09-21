@@ -1,5 +1,5 @@
 import type { PlanStep } from "@stacks-capital/client";
-import { parseAssetId, type StacksNetwork } from "@stacks-capital/core";
+import { parseAssetId, type PlanValidation, type StacksNetwork } from "@stacks-capital/core";
 import { classifyWalletError, type WalletId } from "@stacks-capital/wallets";
 import { Cl, type ClarityValue as StacksClarityValue, cvToHex } from "@stacks/transactions";
 
@@ -88,8 +88,16 @@ export function encodePostCondition(condition: PlanPostCondition): PostCondition
   };
 }
 
+/** Rejects any plan that failed SDK validation before a wallet request is built. */
+export function assertWalletAllowed(validation: PlanValidation): void {
+  if (!validation.ok) {
+    throw new Error(`Plan failed SDK validation before the wallet could open: ${validation.reasons.join("; ")}`);
+  }
+}
+
 /** Turns a plan step into the exact request the wallet is asked to sign. Nothing is added or dropped. */
-export function toWalletRequest(step: PlanStep): WalletRequest {
+export function toWalletRequest(step: PlanStep, validation: PlanValidation): WalletRequest {
+  assertWalletAllowed(validation);
   if (step.payload.kind !== "stacks_contract_call") {
     throw new Error(`This app can only sign Stacks contract calls, not ${step.payload.kind}`);
   }
@@ -118,12 +126,15 @@ export type WalletAnswer =
  * Asks the wallet to sign one plan step and sorts the answer into what it means (I02 findings:
  * Leather rejects with 4001, Xverse with -32000). A rejection is kept out of the workflow, because
  * recording it as an unknown broadcast would send the user to support for something they chose.
+ * Callers must pass a successful PlanValidation from the SDK — the wallet never opens otherwise.
  */
 export async function askWallet(
   provider: { request(method: string, params?: unknown): Promise<unknown> },
   walletId: WalletId,
   request: WalletRequest,
+  validation: PlanValidation,
 ): Promise<WalletAnswer> {
+  assertWalletAllowed(validation);
   try {
     return { kind: "answered", result: await provider.request(request.method, request.params) };
   } catch (error) {

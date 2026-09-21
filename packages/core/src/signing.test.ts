@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { sip10 } from "./ids.ts";
+import { bitcoinNative, sip10 } from "./ids.ts";
 import { amount as makeAmount } from "./amounts.ts";
-import { validatePlan, type SigningContext } from "./signing.ts";
+import { assertReadyToSign, validatePlan, type SigningContext } from "./signing.ts";
 import type { Plan } from "./plan.ts";
 import type { Quote } from "./quote.ts";
 
 const sbtc = sip10("mainnet", "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token", "sbtc-token");
+const btc = bitcoinNative("mainnet");
 const now = new Date("2026-09-15T12:00:00.000Z");
 
 function quote(): Quote {
@@ -118,7 +119,7 @@ describe("signing boundary", () => {
         {
           id: "btc",
           dependsOn: [],
-          expectedAssetEffects: [],
+          expectedAssetEffects: [makeAmount(sbtc, "10000")],
           payload: {
             kind: "bitcoin_deposit",
             amountSats: "10000",
@@ -131,7 +132,69 @@ describe("signing boundary", () => {
         },
       ],
     };
-    const depositQuote: Quote = { ...quote(), id: "q2", action: "deposit_sbtc", adapterVersion: "sbtc-deposit@0.1.0" };
+    const depositQuote: Quote = {
+      ...quote(),
+      id: "q2",
+      action: "deposit_sbtc",
+      adapterVersion: "sbtc-deposit@0.1.0",
+      input: [makeAmount(btc, "10000")],
+      expectedOutput: [makeAmount(sbtc, "10000")],
+      minimumOutput: makeAmount(sbtc, "10000"),
+    };
     assert.equal(validatePlan(depositPlan, depositQuote, ctx).ok, true);
+  });
+
+  it("rejects tampered expiry, cross-network Stacks calls, and numeric quantities", () => {
+    const staleExpiry = plan();
+    staleExpiry.expiresAt = "2026-09-15T12:09:00.000Z";
+    const expiry = validatePlan(staleExpiry, quote(), ctx);
+    assert.equal(expiry.ok, false);
+    assert.match(expiry.reasons.join(" "), /expiry must match/);
+
+    const crossNetwork = plan();
+    const payload = crossNetwork.steps[0]?.payload;
+    if (payload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    payload.network = "testnet";
+    assert.equal(validatePlan(crossNetwork, quote(), ctx).ok, false);
+
+    const numeric = plan();
+    const numericPayload = numeric.steps[0]?.payload;
+    if (numericPayload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    numericPayload.functionArgs = [{ type: "uint", value: 1000 as unknown as string }];
+    const numbers = validatePlan(numeric, quote(), ctx);
+    assert.equal(numbers.ok, false);
+    assert.match(numbers.reasons.join(" "), /JavaScript number/);
+  });
+
+  it("rejects effect and post-condition amounts that do not match the quote", () => {
+    const effects = plan();
+    effects.steps[0]!.expectedAssetEffects = [makeAmount(sbtc, "999")];
+    assert.match(validatePlan(effects, quote(), ctx).reasons.join(" "), /expected (asset effect|output)/);
+
+    const send = plan();
+    const sendPayload = send.steps[0]?.payload;
+    if (sendPayload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    sendPayload.postConditions[0]!.amount = makeAmount(sbtc, "1");
+    assert.match(validatePlan(send, quote(), ctx).reasons.join(" "), /send post-condition|quote input/);
+
+    const { sender: _sender, ...withoutSender } = ctx;
+    const missingSender = validatePlan(plan(), quote(), withoutSender);
+    assert.equal(missingSender.ok, false);
+    assert.match(missingSender.reasons.join(" "), /sender is required/);
+  });
+
+  it("gates wallet presentation behind assertReadyToSign", () => {
+    assert.doesNotThrow(() => assertReadyToSign(plan(), quote(), ctx));
+    assert.throws(
+      () => assertReadyToSign({ ...plan(), quoteId: "other" }, quote(), ctx),
+      (error: unknown) =>
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "PLAN_INVALID" &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        /not bound/.test(error.message),
+    );
   });
 });

@@ -1,0 +1,169 @@
+{
+  "task": "K39",
+  "generatedAt": "2026-09-21T17:39:44.071Z",
+  "releaseCandidate": "0.1.0",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "darwin",
+    "cwd": "/Users/apple/Desktop/capitalos/CapitalOS"
+  },
+  "compatibility": {
+    "nodeMajor": [22, 24],
+    "react": "^19.0.0",
+    "wallets": ["leather", "xverse"],
+    "schemaVersion": "1.0",
+    "releaseCandidate": "0.1.0"
+  },
+  "limitations": [
+    "Clean install extracts packed tarballs into a disposable workspace (packages stay private / unpublished).",
+    "Source packs ship TypeScript; consumers need Node >=22 with --experimental-strip-types or a bundler.",
+    "Partner example still uses workspace fixtures/engine for the demo API host; partner-facing imports stay on the public SDK surface.",
+    "Browser wallet UX is covered by unit classifyWalletError + embed/UI tests, not a live Leather/Xverse session in this gate."
+  ],
+  "checks": [
+    {
+      "id": "version:@stacks-capital/core",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/config",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/wallets",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/sdk",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/client",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/react",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "version:@stacks-capital/ui",
+      "ok": true,
+      "detail": "0.1.0; private; engines.node=>=22",
+      "category": "version"
+    },
+    {
+      "id": "react-peer",
+      "ok": true,
+      "detail": "^19.0.0",
+      "category": "matrix"
+    },
+    {
+      "id": "node-major",
+      "ok": true,
+      "detail": "running v22.16.0; supported 22,24",
+      "category": "matrix"
+    },
+    {
+      "id": "wallet:leather",
+      "ok": true,
+      "detail": "reject=USER_REJECTED; unsupported=UNSUPPORTED_WALLET",
+      "category": "matrix"
+    },
+    {
+      "id": "wallet:xverse",
+      "ok": true,
+      "detail": "reject=USER_REJECTED; unsupported=UNSUPPORTED_WALLET",
+      "category": "matrix"
+    },
+    {
+      "id": "pack:@stacks-capital/core",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-core-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/config",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-config-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/wallets",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-wallets-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/sdk",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-sdk-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/client",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-client-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/react",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-react-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "pack:@stacks-capital/ui",
+      "ok": true,
+      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-ui-0.1.0.tgz",
+      "category": "pack"
+    },
+    {
+      "id": "clean-install",
+      "ok": true,
+      "detail": "pnpm install from packed tarballs (extracted workspace)",
+      "category": "install"
+    },
+    {
+      "id": "clean-import-smoke",
+      "ok": true,
+      "detail": "k39-consumer-ok 0.1.0 1.0",
+      "category": "install"
+    },
+    {
+      "id": "partner:example",
+      "ok": true,
+      "detail": "pass",
+      "category": "partner"
+    },
+    {
+      "id": "sdk:compat",
+      "ok": true,
+      "detail": "pass",
+      "category": "partner"
+    },
+    {
+      "id": "migration-notes",
+      "ok": true,
+      "detail": "/Users/apple/Desktop/capitalos/CapitalOS/docs/guides/sdk-migration-0.1.md",
+      "category": "migration"
+    }
+  ],
+  "summary": {
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "failedIds": []
+  }
+}

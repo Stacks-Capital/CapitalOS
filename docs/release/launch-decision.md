@@ -1,14 +1,13 @@
-# Pilot and launch decision
+# Pilot and launch decision (K20 / K40)
 
 | | |
 |---|---|
-| Task | K20 Pilot and launch decision |
-| Requirements | PMF-01, OPS-01 |
-| Owner / reviewer | kenzman / IBK |
-| Depends on | K19 SDK release compatibility gate, I20 pilot support and release checklist |
-| Date | 2026-09-19 |
+| Tasks | K20 Pilot and launch decision; K40 Own pilot, production go/no-go and rollback decision |
+| Owner / reviewer | Kenzman / IBK |
+| Depends on | K37–K39, I20, I40 |
+| Date | 2026-09-21 |
 
-Architecture launch rule (page 27): the product launches the verified surface, not the promised surface. This document is the go/no-go. I20 recorded evidence; it did not decide.
+Architecture launch rule: ship the verified surface, not the promised surface. This document is the go/no-go. Machine-readable copy: `LAUNCH_DECISION` in `@stacks-capital/sdk`.
 
 ## Decision
 
@@ -16,46 +15,76 @@ Architecture launch rule (page 27): the product launches the verified surface, n
 |---|---|
 | Production launch | **No-go** |
 | Closed earn pilot with real mainnet funds | **No-go** until I20 B1, B4 and B5 |
-| Sandbox partner certification (K19) | **Go** — Zest supply quote → SDK validate → `AWAITING_SIGNATURE` only |
-| Partner webhooks | **Not certified** — they are not built |
+| Sandbox partner certification | **Go** — Zest supply quote → SDK validate → `AWAITING_SIGNATURE` only |
+| Partner webhooks | **Not certified** |
 | Testnet writes | **Stay disabled** |
 
-Nothing found in I20 or K18 puts funds at risk: failures fail closed. That is not enough to put users on mainnet money.
+## Named ownership (K40)
+
+| Role | Owner |
+|---|---|
+| Product | Kenzman |
+| Incident response | IBK |
+| Support | Kenzman |
+| Reviewer | IBK |
+
+Go-live is refused until these roles are named **and** reachable (on-call / escalation contacts still tracked under I20 B5).
+
+## Rollback triggers
+
+Disable the affected capability first (`pnpm ops:disable` / `ops:pause`), then roll back code only if needed ([rollback runbook](../runbooks/rollback.md)).
+
+1. SEV-0 suspected fund loss or compromised registry
+2. SEV-1 wrong plan/risk or cross-tenant exposure
+3. Rollback drill failure against the chosen target
+4. Operator switch ignored after deploy (pre-I17 target)
+5. Signed registry activation fails verification
+
+Minimum rollback target remains **at or after I17 (`3d2d89e`)**.
+
+## Go-live requirements (all blocking)
+
+1. All P0 release gates pass (`pnpm gate:k38`, `pnpm gate:k39`, `pnpm gate:k40`)
+2. I20 blockers B1, B4 and B5 resolved for any closed earn pilot with funds
+3. Named product, incident and support owners recorded and reachable
+4. Manual pilot checks M1–M10 recorded with real wallets
+5. Rollback drill passes against the previous release tag
+
+## K40 pilot evidence
+
+| Item | Result |
+|---|---|
+| Five sandbox pilot entry/exit sessions | Pass — fixture Zest supply to `AWAITING_SIGNATURE`, exit via `USER_REJECTED` (no broadcast) |
+| One external partner sandbox integration | Pass — `pnpm partner:example` + `pnpm sdk:compat` |
+| Real-wallet M1–M10 | **Not run** — still required before any later go |
+| On-chain confirmed exit | **Blocked** — ingestion does not advance past `SUBMITTED` (I20 B1) |
+
+Evidence bundle: `docs/release/evidence/k40-latest.json` / `k40-latest.md`.
 
 ## Verified surface vs promised surface
 
-| Action | Network | Registry | Certification | Why |
-|---|---|---|---|---|
-| Zest supply | mainnet | enabled | **sandbox** | Partner program and SDK smoke. Host wallet broadcasts; SDK does not. |
-| Zest withdraw | mainnet | enabled | not certified | Workflows do not move past `SUBMITTED` (I20 B1). |
-| sBTC deposit / withdraw | mainnet | enabled | not certified | No product screen; no Bitcoin/Emily ingestion (I20 B2). |
-| Granite collateral / borrow / repay | mainnet | enabled | not certified | Positions unread; DIA USDC unset; fail-closed in practice (I20 B3). |
-| Bitflow swap | mainnet | enabled | not certified | Pool principal not pinned (I20 B6). |
-| Every testnet write | testnet | disabled | disabled | Unverified test environments. |
-| Stake | both | disabled | disabled | K16 exclusion. |
+| Action | Network | Certification | Why |
+|---|---|---|---|
+| Zest supply | mainnet | **sandbox** | Partner program and SDK smoke. Host wallet broadcasts; SDK does not. |
+| Zest withdraw | mainnet | not certified | Workflows do not move past `SUBMITTED` (I20 B1). |
+| sBTC deposit / withdraw | mainnet | not certified | No product screen; no Bitcoin/Emily ingestion (I20 B2). |
+| Granite collateral / borrow / repay | mainnet | not certified | Positions unread; DIA USDC unset (I20 B3). |
+| Bitflow swap | mainnet | not certified | Pool principal not pinned (I20 B6). |
+| Every testnet write | testnet | disabled | Unverified test environments. |
+| Stake | both | disabled | K16 exclusion. |
 
-The machine-readable copy is `LAUNCH_DECISION` in `@stacks-capital/sdk`. `packages/sdk/src/launch.test.ts` fails if a disabled capability is certified, or if a sandbox row is not enabled in the registry.
+`packages/sdk/src/launch.test.ts` fails if a disabled capability is certified, or if a sandbox row is not enabled in the registry.
 
-## What a closed earn pilot still needs
+## Commands
 
-From I20, at least:
-
-- B1 — ingestion must link transactions so a supply can leave `SUBMITTED`
-- B4 — terms, privacy, risk disclosures, support ownership
-- B5 — on-call owner, protocol emergency contacts, an alert destination other than stdout
-
-Until then, borrow and swap stay uncertified even though their registry rows are enabled. Operators who run a private demo should `ops:disable` granite and bitflow rather than present them as launched.
+```sh
+pnpm gate:k40
+pnpm partner:example
+pnpm sdk:compat
+```
 
 ## What this does not do
 
-- It does not change capability flags. Disabled stays disabled; enabled-but-uncertified stays fail-closed at quote time.
-- It does not publish packages. K19 only proves they pack.
-- It does not run I20 manual checks M1–M10. Those remain unrun and still required before any later go.
-
-## Evidence
-
-- This file
-- `packages/sdk/src/surface.ts` (`LAUNCH_DECISION`)
-- `packages/sdk/src/launch.test.ts`
-- `pnpm sdk:compat`
-- I20 [pilot checklist](pilot-checklist.md)
+- It does not flip production or closed earn pilot to go.
+- It does not publish packages (K39 packs only).
+- It does not replace I20 manual checks M1–M10.

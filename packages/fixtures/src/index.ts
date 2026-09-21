@@ -114,3 +114,12 @@ export function sandboxAdapters(network: StacksNetwork, reads = network === "mai
     reads,
   };
 }
+
+export {
+  FIXTURE_GOLDEN_ADDRESSES,
+  GOLDEN_FIXTURE_OWNER,
+  GOLDEN_FIXTURE_POSITION,
+  reconcileFixtureGoldenAddresses,
+  reconcileGoldenPositions,
+} from "./goldenAddresses.ts";
+export type { GoldenAddress, GoldenPositionExpectation, GoldenReconcileResult } from "./goldenAddresses.ts";

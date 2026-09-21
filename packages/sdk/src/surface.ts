@@ -7,14 +7,23 @@ import type { Action, StacksNetwork } from "@stacks-capital/core";
 export const PUBLIC_VALUE_EXPORTS = {
   "@stacks-capital/sdk": [
     "BITCOIN_FOR_STACKS",
+    "COMPATIBILITY_MATRIX",
     "LAUNCH_DECISION",
     "REGISTRY_VERSION",
+    "RELEASE_CANDIDATE_VERSION",
+    "RELEASE_PACKAGES",
+    "RISK_CALCULATION_VERSION",
     "allowsWriteRetry",
+    "assertReadyToSign",
     "canSubmitWrite",
     "capitalError",
     "classifyWalletError",
+    "completeFromReconciliation",
+    "concentrationByQuantity",
     "createCapitalOS",
     "executable",
+    "graniteProtectiveActions",
+    "interpretGraniteHealth",
     "isRetryableRead",
     "launchRow",
     "marketsComparable",
@@ -22,8 +31,10 @@ export const PUBLIC_VALUE_EXPORTS = {
     "parsePlan",
     "parseQuote",
     "requireNetwork",
+    "resumeHint",
     "serializePlan",
     "serializeQuote",
+    "stressGraniteCollateral",
   ],
   "@stacks-capital/client": [
     "CLIENT_ID_HEADER",
@@ -62,6 +73,7 @@ export const PUBLIC_VALUE_EXPORTS = {
     "QuoteSummary",
     "WorkflowHistory",
     "askWallet",
+    "assertWalletAllowed",
     "canSign",
     "compareEarn",
     "connectWallet",
@@ -94,6 +106,42 @@ export const PUBLIC_PACKAGES = [
 
 export const SCHEMA_VERSION_LOCK = "1.0";
 
+/** First partner release-candidate line. Registry publish stays out of scope (packages remain private). */
+export const RELEASE_CANDIDATE_VERSION = "0.1.0";
+
+/**
+ * Every package that must appear in a clean install from packed artifacts.
+ * `@stacks-capital/config` is transitive for the SDK (capabilities / registry version), not a partner-facing import.
+ */
+export const RELEASE_PACKAGES = [
+  "@stacks-capital/core",
+  "@stacks-capital/config",
+  "@stacks-capital/wallets",
+  "@stacks-capital/sdk",
+  "@stacks-capital/client",
+  "@stacks-capital/react",
+  "@stacks-capital/ui",
+] as const;
+
+export const RELEASE_PACKAGE_FOLDERS = {
+  "@stacks-capital/core": "core",
+  "@stacks-capital/config": "config",
+  "@stacks-capital/wallets": "wallets",
+  "@stacks-capital/sdk": "sdk",
+  "@stacks-capital/client": "client",
+  "@stacks-capital/react": "react",
+  "@stacks-capital/ui": "ui",
+} as const satisfies Record<(typeof RELEASE_PACKAGES)[number], string>;
+
+/** Supported combinations certified by the K39 gate (not every possible consumer stack). */
+export const COMPATIBILITY_MATRIX = {
+  nodeMajor: [22, 24] as const,
+  react: "^19.0.0",
+  wallets: ["leather", "xverse"] as const,
+  schemaVersion: SCHEMA_VERSION_LOCK,
+  releaseCandidate: RELEASE_CANDIDATE_VERSION,
+} as const;
+
 export function missingExports(exported: object, required: readonly string[]): string[] {
   return required.filter((name) => !Object.hasOwn(exported, name));
 }
@@ -109,7 +157,7 @@ export type LaunchRow = {
 };
 
 /**
- * K20. Architecture launch rule: ship the verified surface, not the promised surface.
+ * K20 / K40. Architecture launch rule: ship the verified surface, not the promised surface.
  * Production is no-go. Sandbox certification is the partner quote → validate → AWAITING_SIGNATURE path.
  */
 export const LAUNCH_DECISION = {
@@ -118,6 +166,30 @@ export const LAUNCH_DECISION = {
   closedEarnPilot: "no-go" as const,
   schemaVersion: SCHEMA_VERSION_LOCK,
   webhooks: "not-certified" as const,
+  /** Named ownership required before any go-live (K40). */
+  ownership: {
+    productOwner: "Kenzman",
+    incidentOwner: "IBK",
+    supportOwner: "Kenzman",
+    reviewer: "IBK",
+  },
+  /** Hard stops that force disable / rollback rather than riding out a bad release. */
+  rollbackTriggers: [
+    "SEV-0 suspected fund loss or compromised registry",
+    "SEV-1 wrong plan/risk or cross-tenant exposure",
+    "Rollback drill failure against the chosen target",
+    "Operator switch ignored after deploy (pre-I17 target)",
+    "Signed registry activation fails verification",
+  ] as const,
+  /** Every item must be true before production can flip to go. */
+  goLiveRequirements: [
+    "All P0 release gates pass (K38 matrices, K39 RC pack, K40 pilot evidence)",
+    "I20 blockers B1, B4 and B5 resolved for any closed earn pilot with funds",
+    "Named product, incident and support owners recorded and reachable",
+    "Manual pilot checks M1–M10 recorded with real wallets",
+    "Rollback drill passes against the previous release tag",
+  ] as const,
+  p0Gates: ["K38", "K39", "K40"] as const,
   rows: [
     {
       action: "deposit_sbtc",

@@ -121,3 +121,4 @@ Defects use the page 03 severity scale: SEV-0 active loss vector, SEV-1 wrong pl
 - A closed pilot of the earn journey needs B1, B4 and B5 resolved at least, with borrow and swap left switched off (`ops:disable`) until B3 and B6 are.
 - The BTC holder round trip (B2) is out of reach for this pilot.
 - Manual checks M1 to M10 should be run and recorded before the decision.
+- K40 recorded five fixture sandbox entry/exit sessions and partner-example certification; production and closed earn remain **no-go**. See [launch decision](launch-decision.md) and `pnpm gate:k40`.

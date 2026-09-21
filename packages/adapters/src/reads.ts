@@ -11,6 +11,10 @@ export type VaultSnapshot = {
   capSupply: string;
   shareRateNumerator: string;
   shareRateDenominator: string;
+  /** Optional vault liquidity remaining for display. Missing stays null, never zero. */
+  availableAssets?: string;
+  /** Optional `get-interest-rate` in basis points (scale 4). Missing disables APR ranking. */
+  interestRateBps?: string;
 };
 
 export type OracleSnapshot = {

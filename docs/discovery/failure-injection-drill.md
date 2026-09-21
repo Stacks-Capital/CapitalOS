@@ -26,6 +26,10 @@ Architecture §21 fault injection: provider lag, reorg, signer delay, quote expi
 
 Signer delay for sBTC deposit stays pending until a canonical mint reconciles (K07/K10). That path is not completed by a Bitcoin txid alone.
 
+## K38 matrix labels
+
+The same fixture file also asserts the K38 injection classes (`provider`, `database`, `webhook`, `wallet`, `reorg`, `registry-pause`). Orchestration and evidence: `pnpm gate:k38` → `docs/engineering/release-gates-k38.md`.
+
 ## Not in this drill
 
 I17 (metrics, alerts, feature flags) has since landed. How its alerts and switches map to these failures is in `docs/runbooks/incidents.md`.

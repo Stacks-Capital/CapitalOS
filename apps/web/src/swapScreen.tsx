@@ -1,5 +1,6 @@
 import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, usePrices } from "@stacks-capital/react";
+import { createCapitalOS, parsePlan, parseQuote, type PlanWire, type QuoteWire } from "@stacks-capital/sdk";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useEffect, useState } from "react";
 import {
@@ -87,7 +88,11 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       if (step === undefined) throw new Error("The plan has no step to sign");
       const provider = findProvider(wallet.id as WalletId);
       if (provider === null) throw new Error("The wallet is no longer available");
-      const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step));
+      const os = createCapitalOS({ network: started.data.plan.network });
+      const validation = os.validate(parsePlan(started.data.plan as PlanWire), parseQuote(quoted.quote as QuoteWire), {
+        sender: wallet.address,
+      });
+      const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step, validation), validation);
       if (answer.kind === "rejected") {
         setProblem(answer.message);
         return;

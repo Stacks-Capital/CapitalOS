@@ -1,5 +1,12 @@
 import type { MarketRisk, OracleQuoteView, Position } from "@stacks-capital/client";
-import { computeHealth, type Health, ORACLE_MAX_AGE_MS, type OracleQuote, oracleFresh } from "@stacks-capital/core";
+import {
+  ORACLE_MAX_AGE_MS,
+  concentrationByQuantity,
+  type Health,
+  type OracleQuote,
+  stressGraniteCollateral,
+  wouldLiquidateAtLtv,
+} from "@stacks-capital/core";
 
 /** A number the screen could not work out, and the reason. Shown as "unavailable", never as zero. */
 export type Unavailable = { available: false; reason: string };
@@ -28,36 +35,23 @@ export function concentrationBy(
   kinds: Position["kind"][] = ["supplied", "collateral"],
 ): Concentration {
   const held = positions.filter((position) => kinds.includes(position.kind));
-  if (held.length === 0) return unavailable("No positions have been projected for this address yet.");
-
-  const unknown = held.filter((position) => position.quantity === null);
-  if (unknown.length > 0) {
-    const names = [...new Set(unknown.map((position) => position.marketId))].join(", ");
-    return unavailable(`Some positions are unknown (${names}), so shares cannot be worked out.`);
+  const report = concentrationByQuantity(
+    held.map((position) => ({
+      key: by(position),
+      quantity: position.quantity === null ? null : BigInt(position.quantity),
+      assetId: position.assetId,
+    })),
+  );
+  if (!report.available || report.total === null) {
+    return unavailable(report.reason ?? "Concentration is unavailable.");
   }
-
-  // Quantities in different assets are not comparable, so a mixed set is reported rather than summed.
-  const assets = new Set(held.map((position) => position.assetId));
-  if (assets.size > 1) return unavailable("Positions are held in different assets, which cannot be added together.");
-
-  const totals = new Map<string, bigint>();
-  let total = 0n;
-  for (const position of held) {
-    const quantity = BigInt(position.quantity ?? "0");
-    total += quantity;
-    totals.set(by(position), (totals.get(by(position)) ?? 0n) + quantity);
-  }
-  if (total === 0n) return unavailable("Nothing is held in these markets, so there is nothing to compare.");
-
   return available({
-    total: total.toString(10),
-    slices: [...totals.entries()]
-      .map(([key, quantity]) => ({
-        key,
-        quantity: quantity.toString(10),
-        shareBps: ((quantity * 10_000n) / total).toString(10),
-      }))
-      .sort((left, right) => Number(BigInt(right.shareBps) - BigInt(left.shareBps))),
+    total: report.total.toString(10),
+    slices: report.slices.map((slice) => ({
+      key: slice.key,
+      quantity: slice.quantity.toString(10),
+      shareBps: slice.shareBps.toString(10),
+    })),
   });
 }
 
@@ -77,10 +71,10 @@ export type ScenarioAssumptions = {
   note: string;
 };
 
-function toOracle(view: OracleQuoteView, priceOverride?: bigint): OracleQuote | null {
+function toOracle(view: OracleQuoteView): OracleQuote | null {
   if (view.price === null) return null;
   return {
-    price: priceOverride ?? BigInt(view.price),
+    price: BigInt(view.price),
     scale: BigInt(view.scale),
     observedAt: view.publishedAt ?? view.observedAt,
     source: view.source,
@@ -93,7 +87,7 @@ export const DEFAULT_SHIFTS = [-1000, -2000, -3000, -5000];
 
 /**
  * What the position would look like if the collateral price moved, holding everything else still.
- * The assumptions are returned beside the numbers, because a scenario without them is just a number.
+ * Uses core stressGraniteCollateral so shifts never invent a base price.
  */
 export function scenarios(
   risk: MarketRisk,
@@ -109,52 +103,82 @@ export function scenarios(
     note: "Only the collateral price moves. Debt, interest and the protocol's parameters are held still.",
   };
 
-  const blocker = (): string | null => {
-    if (risk.params === null) return "The protocol's risk parameters could not be read.";
-    if (risk.position.collateral === null || risk.position.debt === null)
-      return "Your position in this market is unknown.";
-    const collateral = toOracle(risk.collateralOracle);
-    const debt = toOracle(risk.debtOracle);
-    if (collateral === null) return `No price for ${risk.collateralOracle.feedKey}.`;
-    if (debt === null) return `No price for ${risk.debtOracle.feedKey}.`;
-    if (!oracleFresh(collateral, now)) return `The ${risk.collateralOracle.feedKey} price is stale.`;
-    if (!oracleFresh(debt, now)) return `The ${risk.debtOracle.feedKey} price is stale.`;
-    return null;
-  };
+  if (risk.params === null) {
+    return {
+      assumptions,
+      rows: shiftsBps.map((shiftBps) => ({
+        shiftBps,
+        label: `${shiftBps < 0 ? "" : "+"}${(shiftBps / 100).toFixed(0)}%`,
+        health: unavailable("The protocol's risk parameters could not be read."),
+      })),
+    };
+  }
+  if (risk.position.collateral === null || risk.position.debt === null) {
+    return {
+      assumptions,
+      rows: shiftsBps.map((shiftBps) => ({
+        shiftBps,
+        label: `${shiftBps < 0 ? "" : "+"}${(shiftBps / 100).toFixed(0)}%`,
+        health: unavailable("Your position in this market is unknown."),
+      })),
+    };
+  }
 
-  const reason = blocker();
-  const rows = shiftsBps.map((shiftBps) => {
-    const label = `${shiftBps < 0 ? "" : "+"}${(shiftBps / 100).toFixed(0)}%`;
-    if (reason !== null || risk.params === null) return { shiftBps, label, health: unavailable(reason ?? "") };
+  const collateralOracle = toOracle(risk.collateralOracle);
+  const debtOracle = toOracle(risk.debtOracle);
+  if (collateralOracle === null || debtOracle === null) {
+    const reason =
+      collateralOracle === null
+        ? `No price for ${risk.collateralOracle.feedKey}.`
+        : `No price for ${risk.debtOracle.feedKey}.`;
+    return {
+      assumptions,
+      rows: shiftsBps.map((shiftBps) => ({
+        shiftBps,
+        label: `${shiftBps < 0 ? "" : "+"}${(shiftBps / 100).toFixed(0)}%`,
+        health: unavailable(reason),
+      })),
+    };
+  }
 
-    const base = BigInt(risk.collateralOracle.price ?? "0");
-    const moved = (base * BigInt(10_000 + shiftBps)) / 10_000n;
-    const collateral = toOracle(risk.collateralOracle, moved);
-    const debt = toOracle(risk.debtOracle);
-    if (collateral === null || debt === null) return { shiftBps, label, health: unavailable("A price is missing.") };
-
-    const health = computeHealth({
-      collateral: {
-        amount: BigInt(risk.position.collateral ?? "0"),
-        decimals: BigInt(risk.params.collateralDecimals),
-        oracle: collateral,
-      },
-      debt: { amount: BigInt(risk.position.debt ?? "0"), decimals: BigInt(risk.params.debtDecimals), oracle: debt },
-      params: {
-        ltvBorrowBps: BigInt(risk.params.ltvBorrowBps),
-        ltvLiqBps: BigInt(risk.params.ltvLiqBps),
-        bufferBps: BigInt(risk.params.bufferBps),
-      },
-      now,
-    });
-    return { shiftBps, label, health: available(health) };
+  const report = stressGraniteCollateral({
+    collateral: {
+      amount: BigInt(risk.position.collateral),
+      decimals: BigInt(risk.params.collateralDecimals),
+      oracle: collateralOracle,
+    },
+    debt: {
+      amount: BigInt(risk.position.debt),
+      decimals: BigInt(risk.params.debtDecimals),
+      oracle: debtOracle,
+    },
+    params: {
+      ltvBorrowBps: BigInt(risk.params.ltvBorrowBps),
+      ltvLiqBps: BigInt(risk.params.ltvLiqBps),
+      bufferBps: BigInt(risk.params.bufferBps),
+    },
+    now,
+    collateralFeed: risk.collateralOracle.feedKey,
+    debtFeed: risk.debtOracle.feedKey,
+    shiftsBps,
   });
 
-  return { assumptions, rows };
+  return {
+    assumptions: {
+      ...assumptions,
+      note: report.assumptions.note,
+    },
+    rows: report.rows.map((row) => ({
+      shiftBps: row.shiftBps,
+      label: row.label,
+      health:
+        row.health === null ? unavailable(row.unavailableReason ?? "Scenario is unavailable.") : available(row.health),
+    })),
+  };
 }
 
 /** True when a scenario would put the position past the liquidation threshold. */
 export function wouldLiquidate(scenario: Scenario, liquidationThresholdBps: string | null): boolean {
   if (!scenario.health.available || liquidationThresholdBps === null) return false;
-  return scenario.health.value.currentLtvBps >= BigInt(liquidationThresholdBps);
+  return wouldLiquidateAtLtv(scenario.health.value.currentLtvBps, BigInt(liquidationThresholdBps));
 }

@@ -10,6 +10,18 @@
 - [Adapter certification](engineering/adapter-certification.md): exact read, quote, plan, event and reconciliation conformance.
 - [sBTC deposit certification](engineering/sbtc-deposit.md): Bitcoin, signer, mint and reclaim lifecycle evidence.
 - [sBTC withdrawal certification](engineering/sbtc-withdrawal.md): request, signer, fee refund and Bitcoin payout reconciliation.
+- [Zest earn certification](engineering/zest-earn.md): supply, redeem, APR semantics and receipt valuation.
+- [Zest credit availability](engineering/zest-credit.md): why Zest has no user borrow path and where Granite takes over.
+- [Granite credit certification](engineering/granite-credit.md): collateral, borrow, repay-all and oracle boundaries.
+- [Bitflow swap certification](engineering/bitflow-swap.md): exact-input routing, expiry and min-out reconciliation.
+- [Staking routes](engineering/staking-routes.md): why native PoX staking stays unavailable.
+- [Plan hardening](engineering/plan-hardening.md): quote/plan binding, exact arithmetic and the wallet validation gate.
+- [Workflow recovery](engineering/workflow-recovery.md): idempotent transitions, rejection, outage, reorg and reconciliation-gated completion.
+- [Risk engine](engineering/risk-engine.md): Granite health interpretation, stress scenarios, concentration and protective actions.
+- [Threat model K37](engineering/threat-model-k37.md): signing, slippage, oracle, reorg and write-path abuse coverage with launch blocks.
+- [Release gates K38](engineering/release-gates-k38.md): sandbox/mainnet-shadow matrices, golden-address reconcile, failure injection and evidence.
+- [SDK release K39](engineering/sdk-release-k39.md): 0.1.0 release-candidate pack, clean-install and partner compatibility (no registry publish).
+- [SDK migration 0.1](guides/sdk-migration-0.1.md): breaking changes and supported Node/React/wallet combinations.
 
 ## Operating it
 
@@ -21,7 +33,7 @@
 ## Release
 
 - [Pilot and release checklist](release/pilot-checklist.md): evidence, manual checks and outstanding issues for the go/no-go.
-- [Launch decision](release/launch-decision.md): K20 go/no-go. Production is no-go; sandbox certifies Zest supply only.
+- [Launch decision](release/launch-decision.md): K20/K40 go/no-go, named ownership, rollback triggers. Production is no-go; sandbox certifies Zest supply only.
 
 ## How it is built
 

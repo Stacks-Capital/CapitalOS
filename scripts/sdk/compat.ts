@@ -6,10 +6,14 @@ import { fileURLToPath } from "node:url";
 import * as client from "../../packages/client/src/index.ts";
 import * as sdk from "../../packages/sdk/src/index.ts";
 import {
+  COMPATIBILITY_MATRIX,
   LAUNCH_DECISION,
   PARTNER_FORBIDDEN_PACKAGES,
   PUBLIC_PACKAGES,
   PUBLIC_VALUE_EXPORTS,
+  RELEASE_CANDIDATE_VERSION,
+  RELEASE_PACKAGE_FOLDERS,
+  RELEASE_PACKAGES,
   SCHEMA_VERSION_LOCK,
   missingExports,
 } from "../../packages/sdk/src/surface.ts";
@@ -69,49 +73,59 @@ record(
   "investigation",
 );
 
-const folders: Record<(typeof PUBLIC_PACKAGES)[number], string> = {
-  "@stacks-capital/core": "core",
-  "@stacks-capital/wallets": "wallets",
-  "@stacks-capital/sdk": "sdk",
-  "@stacks-capital/client": "client",
-  "@stacks-capital/react": "react",
-  "@stacks-capital/ui": "ui",
-};
+const folders = RELEASE_PACKAGE_FOLDERS;
 
-for (const name of PUBLIC_PACKAGES) {
+for (const name of RELEASE_PACKAGES) {
   const pkg = JSON.parse(readFileSync(join(ROOT, "packages", folders[name], "package.json"), "utf8")) as {
+    version?: string;
     dependencies?: Record<string, string>;
     files?: string[];
     private?: boolean;
+    engines?: { node?: string };
   };
   const deps = Object.keys(pkg.dependencies ?? {});
   const leaked = PARTNER_FORBIDDEN_PACKAGES.filter((forbidden) => deps.includes(forbidden));
+  const isPartnerFacing = (PUBLIC_PACKAGES as readonly string[]).includes(name);
   record(
     `${name} is packable source`,
-    pkg.private === true && pkg.files?.[0] === "src" && leaked.length === 0,
-    leaked.length > 0 ? `depends on ${leaked.join(", ")}` : "src only, no adapters/engine/database/fixtures",
+    pkg.private === true &&
+      pkg.files?.[0] === "src" &&
+      leaked.length === 0 &&
+      pkg.version === RELEASE_CANDIDATE_VERSION &&
+      pkg.engines?.node === ">=22",
+    leaked.length > 0
+      ? `depends on ${leaked.join(", ")}`
+      : `${pkg.version}; src only${isPartnerFacing ? "; partner-facing" : "; transitive"}`,
   );
 }
 
 const packDir = mkdtempSync(join(tmpdir(), "capitalos-pack-"));
 try {
-  const packed = spawnSync("pnpm", ["--filter", "@stacks-capital/sdk", "pack", "--pack-destination", packDir], {
-    cwd: ROOT,
-    encoding: "utf8",
-  });
-  record(
-    "pnpm pack @stacks-capital/sdk",
-    packed.status === 0,
-    packed.status === 0
-      ? "tarball written"
-      : (packed.error?.message ??
-          packed.stderr?.trim() ??
-          packed.stdout?.trim() ??
-          `exit ${packed.status ?? "unknown"}`),
-  );
+  for (const name of RELEASE_PACKAGES) {
+    const packed = spawnSync("pnpm", ["--filter", name, "pack", "--pack-destination", packDir], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    record(
+      `pnpm pack ${name}`,
+      packed.status === 0,
+      packed.status === 0
+        ? "tarball written"
+        : (packed.error?.message ??
+            packed.stderr?.trim() ??
+            packed.stdout?.trim() ??
+            `exit ${packed.status ?? "unknown"}`),
+    );
+  }
 } finally {
   rmSync(packDir, { recursive: true, force: true });
 }
+
+record(
+  "compatibility matrix wallets",
+  COMPATIBILITY_MATRIX.wallets.join(",") === "leather,xverse",
+  COMPATIBILITY_MATRIX.wallets.join(","),
+);
 
 console.log("| Check | Result | Detail |");
 console.log("|---|---|---|");
@@ -125,6 +139,6 @@ if (failed.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `\n${checks.length} checks passed. K19: partner surface holds. K20: production no-go; sandbox Zest supply only.`,
+    `\n${checks.length} checks passed. K19/K39: partner surface holds at ${RELEASE_CANDIDATE_VERSION}; production no-go; sandbox Zest supply only.`,
   );
 }

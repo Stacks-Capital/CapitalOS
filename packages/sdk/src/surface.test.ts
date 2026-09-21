@@ -8,6 +8,9 @@ import {
   PARTNER_FORBIDDEN_PACKAGES,
   PUBLIC_PACKAGES,
   PUBLIC_VALUE_EXPORTS,
+  RELEASE_CANDIDATE_VERSION,
+  RELEASE_PACKAGE_FOLDERS,
+  RELEASE_PACKAGES,
   SCHEMA_VERSION_LOCK,
   missingExports,
 } from "./surface.ts";
@@ -16,9 +19,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 type Manifest = {
   name: string;
+  version?: string;
   private?: boolean;
   exports?: unknown;
   files?: string[];
+  engines?: { node?: string };
   dependencies?: Record<string, string>;
 };
 
@@ -48,16 +53,8 @@ describe("K19 SDK release compatibility", () => {
   });
 
   it("does not put adapters, engine, database or fixtures on a public package", () => {
-    const folders: Record<(typeof PUBLIC_PACKAGES)[number], string> = {
-      "@stacks-capital/core": "core",
-      "@stacks-capital/wallets": "wallets",
-      "@stacks-capital/sdk": "sdk",
-      "@stacks-capital/client": "client",
-      "@stacks-capital/react": "react",
-      "@stacks-capital/ui": "ui",
-    };
     for (const name of PUBLIC_PACKAGES) {
-      const pkg = manifest(folders[name]);
+      const pkg = manifest(RELEASE_PACKAGE_FOLDERS[name]);
       assert.equal(pkg.name, name);
       assert.equal(pkg.private, true);
       assert.deepEqual(pkg.files, ["src"]);
@@ -76,5 +73,18 @@ describe("K19 SDK release compatibility", () => {
       (error: unknown) =>
         typeof error === "object" && error !== null && "code" in error && error.code === "UNSUPPORTED_ACTION",
     );
+  });
+});
+
+describe("K39 release candidate versions", () => {
+  it("aligns every release package at 0.1.0 with Node >=22", () => {
+    assert.equal(sdk.RELEASE_CANDIDATE_VERSION, RELEASE_CANDIDATE_VERSION);
+    assert.equal(RELEASE_CANDIDATE_VERSION, "0.1.0");
+    for (const name of RELEASE_PACKAGES) {
+      const pkg = manifest(RELEASE_PACKAGE_FOLDERS[name]);
+      assert.equal(pkg.version, RELEASE_CANDIDATE_VERSION, name);
+      assert.equal(pkg.engines?.node, ">=22", name);
+      assert.equal(pkg.private, true, name);
+    }
   });
 });

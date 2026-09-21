@@ -18,7 +18,7 @@ The JSON report names the protocol, adapter version, registry version, network, 
 - canonical events decode to the expected activity; and
 - an exact reconciliation succeeds while a one-unit mismatch fails with an explanation.
 
-The built-in suite currently covers sBTC deposit, sBTC withdrawal, Zest supply, Granite borrow, and Bitflow exact-input swap. Each protocol lifecycle task must add entry and exit fixtures before its launch state can change. A provider response or passing fixture must never be relabeled as independent live evidence.
+The built-in suite currently covers sBTC deposit, sBTC withdrawal, Zest supply, Zest redeem, Granite borrow, and Bitflow exact-input swap. Each protocol lifecycle task must add entry and exit fixtures before its launch state can change. A provider response or passing fixture must never be relabeled as independent live evidence.
 
 ## Evidence handling
 
