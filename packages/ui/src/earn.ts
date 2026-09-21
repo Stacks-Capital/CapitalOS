@@ -102,3 +102,26 @@ export function reviewQuote(quote: Quote, now: Date): QuoteView {
 export function canSign(view: QuoteView): boolean {
   return view.executable && !view.expired;
 }
+
+export type Attempt = { stepId: string; outcome: "BROADCAST" | "SIGNED" | "UNKNOWN"; txid: string | null };
+
+/**
+ * The transaction id to show and link, or null when there is none to show.
+ *
+ * An attempt without a txid is not a failure to look up again later, it is an unknown broadcast. The
+ * caller has to treat null as "investigate", never as "try again", because a second broadcast could
+ * move the money twice.
+ */
+export function attemptTxid(attempts: readonly Attempt[]): string | null {
+  for (let index = attempts.length - 1; index >= 0; index -= 1) {
+    const attempt = attempts[index];
+    if (attempt !== undefined && attempt.txid !== null) return attempt.txid;
+  }
+  return null;
+}
+
+/** The contract the wallet is actually asked to sign against. Unnamed stays unnamed, never the market id. */
+export function contractOf(steps: readonly { payload: Record<string, unknown> }[]): string {
+  const contractId = steps[0]?.payload.contractId;
+  return typeof contractId === "string" ? contractId : "not named by the plan";
+}

@@ -1,6 +1,37 @@
 // Components partners embed. Each needs a CapitalProvider from @stacks-capital/react above it.
 export { EarnComparison, PositionsSummary, QuoteSummary, WorkflowHistory } from "./widgets.tsx";
 export { Amount, Panel, StateNote, Unavailable } from "./primitives.tsx";
+export { ResponsiveTable, type TableColumn } from "./table.tsx";
+export {
+  EmptyStateView,
+  FailedDelayedStateView,
+  LoadingStateView,
+  PartialStateView,
+  ReviewStateView,
+  StaleDisputedStateView,
+  StateView,
+  SubmittedStateView,
+  UnsupportedStateView,
+} from "./states.tsx";
+export {
+  AddressChip,
+  BlockHeightChip,
+  explorerTxUrl,
+  formatBlockHeight,
+  PageHeader,
+  ScreenHeader,
+  SHELL_NAV_TABS,
+  type ShellNavTab,
+  ShellHeader,
+  ShellNavigation,
+  SimpleProToggle,
+  truncateAddress,
+  type ViewMode,
+  WorkflowAnnouncer,
+  workflowAnnouncement,
+  WorkflowDrawer,
+  type WorkflowProgress,
+} from "./shell.tsx";
 
 // The rules the components follow, usable without React.
 export {
@@ -26,8 +57,11 @@ export {
   type Rate,
 } from "./compare.ts";
 export {
+  type Attempt,
+  attemptTxid,
   canSign,
   clearPending,
+  contractOf,
   type EarnStage,
   loadPending,
   type Pending,
@@ -55,6 +89,7 @@ export {
 export {
   type Balance,
   buildPortfolio,
+  excludedFrom,
   type Portfolio,
   type PortfolioRow,
   type PortfolioTotal,
@@ -71,7 +106,25 @@ export {
   toWalletRequest,
   type WalletRequest,
 } from "./signing.ts";
-export { messageFor, type PanelState, panelState, type QueryLike, UNAVAILABLE } from "./state.ts";
+export {
+  CANONICAL_STATE_KINDS,
+  type CanonicalState,
+  type CanonicalStateKind,
+  type EmptyState,
+  type FailedDelayedRecovery,
+  type FailedDelayedState,
+  type LoadingState,
+  type PartialState,
+  type ReviewState,
+  type StaleDisputedState,
+  type SubmittedState,
+  type UnsupportedState,
+  messageFor,
+  type PanelState,
+  panelState,
+  type QueryLike,
+  UNAVAILABLE,
+} from "./state.ts";
 export {
   canApprove,
   priceImpactBps,

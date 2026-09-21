@@ -3,9 +3,14 @@ import { useState } from "react";
 import {
   Amount,
   buildPortfolio,
+  EmptyStateView,
+  excludedFrom,
+  LoadingStateView,
   type HoldingPosition as Position,
   Panel,
   panelState,
+  PartialStateView,
+  ResponsiveTable,
   StateNote,
   UNAVAILABLE,
   Unavailable,
@@ -30,40 +35,50 @@ export function Portfolio({ address, signedIn }: { address: string | null; signe
       warnings: position.warnings,
     }));
   const portfolio = buildPortfolio({ balances: [], positions: held, markets: markets.data?.items ?? [] });
+  const excluded = excludedFrom(portfolio);
+  const totalsLine = portfolio.totals.map((total) => `${total.quantity ?? "unknown"} ${total.assetId}`).join(", ");
 
   return (
     <>
       <Panel title="Holdings">
         {address === null ? (
-          <p className="muted">Connect a wallet to see what it holds.</p>
+          <EmptyStateView state={{ kind: "empty", instruction: "Connect a wallet to see what it holds." }} />
         ) : (
           <>
             <Unavailable reason={UNAVAILABLE.balances} />
-            {signedIn ? (
-              <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
+            {!signedIn ? (
+              <EmptyStateView state={{ kind: "empty", instruction: "Sign in to see your positions." }} />
+            ) : positionsState.kind === "loading" ? (
+              <LoadingStateView
+                state={{
+                  kind: "loading",
+                  what: "your positions",
+                  canRetry: true,
+                  onRetry: () => void positions.refresh(),
+                }}
+              />
             ) : (
-              <p className="muted">Sign in to see your positions.</p>
+              <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
             )}
-            {portfolio.totals.length > 0 ? (
-              <p>
-                Total {portfolio.totals.map((total) => `${total.quantity ?? "unknown"} ${total.assetId}`).join(", ")}
-              </p>
+            {/* A subtotal that quietly drops rows reads as a complete balance, so the drops are named. */}
+            {signedIn && portfolio.totals.length > 0 && excluded.length > 0 ? (
+              <PartialStateView
+                state={{ kind: "partial", verifiedSubtotal: totalsLine, excludedPositions: excluded }}
+              />
+            ) : portfolio.totals.length > 0 ? (
+              <p>Total {totalsLine}</p>
             ) : null}
             {portfolio.rows.length > 0 ? (
-              <table>
-                <tbody>
-                  {portfolio.rows.map((row) => (
-                    <tr key={row.key}>
-                      <td>{row.kind}</td>
-                      <td>{row.assetId}</td>
-                      <td>
-                        <Amount quantity={row.quantity} unknown="unknown" />
-                      </td>
-                      <td>{row.countsTowardTotal ? "" : "not counted"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable
+                rows={portfolio.rows}
+                rowKey={(row) => row.key}
+                columns={[
+                  { header: "Kind", cell: (row) => row.kind },
+                  { header: "Asset", cell: (row) => row.assetId },
+                  { header: "Quantity", cell: (row) => <Amount quantity={row.quantity} unknown="unknown" /> },
+                  { header: "Counted", cell: (row) => (row.countsTowardTotal ? "counted" : "not counted") },
+                ]}
+              />
             ) : null}
           </>
         )}
@@ -100,26 +115,16 @@ export function Markets() {
   return (
     <Panel title="Capabilities">
       <StateNote state={state} onRetry={() => void capabilities.refresh()} />
-      <table>
-        <thead>
-          <tr>
-            <th>Market</th>
-            <th>Action</th>
-            <th>State</th>
-            <th>Why</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(capabilities.data?.items ?? []).map((capability) => (
-            <tr key={`${capability.marketId}/${capability.action}`}>
-              <td>{capability.marketId}</td>
-              <td>{capability.action}</td>
-              <td>{capability.state}</td>
-              <td className="muted">{capability.reason}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={capabilities.data?.items ?? []}
+        rowKey={(capability) => `${capability.marketId}/${capability.action}`}
+        columns={[
+          { header: "Market", cell: (capability) => capability.marketId },
+          { header: "Action", cell: (capability) => capability.action },
+          { header: "State", cell: (capability) => capability.state },
+          { header: "Why", cell: (capability) => <span className="muted">{capability.reason}</span> },
+        ]}
+      />
     </Panel>
   );
 }
