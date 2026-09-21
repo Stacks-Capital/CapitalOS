@@ -89,7 +89,8 @@ describe("quote and plan wire format", () => {
       adapterVersion: "zest-earn@0.1.0",
     });
     assert.throws(
-      () => parseQuote({ ...quote, input: [{ asset: quote.input[0]!.asset, quantity: 100000000 as unknown as string }] }),
+      () =>
+        parseQuote({ ...quote, input: [{ asset: quote.input[0]!.asset, quantity: 100000000 as unknown as string }] }),
       /JavaScript number/,
     );
 
