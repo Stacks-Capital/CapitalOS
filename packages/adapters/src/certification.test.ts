@@ -6,8 +6,15 @@ import { certifyAdapter } from "./certification.ts";
 describe("K24 protocol adapter certification", () => {
   it("certifies every built-in fixture and emits auditable deployment metadata", () => {
     const reports = certifyBuiltinAdapters();
-    assert.equal(reports.length, 5);
-    assert.deepEqual(reports.map((report) => report.protocol).sort(), ["bitflow", "granite", "sbtc", "sbtc", "zest"]);
+    assert.equal(reports.length, 6);
+    assert.deepEqual(reports.map((report) => report.protocol).sort(), [
+      "bitflow",
+      "granite",
+      "sbtc",
+      "sbtc",
+      "zest",
+      "zest",
+    ]);
     for (const report of reports) {
       assert.equal(report.status, "fixture_conformant");
       assert.match(report.adapterVersion, /^[a-z0-9-]+@\d+\.\d+\.\d+$/);
