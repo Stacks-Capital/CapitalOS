@@ -8,15 +8,9 @@
     "cwd": "/Users/apple/Desktop/capitalos/CapitalOS"
   },
   "compatibility": {
-    "nodeMajor": [
-      22,
-      24
-    ],
+    "nodeMajor": [22, 24],
     "react": "^19.0.0",
-    "wallets": [
-      "leather",
-      "xverse"
-    ],
+    "wallets": ["leather", "xverse"],
     "schemaVersion": "1.0",
     "releaseCandidate": "0.1.0"
   },
