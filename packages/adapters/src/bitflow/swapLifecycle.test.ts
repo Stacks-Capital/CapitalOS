@@ -126,10 +126,7 @@ describe("K29 Bitflow swap lifecycle", () => {
     assert.throws(
       () => previewBitflowMinOut("99500000000", -1n),
       (error: unknown) =>
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        error.code === "PLAN_INVALID",
+        typeof error === "object" && error !== null && "code" in error && error.code === "PLAN_INVALID",
     );
   });
 });
