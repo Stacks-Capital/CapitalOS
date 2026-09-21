@@ -442,6 +442,10 @@ export function createApp(deps: AppDependencies) {
           createdAt: workflow.createdAt.toISOString(),
           updatedAt: workflow.updatedAt.toISOString(),
           transitions: workflow.transitions.map((move) => ({ ...move, at: new Date(move.at).toISOString() })),
+          attempts: workflow.attempts.map((attempt) => ({
+            ...attempt,
+            recordedAt: new Date(attempt.recordedAt).toISOString(),
+          })),
         },
         context: context(),
       },
