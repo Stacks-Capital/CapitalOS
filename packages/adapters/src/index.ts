@@ -73,6 +73,27 @@ export type {
   SbtcWithdrawalState,
 } from "./sbtc/withdrawalLifecycle.ts";
 export { createZestEarnAdapter, ZEST_EARN_VERSION, ZEST_MARKET_SBTC } from "./zest/earn.ts";
+export {
+  assetsForShares,
+  evaluateZestEarn,
+  sharesForAssets,
+  valueZestReceipt,
+  vaultMarketFromSnapshot,
+  zestEarnTransferId,
+  zestSupplyApr,
+  ZEST_RATE_SCALE,
+} from "./zest/earnLifecycle.ts";
+export type {
+  CanonicalVaultSettlement,
+  ObservedShareBalance,
+  ZestEarnAction,
+  ZestEarnIntent,
+  ZestEarnLifecycle,
+  ZestEarnState,
+  ZestReceiptValuation,
+  ZestSupplyApr,
+  ZestVaultMarketEvidence,
+} from "./zest/earnLifecycle.ts";
 export { createGraniteCreditAdapter, GRANITE_CREDIT_VERSION, GRANITE_MARKET_ISOLATED } from "./granite/credit.ts";
 export {
   createBitflowSwapAdapter,
