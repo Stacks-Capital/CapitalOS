@@ -172,9 +172,7 @@ export function scenarios(
       shiftBps: row.shiftBps,
       label: row.label,
       health:
-        row.health === null
-          ? unavailable(row.unavailableReason ?? "Scenario is unavailable.")
-          : available(row.health),
+        row.health === null ? unavailable(row.unavailableReason ?? "Scenario is unavailable.") : available(row.health),
     })),
   };
 }
