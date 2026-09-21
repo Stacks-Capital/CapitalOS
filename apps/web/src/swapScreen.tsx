@@ -89,11 +89,9 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
       const provider = findProvider(wallet.id as WalletId);
       if (provider === null) throw new Error("The wallet is no longer available");
       const os = createCapitalOS({ network: started.data.plan.network });
-      const validation = os.validate(
-        parsePlan(started.data.plan as PlanWire),
-        parseQuote(quoted.quote as QuoteWire),
-        { sender: wallet.address },
-      );
+      const validation = os.validate(parsePlan(started.data.plan as PlanWire), parseQuote(quoted.quote as QuoteWire), {
+        sender: wallet.address,
+      });
       const answer = await askWallet(provider, wallet.id as WalletId, toWalletRequest(step, validation), validation);
       if (answer.kind === "rejected") {
         setProblem(answer.message);
