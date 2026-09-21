@@ -68,9 +68,7 @@ export type ReconciliationResult = {
   evidence: string;
 };
 
-export type UnknownBroadcastResolution =
-  | { kind: "found"; txid: string }
-  | { kind: "absent"; evidence: string };
+export type UnknownBroadcastResolution = { kind: "found"; txid: string } | { kind: "absent"; evidence: string };
 
 /** Wait / sign states a reload must be able to resume. */
 const RESUMABLE: ReadonlySet<WorkflowState> = new Set([
@@ -335,13 +333,7 @@ export function completeFromReconciliation(workflow: Workflow, result: Reconcili
 }
 
 export function recordProviderOutage(workflow: Workflow, evidence: string): Workflow {
-  const wait: WorkflowState[] = [
-    "SUBMITTED",
-    "CONFIRMING",
-    "STEP_CONFIRMED",
-    "RECONCILING",
-    "BROADCAST_UNKNOWN",
-  ];
+  const wait: WorkflowState[] = ["SUBMITTED", "CONFIRMING", "STEP_CONFIRMED", "RECONCILING", "BROADCAST_UNKNOWN"];
   if (!wait.includes(workflow.state)) {
     throw capitalError("PLAN_INVALID", `Cannot record a provider outage from ${workflow.state}`);
   }
