@@ -60,14 +60,27 @@ export type {
   UnsignedPayload,
 } from "./plan.ts";
 
-export type { NextAction, Transition, Workflow, WorkflowState } from "./workflow.ts";
+export type { NextAction, ResumeHint, ReconciliationResult, Transition, UnknownBroadcastResolution, Workflow, WorkflowState } from "./workflow.ts";
 export {
   applyReorgToWorkflow,
+  assertWriteAllowed,
+  beginConfirming,
+  beginReconciling,
   canSubmitWrite,
+  completeFromReconciliation,
   createWorkflow,
   errorFromState,
+  isResumableState,
+  isTerminalState,
+  markStepConfirmed,
   nextActionFor,
+  recordBroadcast,
+  recordProviderOutage,
+  recordRejection,
   recordUnknownBroadcast,
+  resolveUnknownBroadcast,
+  resumeAfterReorg,
+  resumeHint,
   transition,
 } from "./workflow.ts";
 

@@ -16,6 +16,7 @@
 - [Bitflow swap certification](engineering/bitflow-swap.md): exact-input routing, expiry and min-out reconciliation.
 - [Staking routes](engineering/staking-routes.md): why native PoX staking stays unavailable.
 - [Plan hardening](engineering/plan-hardening.md): quote/plan binding, exact arithmetic and the wallet validation gate.
+- [Workflow recovery](engineering/workflow-recovery.md): idempotent transitions, rejection, outage, reorg and reconciliation-gated completion.
 
 ## Operating it
 
