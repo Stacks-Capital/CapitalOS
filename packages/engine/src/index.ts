@@ -1,4 +1,5 @@
 export { createExecutionEngine, executable } from "./engine.ts";
+export { verifyBuiltinRegistry } from "@stacks-capital/config";
 export type { ExecutionEngine, ExecutionEngineOptions, QuotedPlan } from "./engine.ts";
 export { loadServerReads } from "./serverReads.ts";
 export type { ServerReadOptions } from "./serverReads.ts";
