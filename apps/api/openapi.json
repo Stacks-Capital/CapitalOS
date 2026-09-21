@@ -1085,6 +1085,12 @@
               "null"
             ]
           },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -1104,6 +1110,7 @@
           "nextAction",
           "quoteId",
           "planId",
+          "action",
           "createdAt",
           "updatedAt",
           "transitionCount"
@@ -1175,6 +1182,12 @@
               "null"
             ]
           },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "ownerAddress": {
             "type": [
               "string",
@@ -1227,6 +1240,49 @@
                 "at"
               ]
             }
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stepId": {
+                  "type": "string"
+                },
+                "chain": {
+                  "type": "string",
+                  "enum": [
+                    "bitcoin",
+                    "stacks"
+                  ]
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "BROADCAST",
+                    "SIGNED",
+                    "UNKNOWN"
+                  ]
+                },
+                "txid": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "recordedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "stepId",
+                "chain",
+                "outcome",
+                "txid",
+                "recordedAt"
+              ]
+            }
           }
         },
         "required": [
@@ -1236,10 +1292,12 @@
           "nextAction",
           "quoteId",
           "planId",
+          "action",
           "ownerAddress",
           "createdAt",
           "updatedAt",
-          "transitions"
+          "transitions",
+          "attempts"
         ]
       },
       "QuoteResponse": {
