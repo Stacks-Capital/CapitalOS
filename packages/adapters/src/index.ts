@@ -94,10 +94,53 @@ export type {
   ZestSupplyApr,
   ZestVaultMarketEvidence,
 } from "./zest/earnLifecycle.ts";
+export {
+  evaluateZestCredit,
+  zestCreditAvailability,
+  zestCreditTransferId,
+  ZEST_CREDIT_ACTIONS,
+} from "./zest/creditLifecycle.ts";
+export type {
+  ZestCreditAction,
+  ZestCreditAvailability,
+  ZestCreditLifecycle,
+} from "./zest/creditLifecycle.ts";
 export { createGraniteCreditAdapter, GRANITE_CREDIT_VERSION, GRANITE_MARKET_ISOLATED } from "./granite/credit.ts";
+export {
+  evaluateGraniteCredit,
+  graniteContracts,
+  graniteCreditTransferId,
+  marketFromReads,
+  settleGraniteRepay,
+  GRANITE_RATE_SCALE,
+} from "./granite/creditLifecycle.ts";
+export type {
+  CanonicalGraniteSettlement,
+  GraniteCreditAction,
+  GraniteCreditIntent,
+  GraniteCreditLifecycle,
+  GraniteCreditState,
+  GraniteMarketEvidence,
+  GranitePositionEvidence,
+} from "./granite/creditLifecycle.ts";
 export {
   createBitflowSwapAdapter,
   BITFLOW_MARKET_SBTC_USDCX,
   BITFLOW_SWAP_VERSION,
   DEFAULT_SLIPPAGE_BPS,
 } from "./bitflow/swap.ts";
+export {
+  assertBitflowRoute,
+  bitflowSwapTransferId,
+  evaluateBitflowSwap,
+  previewBitflowMinOut,
+  BITFLOW_DEFAULT_SLIPPAGE_BPS,
+} from "./bitflow/swapLifecycle.ts";
+export type {
+  BitflowSwapIntent,
+  BitflowSwapLifecycle,
+  BitflowSwapState,
+  CanonicalBitflowSettlement,
+} from "./bitflow/swapLifecycle.ts";
+export { evaluateStaking, stakingAvailability, STAKING_ACTIONS } from "./staking/lifecycle.ts";
+export type { StakingAction, StakingAvailability, StakingLifecycle } from "./staking/lifecycle.ts";
