@@ -103,7 +103,8 @@ function postConditionBindingReasons(plan: Plan, quote: Quote, ctx: SigningConte
     if (step.payload.kind === "bitcoin_deposit") {
       const depositQty = assertFinancialInt(step.payload.amountSats, "bitcoin deposit amount");
       const matched = uncoveredInputs.findIndex(
-        (item) => item.asset.identity.kind === "native" && item.asset.identity.symbol === "btc" && item.quantity === depositQty,
+        (item) =>
+          item.asset.identity.kind === "native" && item.asset.identity.symbol === "btc" && item.quantity === depositQty,
       );
       if (matched < 0) {
         reasons.push("bitcoin deposit amount does not match quote input");
