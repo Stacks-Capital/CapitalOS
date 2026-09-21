@@ -135,6 +135,7 @@ export const Workflow = z
     nextAction: z.string(),
     quoteId: z.string().nullable(),
     planId: z.string().nullable(),
+    action: z.string().nullable(),
     ownerAddress: z.string().nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
@@ -147,6 +148,15 @@ export const Workflow = z
         actor: z.string(),
         evidence: z.string(),
         at: z.iso.datetime(),
+      }),
+    ),
+    attempts: z.array(
+      z.object({
+        stepId: z.string(),
+        chain: z.enum(["bitcoin", "stacks"]),
+        outcome: z.enum(["BROADCAST", "SIGNED", "UNKNOWN"]),
+        txid: z.string().nullable(),
+        recordedAt: z.iso.datetime(),
       }),
     ),
   })
@@ -431,6 +441,7 @@ export const WorkflowSummary = z
     nextAction: z.string(),
     quoteId: z.string().nullable(),
     planId: z.string().nullable(),
+    action: z.string().nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
     transitionCount: z.number().int(),
