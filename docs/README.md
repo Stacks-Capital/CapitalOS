@@ -19,6 +19,7 @@
 - [Workflow recovery](engineering/workflow-recovery.md): idempotent transitions, rejection, outage, reorg and reconciliation-gated completion.
 - [Risk engine](engineering/risk-engine.md): Granite health interpretation, stress scenarios, concentration and protective actions.
 - [Threat model K37](engineering/threat-model-k37.md): signing, slippage, oracle, reorg and write-path abuse coverage with launch blocks.
+- [Release gates K38](engineering/release-gates-k38.md): sandbox/mainnet-shadow matrices, golden-address reconcile, failure injection and evidence.
 
 ## Operating it
 

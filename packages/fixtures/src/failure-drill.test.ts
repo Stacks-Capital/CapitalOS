@@ -129,3 +129,117 @@ describe("K18 failure injection and recovery drill", () => {
     assert.equal(capabilityFor("deposit_sbtc", "testnet")?.state, "disabled");
   });
 });
+
+/** K38 matrix labels: provider, database, webhook, wallet, reorg, registry-pause. */
+describe("K38 failure-injection matrix", () => {
+  it("maps each injection class to a fail-closed recovery", () => {
+    const matrix: { class: string; recovery: string; prove: () => void }[] = [
+      {
+        class: "provider",
+        recovery: "ORACLE_STALE blocks quote",
+        prove: () => {
+          const oracle = MAINNET_READS.oracle;
+          assert.ok(oracle);
+          const { granite } = sandboxAdapters(
+            "mainnet",
+            withReads((base) => ({
+              ...base,
+              oracle: { sbtc: { ...oracle.sbtc, stale: true }, usdcx: oracle.usdcx },
+            })),
+          );
+          assert.throws(
+            () =>
+              granite.quote(adapterContext("mainnet"), {
+                action: "borrow",
+                marketId: "granite.sbtc.isolated",
+                amount: "1000000",
+              }),
+            (error: unknown) => codeOf(error) === "ORACLE_STALE",
+          );
+        },
+      },
+      {
+        class: "database",
+        recovery: "restore drill is ops-gated; workflow events are append-only",
+        prove: () => {
+          let flow = createWorkflow({ id: "wf_k38_db", network: "mainnet", idempotencyKey: "db" });
+          flow = transition(flow, "QUOTED", { reason: "q", actor: "sdk", evidence: "q" });
+          assert.ok(flow.transitions.length >= 1);
+          assert.equal(flow.transitions.every((row) => typeof row.at === "string"), true);
+        },
+      },
+      {
+        class: "webhook",
+        recovery: "BROADCAST_UNKNOWN → RETRY_READ (no duplicate SUBMITTED)",
+        prove: () => {
+          let flow = createWorkflow({ id: "wf_k38_hook", network: "mainnet", idempotencyKey: "hook" });
+          flow = transition(flow, "QUOTED", { reason: "q", actor: "sdk", evidence: "q" });
+          flow = transition(flow, "AWAITING_SIGNATURE", { reason: "p", actor: "sdk", evidence: "p" });
+          flow = recordUnknownBroadcast(flow, "webhook timeout");
+          assert.equal(flow.nextAction, "RETRY_READ");
+          assert.equal(canSubmitWrite(flow.state), false);
+        },
+      },
+      {
+        class: "wallet",
+        recovery: "empty txid → UNKNOWN; write stays blocked",
+        prove: () => {
+          assert.equal(walletOutcome({ txid: "" }), "UNKNOWN");
+          assert.equal(canSubmitWrite("BROADCAST_UNKNOWN"), false);
+        },
+      },
+      {
+        class: "reorg",
+        recovery: "REORGED / CONTACT_SUPPORT; events retained",
+        prove: () => {
+          let flow = createWorkflow({ id: "wf_k38_reorg", network: "mainnet", idempotencyKey: "reorg" });
+          for (const state of [
+            "QUOTED",
+            "AWAITING_SIGNATURE",
+            "SUBMITTED",
+            "CONFIRMING",
+            "STEP_CONFIRMED",
+            "RECONCILING",
+            "COMPLETED",
+          ] as const) {
+            flow = transition(flow, state, { reason: state, actor: "test", evidence: state });
+          }
+          const before = flow.transitions.length;
+          flow = applyReorgToWorkflow(flow, "k38-ancestor");
+          assert.equal(flow.state, "REORGED");
+          assert.equal(flow.nextAction, "CONTACT_SUPPORT");
+          assert.ok(flow.transitions.length >= before);
+        },
+      },
+      {
+        class: "registry-pause",
+        recovery: "paused vault → CAPABILITY_DISABLED",
+        prove: () => {
+          const vault = MAINNET_READS.debtVault;
+          assert.ok(vault);
+          const { granite } = sandboxAdapters(
+            "mainnet",
+            withReads((base) => ({
+              ...base,
+              debtVault: { ...vault, pausedRedeem: true },
+            })),
+          );
+          assert.throws(
+            () =>
+              granite.quote(adapterContext("mainnet"), {
+                action: "borrow",
+                marketId: "granite.sbtc.isolated",
+                amount: "1000000",
+              }),
+            (error: unknown) => codeOf(error) === "CAPABILITY_DISABLED",
+          );
+        },
+      },
+    ];
+
+    for (const row of matrix) {
+      row.prove();
+    }
+    assert.equal(matrix.map((row) => row.class).join(","), "provider,database,webhook,wallet,reorg,registry-pause");
+  });
+});

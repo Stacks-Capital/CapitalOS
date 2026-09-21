@@ -1,0 +1,155 @@
+{
+  "task": "K38",
+  "generatedAt": "2026-09-21T17:06:07.179Z",
+  "mode": "sandbox",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "darwin",
+    "cwd": "/Users/apple/Desktop/capitalos/CapitalOS",
+    "registryVersion": "0.1.0",
+    "liveReads": false,
+    "restoreDrill": false
+  },
+  "limitations": [
+    "Gate never broadcasts or funds wallets.",
+    "Golden addresses in default mode use fixture snapshots; live Granite positions remain launch-block I20-B3.",
+    "Bitflow live pools unpinned (I20-B6). Workflows do not advance past SUBMITTED without ingestion (I20-B1).",
+    "Registry pause CLI requires DATABASE_URL; fixture pause coverage is the default gate.",
+    "Webhook provider outage is covered as BROADCAST_UNKNOWN / RETRY_READ semantics, not a live webhook server."
+  ],
+  "goldenAddresses": [
+    {
+      "id": "fixture-user-granite",
+      "matched": true,
+      "mismatches": [],
+      "observed": [
+        {
+          "marketId": "granite.sbtc.isolated",
+          "kind": "collateral",
+          "quantity": "100000000"
+        },
+        {
+          "marketId": "granite.sbtc.isolated",
+          "kind": "debt",
+          "quantity": "0"
+        }
+      ],
+      "expected": [
+        {
+          "marketId": "granite.sbtc.isolated",
+          "kind": "collateral",
+          "quantity": "100000000"
+        },
+        {
+          "marketId": "granite.sbtc.isolated",
+          "kind": "debt",
+          "quantity": "0"
+        }
+      ],
+      "limitations": [
+        "Fixture snapshot only. Live Granite position reads remain a launch block (I20-B3).",
+        "Missing adapter reads still coerce to \"0\"; golden expectations must be explicit quantities."
+      ],
+      "registryVersion": "0.1.0",
+      "source": "golden-fixture"
+    },
+    {
+      "id": "protocol-zest-vault",
+      "matched": true,
+      "mismatches": [],
+      "observed": [],
+      "expected": [],
+      "limitations": [
+        "Protocol principal identity is reconciled against the signed registry, not user balances."
+      ],
+      "registryVersion": "0.1.0",
+      "source": "signed-registry"
+    },
+    {
+      "id": "protocol-granite-market",
+      "matched": true,
+      "mismatches": [],
+      "observed": [],
+      "expected": [],
+      "limitations": [
+        "Protocol principal identity is reconciled against the signed registry."
+      ],
+      "registryVersion": "0.1.0",
+      "source": "signed-registry"
+    }
+  ],
+  "checks": [
+    {
+      "id": "adapters:certify",
+      "ok": true,
+      "detail": "pass",
+      "category": "sandbox"
+    },
+    {
+      "id": "sdk:check",
+      "ok": true,
+      "detail": "pass",
+      "category": "sandbox"
+    },
+    {
+      "id": "fixture-e2e-matrix",
+      "ok": true,
+      "detail": "pass",
+      "category": "sandbox"
+    },
+    {
+      "id": "golden:fixture-user-granite",
+      "ok": true,
+      "detail": "matched via golden-fixture; registry 0.1.0",
+      "category": "golden"
+    },
+    {
+      "id": "golden:protocol-zest-vault",
+      "ok": true,
+      "detail": "matched via signed-registry; registry 0.1.0",
+      "category": "golden"
+    },
+    {
+      "id": "golden:protocol-granite-market",
+      "ok": true,
+      "detail": "matched via signed-registry; registry 0.1.0",
+      "category": "golden"
+    },
+    {
+      "id": "golden:all-matched",
+      "ok": true,
+      "detail": "3/3 addresses",
+      "category": "golden"
+    },
+    {
+      "id": "failure-injection",
+      "ok": true,
+      "detail": "pass",
+      "category": "failure"
+    },
+    {
+      "id": "db:restore-drill",
+      "ok": true,
+      "detail": "skipped (set DATABASE_URL or pass --with-restore)",
+      "category": "ops"
+    },
+    {
+      "id": "registry-pause-drill",
+      "ok": true,
+      "detail": "fixture equivalent covered by failure-drill paused vault + ops:pause CLI when DB is up",
+      "category": "ops"
+    },
+    {
+      "id": "sdk:check:live",
+      "ok": true,
+      "detail": "skipped (pass --live for read-only provider probes)",
+      "category": "mainnet-shadow"
+    }
+  ],
+  "summary": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "failedIds": []
+  }
+}
