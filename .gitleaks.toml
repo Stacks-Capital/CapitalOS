@@ -1,0 +1,10 @@
+title = "CapitalOS"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public Stacks USDCx contract principal used as a fixture identifier, not an API credential"
+regexes = [
+  '''SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE\.usdcx''',
+]
