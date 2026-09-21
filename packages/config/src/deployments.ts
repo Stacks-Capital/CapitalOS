@@ -41,6 +41,53 @@ export type ContractRef = {
   role: string;
 };
 
+export type ReviewedAsset = {
+  id: string;
+  network: StacksNetwork;
+  contractId: string;
+  assetName: string;
+  protocol: string;
+};
+
+/** Assets reviewed for use in executable plans. Symbols alone are deliberately absent. */
+export const ASSETS: readonly ReviewedAsset[] = [
+  {
+    id: "stacks:mainnet:contract:SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token:sbtc-token",
+    network: "mainnet",
+    contractId: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+    assetName: "sbtc-token",
+    protocol: "sbtc",
+  },
+  {
+    id: "stacks:testnet:contract:SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token:sbtc-token",
+    network: "testnet",
+    contractId: "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token",
+    assetName: "sbtc-token",
+    protocol: "sbtc",
+  },
+  {
+    id: "stacks:mainnet:contract:SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx:usdcx-token",
+    network: "mainnet",
+    contractId: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
+    assetName: "usdcx-token",
+    protocol: "usdcx",
+  },
+  {
+    id: "stacks:testnet:contract:ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx:usdcx-token",
+    network: "testnet",
+    contractId: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+    assetName: "usdcx-token",
+    protocol: "usdcx",
+  },
+  {
+    id: "stacks:mainnet:contract:SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc:zft",
+    network: "mainnet",
+    contractId: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc",
+    assetName: "zft",
+    protocol: "zest",
+  },
+];
+
 export const CONTRACTS: readonly ContractRef[] = [
   {
     protocol: "sbtc",
@@ -197,6 +244,7 @@ export const CONTRACTS: readonly ContractRef[] = [
 ];
 
 export type CapabilityState = "enabled" | "read_only" | "paused" | "disabled";
+export type RegistryMode = "active" | "safe_exit_only";
 
 export type CapabilityRecord = {
   action: Action;
@@ -386,6 +434,17 @@ export const CAPABILITIES: readonly CapabilityRecord[] = [
 
 export const BITFLOW_ALLOWED_POOLS: readonly string[] = [];
 
+const EXIT_ACTIONS: ReadonlySet<Action> = new Set(["withdraw_sbtc", "withdraw_supply", "repay"]);
+
+function applyRegistryMode(record: CapabilityRecord, mode: RegistryMode): CapabilityRecord {
+  if (mode === "active" || EXIT_ACTIONS.has(record.action) || record.state === "disabled") return record;
+  return {
+    ...record,
+    state: "paused",
+    reason: `Registry is in safe-exit-only mode. ${record.reason}`,
+  };
+}
+
 export function findContract(protocol: string, label: string, network: StacksNetwork): ContractRef | undefined {
   return CONTRACTS.find((item) => item.protocol === protocol && item.label === label && item.network === network);
 }
@@ -396,15 +455,26 @@ export function contract(protocol: string, label: string, network: StacksNetwork
   return found;
 }
 
-export function capabilityFor(action: Action, network: StacksNetwork, protocol?: string): CapabilityRecord | undefined {
-  return CAPABILITIES.find(
+export function capabilityFor(
+  action: Action,
+  network: StacksNetwork,
+  protocol?: string,
+  mode: RegistryMode = "active",
+): CapabilityRecord | undefined {
+  const found = CAPABILITIES.find(
     (item) =>
       item.action === action && item.network === network && (protocol === undefined || item.protocol === protocol),
   );
+  return found === undefined ? undefined : applyRegistryMode(found, mode);
 }
 
-export function assertExecutable(action: Action, network: StacksNetwork, protocol?: string): CapabilityRecord {
-  const found = capabilityFor(action, network, protocol);
+export function assertExecutable(
+  action: Action,
+  network: StacksNetwork,
+  protocol?: string,
+  mode: RegistryMode = "active",
+): CapabilityRecord {
+  const found = capabilityFor(action, network, protocol, mode);
   if (found === undefined || found.state !== "enabled") {
     const reason = found?.reason ?? "no capability record";
     throw Object.assign(new Error(`${action} is not executable on ${network}: ${reason}`), {
@@ -412,4 +482,15 @@ export function assertExecutable(action: Action, network: StacksNetwork, protoco
     });
   }
   return found;
+}
+
+/** Contracts that may appear as the target of a wallet-signable plan. */
+export function executableContractIds(network: StacksNetwork): readonly string[] {
+  return [
+    ...new Set(
+      CAPABILITIES.filter((item) => item.network === network && item.state !== "disabled").map(
+        (item) => item.contractId,
+      ),
+    ),
+  ];
 }
