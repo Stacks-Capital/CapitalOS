@@ -1,4 +1,4 @@
-import { REGISTRY_VERSION, capabilityFor, type CapabilityRecord } from "@stacks-capital/config";
+import { REGISTRY_VERSION, capabilityFor, executableContractIds, type CapabilityRecord } from "@stacks-capital/config";
 import {
   capitalError,
   createWorkflow,
@@ -50,6 +50,7 @@ export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
       now: signing?.now ?? options.now ?? new Date(),
       network,
       registryVersion: REGISTRY_VERSION,
+      allowedContracts: executableContractIds(network),
     };
     if (signing?.sender !== undefined) context.sender = signing.sender;
     if (signing?.bitcoinAddresses !== undefined) context.bitcoinAddresses = signing.bitcoinAddresses;
