@@ -139,3 +139,20 @@ function totalsFor(rows: PortfolioRow[]): PortfolioTotal[] {
   }
   return [...totals.values()].sort((left, right) => (left.assetId < right.assetId ? -1 : 1));
 }
+
+/**
+ * The rows a total deliberately leaves out, each with the reason. The partial state has to name these,
+ * because a subtotal that quietly drops positions reads as a complete balance.
+ */
+export function excludedFrom(portfolio: Portfolio): Array<{ name: string; reason: string }> {
+  const excluded: Array<{ name: string; reason: string }> = [];
+  for (const row of portfolio.rows) {
+    const name = row.marketId === null ? row.assetId : `${row.assetId} in ${row.marketId}`;
+    if (!row.countsTowardTotal) {
+      excluded.push({ name, reason: "already counted through the protocol position it represents" });
+    } else if (row.quantity === null) {
+      excluded.push({ name, reason: "the provider returned no quantity, and zero is a real balance" });
+    }
+  }
+  return excluded;
+}

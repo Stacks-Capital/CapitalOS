@@ -229,3 +229,39 @@ describe("error messages", () => {
     assert.equal(messageFor(new Error("anything")).message, "Something went wrong.");
   });
 });
+
+describe("shell formatting and navigation (Task 2 / I31)", () => {
+  it("truncates Stacks addresses safely without losing prefix or suffix", async () => {
+    const { truncateAddress } = await import("./shell.ts");
+    assert.equal(truncateAddress(MAINNET_ADDRESS), "SP2C2Y…9YZR");
+    assert.equal(truncateAddress(TESTNET_ADDRESS), "ST20YV…CPK0");
+    assert.equal(truncateAddress("SP123"), "SP123");
+    assert.equal(truncateAddress(null), "");
+    assert.equal(truncateAddress(undefined), "");
+  });
+
+  it("formats block heights with locale separators and handles nullish/zero heights", async () => {
+    const { formatBlockHeight } = await import("./shell.ts");
+    assert.equal(formatBlockHeight(9003231), "9,003,231");
+    assert.equal(formatBlockHeight(100), "100");
+    assert.equal(formatBlockHeight(0), "syncing…");
+    assert.equal(formatBlockHeight(null), "syncing…");
+    assert.equal(formatBlockHeight(undefined), "syncing…");
+  });
+
+  it("defines the canonical 10 shell navigation tabs from the product wireframes", async () => {
+    const { SHELL_NAV_TABS } = await import("./shell.ts");
+    assert.deepEqual(SHELL_NAV_TABS, [
+      "Overview",
+      "Deposit BTC",
+      "Earn",
+      "Borrow",
+      "Swap",
+      "Liquidity",
+      "Staking",
+      "Positions",
+      "Risk",
+      "Activity",
+    ]);
+  });
+});

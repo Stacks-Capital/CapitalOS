@@ -4,6 +4,7 @@ import {
   type ConnectedWallet,
   Panel,
   panelState,
+  ResponsiveTable,
   scenarios,
   StateNote,
   Unavailable,
@@ -73,17 +74,15 @@ export function Risk({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
           <section key={title}>
             <h3>{title}</h3>
             {result.available ? (
-              <table>
-                <tbody>
-                  {result.value.slices.map((slice) => (
-                    <tr key={slice.key}>
-                      <td>{slice.key}</td>
-                      <td>{slice.quantity}</td>
-                      <td>{bps(slice.shareBps)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable
+                rows={result.value.slices}
+                rowKey={(slice) => slice.key}
+                columns={[
+                  { header: "Slice", cell: (slice) => slice.key },
+                  { header: "Quantity", cell: (slice) => slice.quantity },
+                  { header: "Share", cell: (slice) => bps(slice.shareBps) },
+                ]}
+              />
             ) : (
               <Unavailable reason={result.reason} />
             )}
@@ -101,32 +100,30 @@ export function Risk({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
               {projection.assumptions.publishedAt === null ? "" : `, published ${projection.assumptions.publishedAt}`}.
               Liquidation at {bps(projection.assumptions.liquidationThresholdBps)}.
             </p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Move</th>
-                  <th>Loan to value</th>
-                  <th>Health factor</th>
-                  <th>Outcome</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projection.rows.map((row) => (
-                  <tr key={row.label}>
-                    <td>{row.label}</td>
-                    <td>{row.health.available ? bps(row.health.value.currentLtvBps) : "unavailable"}</td>
-                    <td>{row.health.available ? bps(row.health.value.healthFactorBps) : "unavailable"}</td>
-                    <td>
-                      {row.health.available
-                        ? wouldLiquidate(row, projection.assumptions.liquidationThresholdBps)
-                          ? "would be liquidated"
-                          : "still above water"
-                        : row.health.reason}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ResponsiveTable
+              rows={projection.rows}
+              rowKey={(row) => row.label}
+              columns={[
+                { header: "Move", cell: (row) => row.label },
+                {
+                  header: "Loan to value",
+                  cell: (row) => (row.health.available ? bps(row.health.value.currentLtvBps) : "unavailable"),
+                },
+                {
+                  header: "Health factor",
+                  cell: (row) => (row.health.available ? bps(row.health.value.healthFactorBps) : "unavailable"),
+                },
+                {
+                  header: "Outcome",
+                  cell: (row) =>
+                    row.health.available
+                      ? wouldLiquidate(row, projection.assumptions.liquidationThresholdBps)
+                        ? "would be liquidated"
+                        : "still above water"
+                      : row.health.reason,
+                },
+              ]}
+            />
           </>
         )}
       </Panel>

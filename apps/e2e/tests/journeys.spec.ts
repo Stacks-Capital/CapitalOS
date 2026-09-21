@@ -40,7 +40,8 @@ test("connects, signs in with a real signature, and completes a supply", async (
   await page.getByRole("button", { name: "Sign in your wallet" }).click();
 
   await expect(page.getByRole("heading", { name: "Confirming" })).toBeVisible();
-  await expect(page.getByText("SUBMITTED")).toBeVisible();
+  // Exact, because the submitted state also spells the word out in its heading.
+  await expect(page.getByText("SUBMITTED", { exact: true })).toBeVisible();
   expect(wallet.calls).toEqual(["getAddresses", "stx_signMessage", "stx_callContract"]);
 });
 
