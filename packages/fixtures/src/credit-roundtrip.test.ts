@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { capabilityFor } from "@stacks-capital/config";
+import { capabilityFor, executableContractIds } from "@stacks-capital/config";
 import { assertValidPlan, marketsComparable } from "@stacks-capital/core";
 import { adapterContext, FIXTURE_BITFLOW_POOL, MAINNET_OWNER, MAINNET_READS, sandboxAdapters } from "./index.ts";
 import type { AdapterReads } from "@stacks-capital/adapters";
@@ -34,6 +34,7 @@ describe("K11-K14 credit, swap and risk", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: MAINNET_OWNER,
     });
     const add = supplyPlan.steps[0]?.payload;
@@ -51,6 +52,7 @@ describe("K11-K14 credit, swap and risk", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: MAINNET_OWNER,
     });
     const borrowCall = borrowPlan.steps[0]?.payload;
@@ -75,6 +77,7 @@ describe("K11-K14 credit, swap and risk", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: MAINNET_OWNER,
     });
     const repayCall = repayPlan.steps[0]?.payload;
@@ -98,6 +101,7 @@ describe("K11-K14 credit, swap and risk", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: MAINNET_OWNER,
     });
   });
@@ -141,6 +145,7 @@ describe("K11-K14 credit, swap and risk", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: MAINNET_OWNER,
     });
     const call = plan.steps[0]?.payload;
