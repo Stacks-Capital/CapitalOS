@@ -10,6 +10,7 @@
 - [Adapter certification](engineering/adapter-certification.md): exact read, quote, plan, event and reconciliation conformance.
 - [sBTC deposit certification](engineering/sbtc-deposit.md): Bitcoin, signer, mint and reclaim lifecycle evidence.
 - [sBTC withdrawal certification](engineering/sbtc-withdrawal.md): request, signer, fee refund and Bitcoin payout reconciliation.
+- [Zest earn certification](engineering/zest-earn.md): supply, redeem, APR semantics and receipt valuation.
 
 ## Operating it
 
