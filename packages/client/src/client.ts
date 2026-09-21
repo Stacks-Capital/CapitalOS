@@ -10,10 +10,12 @@ import {
   type Transport,
 } from "./http.ts";
 import type {
+  AssetValuation,
   Challenge,
   EarnOption,
   Market,
   MarketCapability,
+  MarketEvidence,
   MarketRisk,
   OracleQuoteView,
   Page,
@@ -70,8 +72,12 @@ export type CapitalClient = {
   workflows(options?: PageOptions & { owner?: string }): Promise<Page<WorkflowSummary>>;
   /** Latest price for each feed the platform reads. */
   prices(options?: CallOptions): Promise<Result<{ items: OracleQuoteView[] }>>;
+  /** Reconciled price quorum valuations for supported assets. */
+  priceValuations(options?: CallOptions): Promise<Result<{ items: AssetValuation[] }>>;
   /** Risk parameters, prices and the caller's position for one market. */
   marketRisk(marketId: string, options?: CallOptions & { owner?: string }): Promise<Result<MarketRisk>>;
+  /** Full source-tagged evidence, telemetry age, confidence and disagreement for one market. */
+  marketEvidence(marketId: string, options?: CallOptions): Promise<Result<MarketEvidence>>;
   /** Positions for one address. A session reads its own; a key names the owner. */
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
@@ -217,11 +223,29 @@ export function createClient(options: ClientOptions): CapitalClient {
         retry: true,
       }),
 
+    priceValuations: (call_) =>
+      call<{ items: AssetValuation[] }>({
+        method: "GET",
+        path: "/v1/prices/valuations",
+        query: { network },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
     marketRisk: (marketId, call_) =>
       call<MarketRisk>({
         method: "GET",
         path: `/v1/markets/${encodeURIComponent(marketId)}/risk`,
         query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    marketEvidence: (marketId, call_) =>
+      call<MarketEvidence>({
+        method: "GET",
+        path: `/v1/markets/${encodeURIComponent(marketId)}/evidence`,
+        query: { network },
         signal: call_?.signal,
         retry: true,
       }),

@@ -57,6 +57,18 @@ export {
   serializePlan,
   serializeQuote,
   stressGraniteCollateral,
+  assertOracleQuorum,
+  evaluatePortfolioValuation,
+  reconcilePriceQuorum,
+} from "@stacks-capital/core";
+export type {
+  AssetValuation,
+  PortfolioCoverage,
+  PortfolioValuation,
+  PriceReading,
+  QuorumOptions,
+  ValuationStatus,
+  ValuedHoldingItem,
 } from "@stacks-capital/core";
 
 export type { WalletId } from "@stacks-capital/wallets";

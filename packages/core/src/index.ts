@@ -120,6 +120,7 @@ export {
   ORACLE_MAX_AGE_MS,
   USD_SCALE,
   assertOracleFresh,
+  assertOracleQuorum,
   computeHealth,
   marketsComparable,
   minOutFromSpot,
@@ -156,3 +157,19 @@ export {
   unsupportedCreditRisk,
   wouldLiquidateAtLtv,
 } from "./riskReport.ts";
+
+export type {
+  AssetValuation,
+  PortfolioCoverage,
+  PortfolioValuation,
+  PriceReading,
+  QuorumOptions,
+  ValuationStatus,
+  ValuedHoldingItem,
+} from "./valuation.ts";
+export {
+  DEFAULT_MAX_QUORUM_SPREAD_BPS,
+  DEFAULT_PRICE_SCALE,
+  evaluatePortfolioValuation,
+  reconcilePriceQuorum,
+} from "./valuation.ts";

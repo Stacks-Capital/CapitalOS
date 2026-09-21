@@ -1,4 +1,5 @@
 import type { Market } from "@stacks-capital/client";
+import { type AssetValuation, type PortfolioValuation, evaluatePortfolioValuation } from "@stacks-capital/core";
 
 /** A token balance held by the wallet itself. */
 export type Balance = {
@@ -155,4 +156,17 @@ export function excludedFrom(portfolio: Portfolio): Array<{ name: string; reason
     }
   }
   return excluded;
+}
+
+/**
+ * Values the portfolio totals against oracle valuations.
+ * Labels unsupported assets without withholding unrelated verified values.
+ * Partial portfolio totals disclose valued and unvalued coverage.
+ */
+export function valuePortfolio(portfolio: Portfolio, valuations: AssetValuation[]): PortfolioValuation {
+  const holdings = portfolio.totals.map((t) => ({
+    assetId: t.assetId,
+    quantity: t.quantity,
+  }));
+  return evaluatePortfolioValuation(holdings, valuations);
 }

@@ -311,7 +311,12 @@ function quoteCredit(ctx: AdapterContext, intent: Intent, reads: AdapterReads): 
   assertPositive(amount(inputAsset, qty), "granite amount");
 
   const health = healthFor(ctx, normalized, reads);
-  if (health.stale) throw capitalError("ORACLE_STALE", health.warnings.join("; ") || "oracle is stale");
+  if (health.stale) {
+    if (health.warnings.some((w) => w.includes("quorum"))) {
+      throw capitalError("QUORUM_DISAGREEMENT", health.warnings.join("; ") || "oracle has quorum disagreement");
+    }
+    throw capitalError("ORACLE_STALE", health.warnings.join("; ") || "oracle is stale");
+  }
   if ((normalized.action === "borrow" || normalized.action === "withdraw_supply") && !health.healthy) {
     throw capitalError("CAP_REACHED", "projected health is above borrow LTV");
   }

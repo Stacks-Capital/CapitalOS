@@ -6,6 +6,7 @@ export type ErrorCode =
   | "QUOTE_EXPIRED"
   | "CAP_REACHED"
   | "ORACLE_STALE"
+  | "QUORUM_DISAGREEMENT"
   | "USER_REJECTED"
   | "INSUFFICIENT_BALANCE"
   | "NETWORK_MISMATCH"
@@ -24,6 +25,7 @@ export const ERROR_CLASS: Readonly<Record<ErrorCode, ErrorClass>> = {
   QUOTE_EXPIRED: "requote",
   CAP_REACHED: "requote",
   ORACLE_STALE: "requote",
+  QUORUM_DISAGREEMENT: "requote",
   USER_REJECTED: "user_action",
   INSUFFICIENT_BALANCE: "user_action",
   NETWORK_MISMATCH: "user_action",

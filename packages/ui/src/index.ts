@@ -95,6 +95,7 @@ export {
   type PortfolioTotal,
   type Position as HoldingPosition,
   type RowKind,
+  valuePortfolio,
 } from "./holdings.ts";
 export { type ConnectedWallet, type MessageSigner, type SignInResult, signIn } from "./session.ts";
 export {

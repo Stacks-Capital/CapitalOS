@@ -5,9 +5,11 @@ import {
   createNonce,
   exchangeNonceForSession,
   findWorkflowForTenant,
+  getMarketEvidence,
   isAllowedOrigin,
   latestPositions,
   latestPrices,
+  latestPriceValuations,
   listCapabilities,
   listEarnOptions,
   listWorkflowsForTenant,
@@ -39,11 +41,13 @@ import {
   capabilitiesRoute,
   challengeRoute,
   earnOptionsRoute,
+  marketEvidenceRoute,
   marketRiskRoute,
   marketsRoute,
   planRoute,
   positionsRoute,
   pricesRoute,
+  priceValuationsRoute,
   quoteRoute,
   signatureRoute,
   startWorkflowRoute,
@@ -224,6 +228,70 @@ export function createApp(deps: AppDependencies) {
             warnings: option.warnings,
             observedAt: option.observedAt === null ? null : option.observedAt.toISOString(),
             adapterVersion: option.adapterVersion,
+            evidence: {
+              ageSeconds:
+                option.observedAt === null
+                  ? null
+                  : Math.max(0, Math.round((now().getTime() - option.observedAt.getTime()) / 1000)),
+              blockHeight: option.blockHeight,
+              blockHash: option.blockHash,
+              confidence: option.confidence,
+              source: option.source,
+              disagreement: option.disagreement,
+              isIndependentRead: option.isIndependentRead,
+            },
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(marketEvidenceRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const evidence = await getMarketEvidence(deps.sql, network, id, now());
+    if (!evidence) {
+      throw new ApiError("NOT_FOUND", `Market ${id} not found`);
+    }
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          marketId: evidence.marketId,
+          network: evidence.network,
+          protocol: evidence.protocol,
+          source: evidence.source,
+          blockHeight: evidence.blockHeight,
+          blockHash: evidence.blockHash,
+          observedAt: evidence.observedAt === null ? null : evidence.observedAt.toISOString(),
+          evidenceAgeSeconds: evidence.evidenceAgeSeconds,
+          confidence: evidence.confidence,
+          disagreement: evidence.disagreement,
+          disagreementDetail: evidence.disagreementDetail,
+          isIndependentRead: evidence.isIndependentRead,
+          rate: evidence.rate,
+          liquidity: evidence.liquidity,
+          warnings: evidence.warnings,
+          observations: evidence.observations.map((obs) => ({
+            source: obs.source,
+            sourceType: obs.sourceType,
+            isIndependentRead: obs.isIndependentRead,
+            availableLiquidity: obs.availableLiquidity,
+            capacity: obs.capacity,
+            supplyRate: obs.supplyRate,
+            borrowRate: obs.borrowRate,
+            rateScale: obs.rateScale,
+            paused: obs.paused,
+            stale: obs.stale,
+            warnings: obs.warnings,
+            observedAt: obs.observedAt.toISOString(),
+            blockHeight: obs.blockHeight,
+            blockHash: obs.blockHash,
           })),
         },
         context: context(),
@@ -235,22 +303,64 @@ export function createApp(deps: AppDependencies) {
   app.openapi(pricesRoute, async (c) => {
     const { network } = c.req.valid("query");
     requireScope(await admit(c), "markets:read");
-    const prices = await latestPrices(deps.sql, network, ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"]);
+    const feeds = ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"];
+    const [prices, valuations] = await Promise.all([
+      latestPrices(deps.sql, network, feeds),
+      latestPriceValuations(deps.sql, network, feeds, { now: now() }),
+    ]);
+    const valByFeed = new Map(valuations.map((v) => [v.assetId, v]));
+
     return c.json(
       {
         schemaVersion: SCHEMA_VERSION,
         requestId: c.get("requestId"),
         network: `stacks:${network}` as const,
         data: {
-          items: prices.map((price) => ({
-            feedKey: price.feedKey,
-            price: price.price,
-            scale: price.priceScale,
-            publishedAt: price.publishedAt === null ? null : price.publishedAt.toISOString(),
-            observedAt: price.observedAt.toISOString(),
-            source: price.source,
-            stale: price.stale,
-            warnings: price.warnings,
+          items: prices.map((price) => {
+            const val = valByFeed.get(price.feedKey);
+            return {
+              feedKey: price.feedKey,
+              price: price.price,
+              scale: price.priceScale,
+              publishedAt: price.publishedAt === null ? null : price.publishedAt.toISOString(),
+              observedAt: price.observedAt.toISOString(),
+              source: price.source,
+              stale: price.stale,
+              warnings: price.warnings,
+              assetId: val?.assetId ?? price.feedKey,
+              sourceSet: val?.sourceSet ?? [price.source],
+              disagreement: val?.disagreement ?? false,
+              status: val?.status ?? (price.stale ? "stale" : "verified"),
+            };
+          }),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(priceValuationsRoute, async (c) => {
+    const { network } = c.req.valid("query");
+    requireScope(await admit(c), "markets:read");
+    const feeds = ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"];
+    const valuations = await latestPriceValuations(deps.sql, network, feeds, { now: now() });
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: {
+          items: valuations.map((v) => ({
+            assetId: v.assetId,
+            price: v.price,
+            scale: v.scale,
+            sourceSet: v.sourceSet,
+            timestamp: v.timestamp,
+            status: v.status,
+            disagreement: v.disagreement,
+            spreadBps: v.spreadBps,
+            warnings: v.warnings,
           })),
         },
         context: context(),

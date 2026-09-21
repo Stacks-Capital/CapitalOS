@@ -12,6 +12,10 @@ export type OracleQuote = {
   source: string;
   stale: boolean;
   maxAgeMs: number;
+  disagreement?: boolean;
+  sourceSet?: string[];
+  status?: string;
+  warnings?: string[];
 };
 
 export type AssetRiskSide = {
@@ -62,6 +66,12 @@ export function assertOracleFresh(oracle: OracleQuote, now: Date, label: string)
   throw capitalError("ORACLE_STALE", `${label} oracle is stale or age ${age}ms exceeds ${oracle.maxAgeMs}ms`);
 }
 
+export function assertOracleQuorum(oracle: OracleQuote, label: string): void {
+  if (oracle.disagreement || oracle.status === "disputed") {
+    throw capitalError("QUORUM_DISAGREEMENT", `${label} oracle has quorum disagreement; financial actions fail closed`);
+  }
+}
+
 export function usdNotional(side: AssetRiskSide, rounding: Rounding): bigint {
   if (side.oracle.scale !== USD_SCALE) throw new Error("oracle scale must be 8");
   return mulDiv(side.amount, side.oracle.price, pow10(side.decimals), rounding);
@@ -74,6 +84,22 @@ export function computeHealth(input: {
   now: Date;
 }): Health {
   const warnings: string[] = [];
+
+  if (input.collateral.oracle.disagreement || input.debt.oracle.disagreement) {
+    return {
+      collateralUsd: 0n,
+      debtUsd: 0n,
+      currentLtvBps: 0n,
+      healthFactorBps: 0n,
+      maxBorrow: 0n,
+      liquidationThresholdBps: input.params.ltvLiqBps,
+      withinBuffer: false,
+      healthy: false,
+      stale: true,
+      warnings: ["oracle has quorum disagreement; health and LTV are unavailable"],
+    };
+  }
+
   if (!oracleFresh(input.collateral.oracle, input.now) || !oracleFresh(input.debt.oracle, input.now)) {
     return {
       collateralUsd: 0n,

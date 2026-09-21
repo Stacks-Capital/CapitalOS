@@ -46,14 +46,17 @@ export {
   type ActivityRow,
   type BlockRow,
   type ChainName,
+  type CheckpointRecord,
   type CheckpointRow,
   type EventRow,
   findCanonicalBlock,
+  getMissingSnapshotTargets,
   insertBlock,
   insertMarketSnapshot,
   insertPriceSnapshot,
   insertRawEvent,
   latestMarketSnapshot,
+  listAllCheckpoints,
   listProjectionTargets,
   markReorg,
   type MarketSnapshotRow,
@@ -68,6 +71,7 @@ export {
   recordReconciliation,
 } from "./ingestion.ts";
 export { type EarnOptionRow, listEarnOptions } from "./earn.ts";
+export { getMarketEvidence, type MarketEvidenceRecord, type MarketObservation } from "./markets.ts";
 export {
   type AlertInput,
   type AlertKind,
@@ -98,6 +102,8 @@ export {
   insertRewardSnapshot,
   latestPositions,
   latestPrices,
+  latestPriceObservations,
+  latestPriceValuations,
   listKnownOwners,
   listMarketAssets,
   type MarketAssets,

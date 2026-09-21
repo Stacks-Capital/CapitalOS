@@ -146,6 +146,16 @@ export type Position = {
   calculationVersion: string;
 };
 
+export type EarnOptionEvidence = {
+  ageSeconds: number | null;
+  blockHeight: number | null;
+  blockHash: string | null;
+  confidence: "high" | "medium" | "low";
+  source: string;
+  disagreement: "match" | "mismatch" | "unavailable" | null;
+  isIndependentRead: boolean;
+};
+
 export type EarnOption = {
   marketId: string;
   protocol: string;
@@ -165,6 +175,52 @@ export type EarnOption = {
   warnings: string[];
   observedAt: string | null;
   adapterVersion: string;
+  evidence?: EarnOptionEvidence | undefined;
+};
+
+export type MarketObservation = {
+  source: string;
+  sourceType: "independent" | "provider_reported";
+  isIndependentRead: boolean;
+  availableLiquidity: string | null;
+  capacity: string | null;
+  supplyRate: string | null;
+  borrowRate: string | null;
+  rateScale: number | null;
+  paused: boolean | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+};
+
+export type MarketEvidence = {
+  marketId: string;
+  network: string;
+  protocol: string;
+  source: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+  observedAt: string | null;
+  evidenceAgeSeconds: number | null;
+  confidence: "high" | "medium" | "low";
+  disagreement: "match" | "mismatch" | "unavailable" | null;
+  disagreementDetail: string | null;
+  isIndependentRead: boolean;
+  rate: {
+    supplyRate: string | null;
+    borrowRate: string | null;
+    rateScale: number | null;
+    stale: boolean;
+  };
+  liquidity: {
+    available: string | null;
+    capacity: string | null;
+    stale: boolean;
+  };
+  warnings: string[];
+  observations: MarketObservation[];
 };
 
 export type OracleQuoteView = {
@@ -175,6 +231,49 @@ export type OracleQuoteView = {
   observedAt: string;
   source: string;
   stale: boolean;
+  warnings: string[];
+  assetId?: string;
+  sourceSet?: string[];
+  disagreement?: boolean;
+  status?: "verified" | "disputed" | "stale" | "unsupported";
+};
+
+export type AssetValuation = {
+  assetId: string;
+  price: string | null;
+  scale: number;
+  sourceSet: string[];
+  timestamp: string;
+  status: "verified" | "disputed" | "stale" | "unsupported";
+  disagreement: boolean;
+  spreadBps: number | null;
+  warnings: string[];
+};
+
+export type PortfolioCoverage = {
+  isComplete: boolean;
+  valuedCount: number;
+  unvaluedCount: number;
+  totalCount: number;
+  coverageBps: number | null;
+  valuedAssets: string[];
+  unvaluedAssets: Array<{ assetId: string; reason: string; quantity: string | null }>;
+};
+
+export type ValuedHoldingItem = {
+  assetId: string;
+  quantity: string | null;
+  decimals: number;
+  usdValue: string | null;
+  status: "valued" | "unsupported" | "stale" | "disputed" | "missing_quantity";
+  unvaluedReason: string | null;
+  valuation: AssetValuation | null;
+};
+
+export type PortfolioValuation = {
+  totalUsd: string | null;
+  coverage: PortfolioCoverage;
+  items: ValuedHoldingItem[];
   warnings: string[];
 };
 

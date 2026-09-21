@@ -360,6 +360,18 @@ export const Position = z
 
 export const PositionsResponse = envelope("PositionsResponse", z.object({ items: z.array(Position) }));
 
+export const EarnOptionEvidence = z
+  .object({
+    ageSeconds: z.number().nullable(),
+    blockHeight: z.number().int().nullable(),
+    blockHash: z.string().nullable(),
+    confidence: z.enum(["high", "medium", "low"]),
+    source: z.string(),
+    disagreement: z.enum(["match", "mismatch", "unavailable"]).nullable(),
+    isIndependentRead: z.boolean(),
+  })
+  .openapi("EarnOptionEvidence");
+
 export const EarnOption = z
   .object({
     marketId: z.string(),
@@ -379,10 +391,62 @@ export const EarnOption = z
     warnings: z.array(z.string()),
     observedAt: z.iso.datetime().nullable(),
     adapterVersion: z.string(),
+    evidence: EarnOptionEvidence.optional(),
   })
   .openapi("EarnOption");
 
 export const EarnOptionsResponse = envelope("EarnOptionsResponse", z.object({ items: z.array(EarnOption) }));
+
+export const MarketObservation = z
+  .object({
+    source: z.string(),
+    sourceType: z.enum(["independent", "provider_reported"]),
+    isIndependentRead: z.boolean(),
+    availableLiquidity: z.string().nullable(),
+    capacity: z.string().nullable(),
+    supplyRate: z.string().nullable(),
+    borrowRate: z.string().nullable(),
+    rateScale: z.number().int().nullable(),
+    paused: z.boolean().nullable(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+    observedAt: z.iso.datetime(),
+    blockHeight: z.number().int().nullable(),
+    blockHash: z.string().nullable(),
+  })
+  .openapi("MarketObservation");
+
+export const MarketEvidence = z
+  .object({
+    marketId: z.string(),
+    network: z.string(),
+    protocol: z.string(),
+    source: z.string(),
+    blockHeight: z.number().int().nullable(),
+    blockHash: z.string().nullable(),
+    observedAt: z.iso.datetime().nullable(),
+    evidenceAgeSeconds: z.number().nullable(),
+    confidence: z.enum(["high", "medium", "low"]),
+    disagreement: z.enum(["match", "mismatch", "unavailable"]).nullable(),
+    disagreementDetail: z.string().nullable(),
+    isIndependentRead: z.boolean(),
+    rate: z.object({
+      supplyRate: z.string().nullable(),
+      borrowRate: z.string().nullable(),
+      rateScale: z.number().int().nullable(),
+      stale: z.boolean(),
+    }),
+    liquidity: z.object({
+      available: z.string().nullable(),
+      capacity: z.string().nullable(),
+      stale: z.boolean(),
+    }),
+    warnings: z.array(z.string()),
+    observations: z.array(MarketObservation),
+  })
+  .openapi("MarketEvidence");
+
+export const MarketEvidenceResponse = envelope("MarketEvidenceResponse", MarketEvidence);
 
 export const OracleQuote = z
   .object({
@@ -394,8 +458,68 @@ export const OracleQuote = z
     source: z.string(),
     stale: z.boolean(),
     warnings: z.array(z.string()),
+    assetId: z.string().optional(),
+    sourceSet: z.array(z.string()).optional(),
+    disagreement: z.boolean().optional(),
+    status: z.enum(["verified", "disputed", "stale", "unsupported"]).optional(),
   })
   .openapi("OracleQuote");
+
+export const AssetValuation = z
+  .object({
+    assetId: z.string(),
+    price: z.string().nullable(),
+    scale: z.number().int(),
+    sourceSet: z.array(z.string()),
+    timestamp: z.iso.datetime(),
+    status: z.enum(["verified", "disputed", "stale", "unsupported"]),
+    disagreement: z.boolean(),
+    spreadBps: z.number().nullable(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("AssetValuation");
+
+export const PortfolioCoverage = z
+  .object({
+    isComplete: z.boolean(),
+    valuedCount: z.number().int(),
+    unvaluedCount: z.number().int(),
+    totalCount: z.number().int(),
+    coverageBps: z.number().int().nullable(),
+    valuedAssets: z.array(z.string()),
+    unvaluedAssets: z.array(
+      z.object({
+        assetId: z.string(),
+        reason: z.string(),
+        quantity: z.string().nullable(),
+      }),
+    ),
+  })
+  .openapi("PortfolioCoverage");
+
+export const ValuedHoldingItem = z
+  .object({
+    assetId: z.string(),
+    quantity: z.string().nullable(),
+    decimals: z.number().int(),
+    usdValue: z.string().nullable(),
+    status: z.enum(["valued", "unsupported", "stale", "disputed", "missing_quantity"]),
+    unvaluedReason: z.string().nullable(),
+    valuation: AssetValuation.nullable(),
+  })
+  .openapi("ValuedHoldingItem");
+
+export const PortfolioValuation = z
+  .object({
+    totalUsd: z.string().nullable(),
+    coverage: PortfolioCoverage,
+    items: z.array(ValuedHoldingItem),
+    warnings: z.array(z.string()),
+  })
+  .openapi("PortfolioValuation");
+
+export const PortfolioValuationResponse = envelope("PortfolioValuationResponse", PortfolioValuation);
+export const ValuationsResponse = envelope("ValuationsResponse", z.object({ items: z.array(AssetValuation) }));
 
 export const MarketRisk = z
   .object({

@@ -11,13 +11,14 @@ import {
   type Quote,
   type StacksNetwork,
   type Workflow,
+  type AssetValuation,
 } from "@stacks-capital/core";
 import {
   createWorkflowRow,
   effectiveCapability,
   recordOpsEvent,
   latestPositions,
-  latestPrices,
+  latestPriceValuations,
   findAttempt,
   findWorkflowStepKind,
   findStoredQuote,
@@ -104,6 +105,22 @@ async function quoteUnchecked(
   deps: { sql: Sql; reads: ReadsLoader; now: () => Date },
   input: QuoteInput,
 ): Promise<{ quote: Quote; plan: Plan }> {
+  // Acceptance evidence: Quorum disagreement fails closed for actions
+  const feedsToCheck = ["borrow", "supply", "withdraw_supply", "repay"].includes(input.action)
+    ? [FEEDS.collateral, FEEDS.debt]
+    : [];
+  if (feedsToCheck.length > 0) {
+    const valuations = await latestPriceValuations(deps.sql, input.network, feedsToCheck, { now: deps.now() });
+    for (const val of valuations) {
+      if (val.disagreement || val.status === "disputed") {
+        throw new ApiError(
+          "QUORUM_DISAGREEMENT",
+          `Quorum disagreement for ${val.assetId}: price sources disagree; financial actions fail closed`,
+        );
+      }
+    }
+  }
+
   let reads: AdapterReads;
   try {
     reads = await loadReads(deps.reads, input.network, input.owner);
@@ -314,6 +331,7 @@ function asApiError(error: unknown, fallback: string): ApiError {
     "CAPABILITY_DISABLED",
     "UNSUPPORTED_ACTION",
     "ORACLE_STALE",
+    "QUORUM_DISAGREEMENT",
     "QUOTE_EXPIRED",
     "CAP_REACHED",
     "PLAN_INVALID",
@@ -349,16 +367,16 @@ export type OracleView = {
   source: string;
   stale: boolean;
   warnings: string[];
+  assetId?: string;
+  sourceSet?: string[];
+  disagreement?: boolean;
+  status?: "verified" | "disputed" | "stale" | "unsupported";
 };
 
 const FEEDS = { collateral: "BTC/USD", debt: "USDC/USD" } as const;
 
-function oracleView(
-  feedKey: string,
-  row: Awaited<ReturnType<typeof latestPrices>>[number] | undefined,
-  at: Date,
-): OracleView {
-  if (row === undefined) {
+function oracleView(feedKey: string, val: AssetValuation | undefined, at: Date): OracleView {
+  if (val === undefined) {
     return {
       feedKey,
       price: null,
@@ -368,17 +386,25 @@ function oracleView(
       source: "none",
       stale: true,
       warnings: [`No price has been read for ${feedKey} yet`],
+      assetId: feedKey,
+      sourceSet: [],
+      disagreement: false,
+      status: "unsupported",
     };
   }
   return {
     feedKey,
-    price: row.price,
-    scale: row.priceScale,
-    publishedAt: row.publishedAt === null ? null : row.publishedAt.toISOString(),
-    observedAt: row.observedAt.toISOString(),
-    source: row.source,
-    stale: row.stale,
-    warnings: row.warnings,
+    price: val.price,
+    scale: val.scale,
+    publishedAt: val.timestamp,
+    observedAt: val.timestamp,
+    source: val.sourceSet.join(", ") || "none",
+    stale: val.status === "stale" || val.status === "unsupported",
+    warnings: val.warnings,
+    assetId: val.assetId,
+    sourceSet: val.sourceSet,
+    disagreement: val.disagreement,
+    status: val.status,
   };
 }
 
@@ -391,8 +417,8 @@ export async function marketRisk(
   input: { network: StacksNetwork; marketId: string; owner: string | null },
 ): Promise<RiskView> {
   const at = deps.now();
-  const prices = await latestPrices(deps.sql, input.network, [FEEDS.collateral, FEEDS.debt]);
-  const byFeed = new Map(prices.map((price) => [price.feedKey, price]));
+  const valuations = await latestPriceValuations(deps.sql, input.network, [FEEDS.collateral, FEEDS.debt], { now: at });
+  const byFeed = new Map(valuations.map((val) => [val.assetId, val]));
   const warnings: string[] = [];
 
   let params: RiskView["params"] = null;

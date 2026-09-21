@@ -462,6 +462,9 @@
           },
           "adapterVersion": {
             "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EarnOptionEvidence"
           }
         },
         "required": [
@@ -482,6 +485,351 @@
           "warnings",
           "observedAt",
           "adapterVersion"
+        ]
+      },
+      "EarnOptionEvidence": {
+        "type": "object",
+        "properties": {
+          "ageSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "disagreement": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "match",
+              "mismatch",
+              "unavailable",
+              null
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ageSeconds",
+          "blockHeight",
+          "blockHash",
+          "confidence",
+          "source",
+          "disagreement",
+          "isIndependentRead"
+        ]
+      },
+      "MarketEvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketEvidence"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "MarketEvidence": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "evidenceAgeSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "disagreement": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "match",
+              "mismatch",
+              "unavailable",
+              null
+            ]
+          },
+          "disagreementDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          },
+          "rate": {
+            "type": "object",
+            "properties": {
+              "supplyRate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "borrowRate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rateScale": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "supplyRate",
+              "borrowRate",
+              "rateScale",
+              "stale"
+            ]
+          },
+          "liquidity": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "capacity": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "available",
+              "capacity",
+              "stale"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketObservation"
+            }
+          }
+        },
+        "required": [
+          "marketId",
+          "network",
+          "protocol",
+          "source",
+          "blockHeight",
+          "blockHash",
+          "observedAt",
+          "evidenceAgeSeconds",
+          "confidence",
+          "disagreement",
+          "disagreementDetail",
+          "isIndependentRead",
+          "rate",
+          "liquidity",
+          "warnings",
+          "observations"
+        ]
+      },
+      "MarketObservation": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "independent",
+              "provider_reported"
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          },
+          "availableLiquidity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capacity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplyRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borrowRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateScale": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paused": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "sourceType",
+          "isIndependentRead",
+          "availableLiquidity",
+          "capacity",
+          "supplyRate",
+          "borrowRate",
+          "rateScale",
+          "paused",
+          "stale",
+          "warnings",
+          "observedAt",
+          "blockHeight",
+          "blockHash"
         ]
       },
       "PricesResponse": {
@@ -566,6 +914,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "sourceSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disagreement": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "disputed",
+              "stale",
+              "unsupported"
+            ]
           }
         },
         "required": [
@@ -576,6 +945,113 @@
           "observedAt",
           "source",
           "stale",
+          "warnings"
+        ]
+      },
+      "ValuationsResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssetValuation"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "AssetValuation": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scale": {
+            "type": "integer"
+          },
+          "sourceSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "disputed",
+              "stale",
+              "unsupported"
+            ]
+          },
+          "disagreement": {
+            "type": "boolean"
+          },
+          "spreadBps": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "assetId",
+          "price",
+          "scale",
+          "sourceSet",
+          "timestamp",
+          "status",
+          "disagreement",
+          "spreadBps",
           "warnings"
         ]
       },
@@ -2456,6 +2932,129 @@
         }
       }
     },
+    "/v1/markets/{id}/evidence": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full source-tagged evidence, telemetry age, confidence and disagreement for one market",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketEvidenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such market",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/prices": {
       "get": {
         "security": [
@@ -2492,6 +3091,109 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PricesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices/valuations": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reconciled price quorum valuations for supported assets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValuationsResponse"
                 }
               }
             }

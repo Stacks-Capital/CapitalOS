@@ -6,6 +6,7 @@ import {
   EarnOptionsResponse,
   ErrorBody,
   ListQuery,
+  MarketEvidenceResponse,
   MarketRiskResponse,
   MarketsResponse,
   NetworkQuery,
@@ -21,6 +22,7 @@ import {
   SignatureResponse,
   StartedWorkflowResponse,
   StartWorkflowRequest,
+  ValuationsResponse,
   VerifyRequest,
   WorkflowParams,
   WorkflowListQuery,
@@ -135,6 +137,17 @@ export const pricesRoute = createRoute({
   responses: { 200: json("Latest price for each feed the platform reads", PricesResponse), ...errorResponses },
 });
 
+export const priceValuationsRoute = createRoute({
+  method: "get",
+  path: "/v1/prices/valuations",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: {
+    200: json("Reconciled price quorum valuations for supported assets", ValuationsResponse),
+    ...errorResponses,
+  },
+});
+
 export const marketRiskRoute = createRoute({
   method: "get",
   path: "/v1/markets/{id}/risk",
@@ -142,6 +155,21 @@ export const marketRiskRoute = createRoute({
   request: { params: WorkflowParams, query: PositionQuery },
   responses: {
     200: json("Risk parameters, prices and the caller's position", MarketRiskResponse),
+    404: error("No such market"),
+    ...errorResponses,
+  },
+});
+
+export const marketEvidenceRoute = createRoute({
+  method: "get",
+  path: "/v1/markets/{id}/evidence",
+  security: anyCaller,
+  request: { params: WorkflowParams, query: NetworkQuery },
+  responses: {
+    200: json(
+      "Full source-tagged evidence, telemetry age, confidence and disagreement for one market",
+      MarketEvidenceResponse,
+    ),
     404: error("No such market"),
     ...errorResponses,
   },
