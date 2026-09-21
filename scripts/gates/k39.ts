@@ -91,9 +91,7 @@ record(
 for (const wallet of COMPATIBILITY_MATRIX.wallets) {
   const rejected = classifyWalletError(wallet, { code: 4001 });
   const unsupported =
-    wallet === "xverse"
-      ? classifyWalletError(wallet, { code: -32001 })
-      : classifyWalletError(wallet, { code: -32601 });
+    wallet === "xverse" ? classifyWalletError(wallet, { code: -32001 }) : classifyWalletError(wallet, { code: -32601 });
   record(
     "matrix",
     `wallet:${wallet}`,
@@ -108,11 +106,10 @@ const tarballs: Record<string, string> = {};
 try {
   for (const name of RELEASE_PACKAGES) {
     const folder = RELEASE_PACKAGE_FOLDERS[name];
-    const packed = spawnSync(
-      "pnpm",
-      ["--filter", name, "pack", "--pack-destination", packRoot],
-      { cwd: root, encoding: "utf8" },
-    );
+    const packed = spawnSync("pnpm", ["--filter", name, "pack", "--pack-destination", packRoot], {
+      cwd: root,
+      encoding: "utf8",
+    });
     const expected = join(packRoot, `${name.replace("@", "").replace("/", "-")}-${RELEASE_CANDIDATE_VERSION}.tgz`);
     const ok = packed.status === 0;
     if (ok) tarballs[name] = expected;
@@ -120,7 +117,7 @@ try {
       "pack",
       `pack:${name}`,
       ok,
-      ok ? expected : (packed.stderr?.trim() || packed.stdout?.trim() || `exit ${String(packed.status)}`),
+      ok ? expected : packed.stderr?.trim() || packed.stdout?.trim() || `exit ${String(packed.status)}`,
     );
   }
 
@@ -131,7 +128,10 @@ try {
   mkdirSync(pkgsRoot, { recursive: true });
   mkdirSync(consumerRoot, { recursive: true });
   writeFileSync(join(workspaceRoot, "pnpm-workspace.yaml"), "packages:\n  - pkgs/*\n  - consumer\n");
-  writeFileSync(join(workspaceRoot, "package.json"), `${JSON.stringify({ name: "capitalos-k39-workspace", private: true }, null, 2)}\n`);
+  writeFileSync(
+    join(workspaceRoot, "package.json"),
+    `${JSON.stringify({ name: "capitalos-k39-workspace", private: true }, null, 2)}\n`,
+  );
 
   for (const name of RELEASE_PACKAGES) {
     const tarball = tarballs[name];
@@ -231,7 +231,7 @@ console.log("k39-consumer-ok", RELEASE_CANDIDATE_VERSION, SCHEMA_VERSION);
       "clean-import-smoke",
       smoke.status === 0 && (smoke.stdout ?? "").includes("k39-consumer-ok"),
       smoke.status === 0
-        ? (smoke.stdout ?? "").trim().split("\n").at(-1) ?? "ok"
+        ? ((smoke.stdout ?? "").trim().split("\n").at(-1) ?? "ok")
         : (smoke.stderr?.trim() || smoke.stdout?.trim() || `exit ${String(smoke.status)}`).slice(0, 400),
     );
   } else {
