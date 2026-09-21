@@ -51,9 +51,38 @@ export type RiskExplanation = {
   alerts: string[];
 };
 
+export type SemanticAsset = {
+  unit: string;
+  decimals: number;
+  evidence: string;
+};
+
+export type ActionSemantics = {
+  action: Action;
+  inputUnit: string;
+  outputUnit: string;
+  rounding: "exact" | "down";
+  completionEvidence: string;
+  postConditionPolicy: "bitcoin_script" | "deny_mode";
+};
+
+/**
+ * Protocol facts that an adapter is allowed to use when normalizing data.
+ * Anything absent from this declaration must remain absent instead of being
+ * guessed from a ticker, a balance delta, or another protocol.
+ */
+export type AdapterSemantics = {
+  amountEncoding: "base_10_integer_base_units";
+  unsupportedFieldPolicy: "omit";
+  positionModel: string;
+  assets: readonly SemanticAsset[];
+  actions: readonly ActionSemantics[];
+};
+
 export type ProtocolAdapter = {
   protocol: string;
   version: string;
+  semantics: AdapterSemantics;
   describeCapabilities(ctx: AdapterContext): CapabilityRecord[];
   listMarkets(ctx: AdapterContext): Market[];
   getMarket(ctx: AdapterContext, marketId: string): Market;
