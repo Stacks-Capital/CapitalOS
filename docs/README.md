@@ -17,6 +17,7 @@
 - [Staking routes](engineering/staking-routes.md): why native PoX staking stays unavailable.
 - [Plan hardening](engineering/plan-hardening.md): quote/plan binding, exact arithmetic and the wallet validation gate.
 - [Workflow recovery](engineering/workflow-recovery.md): idempotent transitions, rejection, outage, reorg and reconciliation-gated completion.
+- [Risk engine](engineering/risk-engine.md): Granite health interpretation, stress scenarios, concentration and protective actions.
 
 ## Operating it
 

@@ -104,3 +104,18 @@ describe("public SDK", () => {
     assert.equal(flow.nextAction, "COMPLETE");
   });
 });
+
+describe("K36 risk exports", () => {
+  it("exposes versioned Granite health interpretation without inventing prices", async () => {
+    const {
+      RISK_CALCULATION_VERSION,
+      interpretGraniteHealth,
+      stressGraniteCollateral,
+      graniteProtectiveActions,
+    } = await import("./index.ts");
+    assert.match(RISK_CALCULATION_VERSION, /^risk@/);
+    assert.equal(typeof interpretGraniteHealth, "function");
+    assert.equal(typeof stressGraniteCollateral, "function");
+    assert.equal(typeof graniteProtectiveActions, "function");
+  });
+});

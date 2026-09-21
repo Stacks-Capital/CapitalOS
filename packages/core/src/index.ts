@@ -121,3 +121,30 @@ export {
   projectedHealth,
   usdNotional,
 } from "./risk.ts";
+
+export type {
+  ConcentrationReport,
+  ConcentrationSlice,
+  CreditProtectiveActionId,
+  GraniteHealthInterpretation,
+  LiquidityGate,
+  ProtectiveAction,
+  ProtectiveActionReport,
+  RiskProtocol,
+  StressAssumptions,
+  StressScenarioReport,
+  StressScenarioRow,
+  UnsupportedCreditRisk,
+} from "./riskReport.ts";
+export {
+  GRANITE_HEALTH_LIMITATIONS,
+  RISK_CALCULATION_VERSION,
+  borrowLiquidityGate,
+  concentrationByQuantity,
+  graniteProtectiveActions,
+  interpretGraniteHealth,
+  shiftOraclePrice,
+  stressGraniteCollateral,
+  unsupportedCreditRisk,
+  wouldLiquidateAtLtv,
+} from "./riskReport.ts";
