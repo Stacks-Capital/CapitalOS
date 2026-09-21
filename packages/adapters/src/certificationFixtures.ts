@@ -18,7 +18,7 @@ const BTC = "bitcoin:mainnet:native:btc";
 const USDCX = "stacks:mainnet:contract:SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx:usdcx-token";
 const ZSBTC = "stacks:mainnet:contract:SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc:zft";
 const SBTC_TOKEN = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
-const USDCX_TOKEN = "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx";
+const USDCX_CONTRACT = "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx";
 const ZEST_VAULT = "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-sbtc";
 const GRANITE_MARKET = "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market";
 const BITFLOW_ROUTER = "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-swap-router-v-1-2";
@@ -374,7 +374,7 @@ export const ADAPTER_CERTIFICATION_FIXTURES: readonly AdapterCertificationFixtur
             contractId: GRANITE_MARKET,
             functionName: "borrow",
             functionArgs: [
-              { type: "principal", value: USDCX_TOKEN },
+              { type: "principal", value: USDCX_CONTRACT },
               { type: "uint", value: "50000000000" },
               { type: "none" },
               { type: "none" },
@@ -439,7 +439,7 @@ export const ADAPTER_CERTIFICATION_FIXTURES: readonly AdapterCertificationFixtur
             functionArgs: [
               { type: "principal", value: BITFLOW_POOL },
               { type: "principal", value: SBTC_TOKEN },
-              { type: "principal", value: USDCX_TOKEN },
+              { type: "principal", value: USDCX_CONTRACT },
               { type: "uint", value: "100000000" },
               { type: "uint", value: "99002500000" },
               { type: "uint", value: "8" },
