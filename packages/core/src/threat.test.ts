@@ -150,3 +150,26 @@ describe("K17 transaction threat controls", () => {
     assert.equal(flow.nextAction, "CONTACT_SUPPORT");
   });
 });
+
+describe("K37 economic threat controls", () => {
+  it("keeps the scope non-custodial: SDK-style workflows never auto-broadcast", () => {
+    let flow = createWorkflow({ id: "wf_nc", network: "mainnet", idempotencyKey: "nc" });
+    flow = transition(flow, "QUOTED", { reason: "q", actor: "sdk", evidence: "q" });
+    flow = transition(flow, "AWAITING_SIGNATURE", { reason: "p", actor: "sdk", evidence: "p" });
+    assert.equal(canSubmitWrite(flow.state), true);
+    // Host wallet must supply a txid; empty evidence stays unknown and write-closed.
+    flow = recordUnknownBroadcast(flow, "wallet hung without txid");
+    assert.equal(canSubmitWrite(flow.state), false);
+    assert.equal(allowsWriteRetry(capitalError("BROADCAST_UNKNOWN", "hung")), false);
+  });
+
+  it("rejects post-condition amount tampering that would unbind the quote", () => {
+    const tampered = plan();
+    const payload = tampered.steps[0]?.payload;
+    if (payload?.kind !== "stacks_contract_call") throw new Error("expected stacks call");
+    payload.postConditions[0]!.amount = makeAmount(sbtc, "1");
+    const checked = validatePlan(tampered, quote(), ctx);
+    assert.equal(checked.ok, false);
+    assert.match(checked.reasons.join(" "), /send post-condition|quote input/);
+  });
+});

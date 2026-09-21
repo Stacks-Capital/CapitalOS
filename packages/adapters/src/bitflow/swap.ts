@@ -19,6 +19,8 @@ import type { AdapterContext, Intent, Market, ProtocolAdapter } from "../types.t
 export const BITFLOW_SWAP_VERSION = "bitflow-swap@0.1.0";
 export const BITFLOW_MARKET_SBTC_USDCX = "bitflow.sbtc-usdcx";
 export const DEFAULT_SLIPPAGE_BPS = 50n;
+/** Product max — above this the quote is treated as an abusive unprotected swap. */
+export const MAX_SLIPPAGE_BPS = 300n;
 export const DEFAULT_MAX_STEPS = "8";
 
 function sbtc(network: StacksNetwork) {
@@ -81,8 +83,21 @@ function assertRoute(
   if (swap.amountIn !== intent.amount) throw capitalError("QUOTE_EXPIRED", "route amountIn does not match the intent");
   const amountOut = parseQuantity(swap.amountOut);
   const slippage = intent.slippageBps !== undefined ? parseQuantity(intent.slippageBps) : DEFAULT_SLIPPAGE_BPS;
+  if (slippage < 0n || slippage > MAX_SLIPPAGE_BPS) {
+    throw capitalError("PLAN_INVALID", `slippage must be between 0 and ${MAX_SLIPPAGE_BPS.toString(10)} bps`);
+  }
   const quotedMin = minOutFromSpot(amountOut, slippage);
+  const floor = minOutFromSpot(amountOut, MAX_SLIPPAGE_BPS);
   const minOut = intent.minOut !== undefined ? parseQuantity(intent.minOut) : quotedMin;
+  if (minOut <= 0n && amountOut > 0n) {
+    throw capitalError("PLAN_INVALID", "min-out must be greater than zero");
+  }
+  if (minOut < floor) {
+    throw capitalError(
+      "PLAN_INVALID",
+      `min-out is below the ${MAX_SLIPPAGE_BPS.toString(10)} bps floor for this route`,
+    );
+  }
   if (minOut > amountOut) throw capitalError("QUOTE_EXPIRED", "min-out is above the quoted amount");
   return { poolId, amountOut, minOut };
 }

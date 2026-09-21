@@ -173,6 +173,51 @@ describe("K32 Granite credit lifecycle", () => {
     );
   });
 
+  it("reconciles collateral remove and blocks an unhealthy withdraw", () => {
+    const healthy = evaluateGraniteCredit({
+      intent: {
+        action: "withdraw_supply",
+        network: "mainnet",
+        owner: OWNER,
+        amount: "10000000",
+        idempotencyKey: "remove-1",
+      },
+      market,
+      position: { ...position, collateral: "100000000", debt: "10000000", accruedDebt: "10000000" },
+      settlement: {
+        kind: "granite_collateral_remove",
+        stacksTxid: "0x77",
+        blockHeight: 4,
+        blockHash: "0x88",
+        canonical: true,
+        assetMoved: "10000000",
+        owner: OWNER,
+      },
+      broadcastKnown: true,
+      now: NOW,
+    });
+    assert.equal(healthy.state, "reconciled");
+    assert.equal(healthy.broadcastAllowed, false);
+
+    assert.equal(
+      evaluateGraniteCredit({
+        intent: {
+          action: "withdraw_supply",
+          network: "mainnet",
+          owner: OWNER,
+          amount: "50000000",
+          idempotencyKey: "remove-blocked",
+        },
+        market,
+        position: { ...position, collateral: "100000000", debt: "69000000000", accruedDebt: "69000000000" },
+        settlement: null,
+        broadcastKnown: false,
+        now: NOW,
+      }).state,
+      "health_blocked",
+    );
+  });
+
   it("builds market evidence from adapter reads and rejects missing oracles", () => {
     const reads: AdapterReads = {
       emilyLimits: { perDepositMinimum: "1000", perWithdrawalCap: "1" },

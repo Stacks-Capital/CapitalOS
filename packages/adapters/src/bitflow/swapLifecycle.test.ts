@@ -110,4 +110,26 @@ describe("K29 Bitflow swap lifecycle", () => {
       "unavailable",
     );
   });
+
+  it("rejects abusive slippage above the product max", () => {
+    assert.throws(
+      () => previewBitflowMinOut("99500000000", 9999n),
+      (error: unknown) =>
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "PLAN_INVALID" &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        /slippage must be between/.test(error.message),
+    );
+    assert.throws(
+      () => previewBitflowMinOut("99500000000", -1n),
+      (error: unknown) =>
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "PLAN_INVALID",
+    );
+  });
 });

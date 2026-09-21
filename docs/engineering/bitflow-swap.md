@@ -6,6 +6,7 @@ Bitflow exact-input swaps are limited to the allowlisted sBTC↔USDCx pair on `d
 
 - Quote expiry and any change to pool, router or amount-in force a requote. The wallet must not sign a stale route.
 - Minimum output is an on-chain argument plus deny-mode post-conditions.
+- Slippage is capped at `MAX_SLIPPAGE_BPS` (300). Quotes that request higher slippage or a min-out below that floor fail closed.
 - Completion requires a canonical settlement whose amount-out meets min-out and whose pool matches the quote.
 - Testnet stays unavailable. Non-fixture live tickers fail closed while the pool list is empty.
 

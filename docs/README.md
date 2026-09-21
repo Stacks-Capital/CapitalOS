@@ -18,6 +18,7 @@
 - [Plan hardening](engineering/plan-hardening.md): quote/plan binding, exact arithmetic and the wallet validation gate.
 - [Workflow recovery](engineering/workflow-recovery.md): idempotent transitions, rejection, outage, reorg and reconciliation-gated completion.
 - [Risk engine](engineering/risk-engine.md): Granite health interpretation, stress scenarios, concentration and protective actions.
+- [Threat model K37](engineering/threat-model-k37.md): signing, slippage, oracle, reorg and write-path abuse coverage with launch blocks.
 
 ## Operating it
 

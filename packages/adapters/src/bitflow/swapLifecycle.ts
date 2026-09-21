@@ -1,8 +1,10 @@
 import { BITFLOW_ALLOWED_POOLS, capabilityFor, findContract } from "@stacks-capital/config";
-import { minOutFromSpot, parseQuantity, type StacksNetwork } from "@stacks-capital/core";
+import { capitalError, minOutFromSpot, parseQuantity, type StacksNetwork } from "@stacks-capital/core";
 import type { SwapSnapshot } from "../reads.ts";
+import { MAX_SLIPPAGE_BPS } from "./swap.ts";
 
 export const BITFLOW_DEFAULT_SLIPPAGE_BPS = 50n;
+export { MAX_SLIPPAGE_BPS };
 
 export type BitflowSwapIntent = {
   network: StacksNetwork;
@@ -191,5 +193,9 @@ export function evaluateBitflowSwap(input: {
 }
 
 export function previewBitflowMinOut(amountOut: string, slippageBps = BITFLOW_DEFAULT_SLIPPAGE_BPS): string {
-  return minOutFromSpot(parseQuantity(amountOut), slippageBps).toString(10);
+  const slippage = typeof slippageBps === "bigint" ? slippageBps : parseQuantity(String(slippageBps));
+  if (slippage < 0n || slippage > MAX_SLIPPAGE_BPS) {
+    throw capitalError("PLAN_INVALID", `slippage must be between 0 and ${MAX_SLIPPAGE_BPS.toString(10)} bps`);
+  }
+  return minOutFromSpot(parseQuantity(amountOut), slippage).toString(10);
 }

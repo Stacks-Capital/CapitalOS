@@ -128,6 +128,7 @@ export {
   BITFLOW_MARKET_SBTC_USDCX,
   BITFLOW_SWAP_VERSION,
   DEFAULT_SLIPPAGE_BPS,
+  MAX_SLIPPAGE_BPS,
 } from "./bitflow/swap.ts";
 export {
   assertBitflowRoute,
