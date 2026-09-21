@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { capabilityFor } from "@stacks-capital/config";
+import { executableContractIds } from "@stacks-capital/config";
 import {
   assertValidPlan,
   canSubmitWrite,
@@ -47,6 +48,7 @@ describe("K10 earn round trip", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: owner,
     });
     assert.equal(depositPlan.steps[0]?.payload.kind, "bitcoin_deposit");
@@ -64,6 +66,7 @@ describe("K10 earn round trip", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: owner,
     });
     assert.equal(
@@ -88,6 +91,7 @@ describe("K10 earn round trip", () => {
       now: ctx.now,
       network: "mainnet",
       registryVersion: ctx.registryVersion,
+      allowedContracts: executableContractIds("mainnet"),
       sender: owner,
     });
     assert.equal(walkConfirmed("wf_redeem").state, "COMPLETED");
