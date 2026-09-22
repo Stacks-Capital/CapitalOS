@@ -1,10 +1,25 @@
 import assert from "node:assert/strict";
 import { after, describe, it } from "node:test";
-import { type Cache, type CapitalClient, cacheKey, createCache, type Market, type Page } from "@stacks-capital/client";
+import {
+  type Cache,
+  type CapitalClient,
+  cacheKey,
+  createCache,
+  type Market,
+  type Page,
+  RESOURCES,
+} from "@stacks-capital/client";
 import { JSDOM } from "jsdom";
 import { createElement, type ReactNode } from "react";
 import { CapitalProvider } from "./context.ts";
-import { useMarkets, useWorkflow } from "./hooks.ts";
+import {
+  useEarnPerformance,
+  useMarkets,
+  usePortfolio,
+  usePriceValuations,
+  useWorkflow,
+  useWorkflowResume,
+} from "./hooks.ts";
 
 // React needs a document. jsdom gives one without a browser.
 const dom = new JSDOM("<!doctype html><html><body><div id='root'></div></body></html>");
@@ -48,9 +63,60 @@ function fakeClient(overrides: Partial<CapitalClient> = {}): CapitalClient {
     markets: async () => page("zest.sbtc.vault"),
     allMarkets: async () => [MARKET],
     capabilities: async () => ({ items: [], nextCursor: null, context: page("x").context }),
-    workflow: async () => ({ data: { id: "wf_1" }, context: page("x").context }),
+    workflow: async (id: string) =>
+      ({
+        data: {
+          id,
+          network: "mainnet",
+          state: "AWAITING_SIGNATURE",
+          nextAction: "SIGN_STEP",
+          transitions: [],
+          idempotencyKey: "idem_1",
+        },
+        context: page("x").context,
+      }) as never,
     challenge: async () => ({ data: { nonceId: "non_1" }, context: page("x").context }),
     verify: async () => ({ data: { token: "ses_1.secret" }, context: page("x").context }),
+    portfolio: async () =>
+      ({
+        data: {
+          totalAssets: { quantity: "1000", asset: "sbtc" },
+          totalDebt: { quantity: "0", asset: "sbtc" },
+          netWorth: { quantity: "1000", asset: "sbtc" },
+          categories: [],
+          collateralValuations: [],
+        },
+        context: page("x").context,
+      }) as never,
+    earnPerformance: async () =>
+      ({
+        data: {
+          items: [
+            {
+              marketId: "zest.sbtc.vault",
+              realizedEarnings: { quantity: "50", asset: "sbtc" },
+              claimedRewards: [],
+              accruedEstimates: [],
+            },
+          ],
+        },
+        context: page("x").context,
+      }) as never,
+    priceValuations: async () =>
+      ({
+        data: {
+          items: [
+            {
+              asset: "sbtc",
+              referencePriceUsd: "60000",
+              sources: [],
+              spreadBps: "5",
+              stale: false,
+            },
+          ],
+        },
+        context: page("x").context,
+      }) as never,
     withSession: () => client,
     ...overrides,
   } as unknown as CapitalClient;
@@ -58,14 +124,21 @@ function fakeClient(overrides: Partial<CapitalClient> = {}): CapitalClient {
 }
 
 /** Renders a tree and returns helpers to change its props and read what the hook produced. */
-function mount(element: (props: { address: string | null }) => ReactNode, address: string | null = "SP1") {
+function mount(
+  element: (props: { address: string | null; tenantId?: string | null }) => ReactNode,
+  address: string | null = "SP1",
+  tenantId?: string | null,
+) {
   const container = dom.window.document.createElement("div");
   const root = createRoot(container);
-  const render = (next: string | null) => act(() => void root.render(element({ address: next })));
-  render(address);
+  const render = (next: string | null, nextTenant?: string | null) =>
+    act(
+      () => void root.render(element({ address: next, ...(nextTenant !== undefined ? { tenantId: nextTenant } : {}) })),
+    );
+  render(address, tenantId);
   return {
-    async set(next: string | null) {
-      render(next);
+    async set(next: string | null, nextTenant?: string | null) {
+      render(next, nextTenant);
       await act(async () => {});
     },
     async settle() {
@@ -77,14 +150,35 @@ function mount(element: (props: { address: string | null }) => ReactNode, addres
   };
 }
 
-function harness(client: CapitalClient, cache: Cache, useHook: () => unknown) {
+function harness(
+  client: CapitalClient,
+  cache: Cache,
+  useHook: () => unknown,
+  options?: { tenantId?: string | null; address?: string | null },
+) {
   const results: unknown[] = [];
   const Probe = () => {
     results.push(useHook());
     return null;
   };
-  const view = mount(({ address }) =>
-    createElement(CapitalProvider, { client, cache, address }, createElement(Probe, null)),
+  const view = mount(
+    ({ address, tenantId }) =>
+      createElement(
+        CapitalProvider,
+        {
+          client,
+          cache,
+          address,
+          ...(tenantId !== undefined
+            ? { tenantId }
+            : options?.tenantId !== undefined
+              ? { tenantId: options.tenantId }
+              : {}),
+        },
+        createElement(Probe, null),
+      ),
+    options && "address" in options ? options.address : "SP1",
+    options?.tenantId,
   );
   return { results, view, last: () => results.at(-1) };
 }
@@ -278,5 +372,286 @@ describe("provider", () => {
       return null;
     };
     assert.throws(() => mount(() => createElement(Probe, null)), /must be used inside a CapitalProvider/);
+  });
+});
+
+describe("usePortfolio", () => {
+  it("loads portfolio for current address and caches it under portfolio resource", async () => {
+    const cache = createCache();
+    let calls = 0;
+    const client = fakeClient({
+      portfolio: async (input) => {
+        calls += 1;
+        assert.equal(input?.owner, undefined);
+        return {
+          data: {
+            totalAssets: { quantity: "5000", asset: "sbtc" },
+            totalDebt: { quantity: "1000", asset: "sbtc" },
+            netWorth: { quantity: "4000", asset: "sbtc" },
+            categories: [],
+            collateralValuations: [],
+          },
+          context: page("x").context,
+        } as never;
+      },
+    });
+
+    const { view, last } = harness(client, cache, () => usePortfolio());
+    await view.settle();
+
+    const result = last() as { status: string; data?: { data: { netWorth: { quantity: string } } } };
+    assert.equal(result.status, "ready");
+    assert.equal(result.data?.data.netWorth.quantity, "4000");
+    assert.equal(calls, 1);
+    assert.equal(
+      cache.get(cacheKey({ network: "mainnet", address: "SP1" }, RESOURCES.portfolio, { owner: "SP1" })).status,
+      "ready",
+    );
+    view.unmount();
+  });
+
+  it("allows custom owner override", async () => {
+    const cache = createCache();
+    let requestedOwner = "";
+    const client = fakeClient({
+      portfolio: async (input) => {
+        requestedOwner = input?.owner ?? "";
+        return {
+          data: {
+            totalAssets: { quantity: "10000", asset: "sbtc" },
+            totalDebt: { quantity: "0", asset: "sbtc" },
+            netWorth: { quantity: "10000", asset: "sbtc" },
+            categories: [],
+            collateralValuations: [],
+          },
+          context: page("x").context,
+        } as never;
+      },
+    });
+
+    const { view } = harness(client, cache, () => usePortfolio({ owner: "SP_CUSTOM" }));
+    await view.settle();
+
+    assert.equal(requestedOwner, "SP_CUSTOM");
+    assert.equal(
+      cache.get(cacheKey({ network: "mainnet", address: "SP1" }, RESOURCES.portfolio, { owner: "SP_CUSTOM" })).status,
+      "ready",
+    );
+    view.unmount();
+  });
+
+  it("stays idle when address is null and no owner is provided", async () => {
+    const cache = createCache();
+    let calls = 0;
+    const client = fakeClient({
+      portfolio: async () => {
+        calls += 1;
+        return {} as never;
+      },
+    });
+
+    const { view, last } = harness(client, cache, () => usePortfolio(), { address: null });
+    await view.settle();
+
+    const result = last() as { status: string };
+    assert.equal(result.status, "idle");
+    assert.equal(calls, 0);
+    view.unmount();
+  });
+});
+
+describe("useEarnPerformance", () => {
+  it("loads earn performance for address and marketId", async () => {
+    const cache = createCache();
+    let queryInput: { owner?: string; marketId?: string } | undefined;
+    const client = fakeClient({
+      earnPerformance: async (input) => {
+        queryInput = input;
+        return {
+          data: {
+            items: [
+              {
+                marketId: "zest.sbtc.vault",
+                realizedEarnings: { quantity: "75", asset: "sbtc" },
+                claimedRewards: [],
+                accruedEstimates: [],
+              },
+            ],
+          },
+          context: page("x").context,
+        } as never;
+      },
+    });
+
+    const { view, last } = harness(client, cache, () => useEarnPerformance({ marketId: "zest.sbtc.vault" }));
+    await view.settle();
+
+    const result = last() as {
+      status: string;
+      data?: { data: { items: { realizedEarnings: { quantity: string } }[] } };
+    };
+    assert.equal(result.status, "ready");
+    assert.equal(result.data?.data.items[0]?.realizedEarnings.quantity, "75");
+    assert.equal(queryInput?.marketId, "zest.sbtc.vault");
+    assert.equal(
+      cache.get(
+        cacheKey({ network: "mainnet", address: "SP1" }, RESOURCES.earnPerformance, {
+          owner: "SP1",
+          marketId: "zest.sbtc.vault",
+        }),
+      ).status,
+      "ready",
+    );
+    view.unmount();
+  });
+});
+
+describe("usePriceValuations", () => {
+  it("loads asset price valuations into cache", async () => {
+    const cache = createCache();
+    let calls = 0;
+    const client = fakeClient({
+      priceValuations: async () => {
+        calls += 1;
+        return {
+          data: {
+            items: [
+              {
+                asset: "sbtc",
+                referencePriceUsd: "65000",
+                sources: [],
+                spreadBps: "4",
+                stale: false,
+              },
+            ],
+          },
+          context: page("x").context,
+        } as never;
+      },
+    });
+
+    const { view, last } = harness(client, cache, () => usePriceValuations());
+    await view.settle();
+
+    const result = last() as { status: string; data?: { data: { items: { referencePriceUsd: string }[] } } };
+    assert.equal(result.status, "ready");
+    assert.equal(result.data?.data.items[0]?.referencePriceUsd, "65000");
+    assert.equal(calls, 1);
+    assert.equal(
+      cache.get(cacheKey({ network: "mainnet", address: "SP1" }, RESOURCES.priceValuations)).status,
+      "ready",
+    );
+    view.unmount();
+  });
+});
+
+describe("useWorkflowResume", () => {
+  it("calculates resume hint for active workflow in AWAITING_SIGNATURE", async () => {
+    const cache = createCache();
+    const client = fakeClient({
+      workflow: async (id: string) =>
+        ({
+          data: {
+            id,
+            network: "mainnet",
+            state: "AWAITING_SIGNATURE",
+            nextAction: "SIGN_STEP",
+            transitions: [],
+            idempotencyKey: "idem_resume_1",
+          },
+          context: page("x").context,
+        }) as never,
+    });
+
+    const { view, last } = harness(client, cache, () => useWorkflowResume("wf_active_1"));
+    await view.settle();
+
+    const result = last() as ReturnType<typeof useWorkflowResume>;
+    assert.equal(result.workflow.status, "ready");
+    assert.equal(result.isResuming, true);
+    assert.equal(result.canSign, true);
+    assert.equal(result.isTerminal, false);
+    assert.equal(result.hint?.state, "AWAITING_SIGNATURE");
+    assert.equal(result.hint?.nextAction, "SIGN_STEP");
+    view.unmount();
+  });
+
+  it("identifies terminal state for COMPLETED workflow", async () => {
+    const cache = createCache();
+    const client = fakeClient({
+      workflow: async (id: string) =>
+        ({
+          data: {
+            id,
+            network: "mainnet",
+            state: "COMPLETED",
+            nextAction: "NONE",
+            transitions: [],
+            idempotencyKey: "idem_done",
+          },
+          context: page("x").context,
+        }) as never,
+    });
+
+    const { view, last } = harness(client, cache, () => useWorkflowResume("wf_done_1"));
+    await view.settle();
+
+    const result = last() as ReturnType<typeof useWorkflowResume>;
+    assert.equal(result.workflow.status, "ready");
+    assert.equal(result.isResuming, false);
+    assert.equal(result.canSign, false);
+    assert.equal(result.isTerminal, true);
+    assert.equal(result.hint?.terminal, true);
+    view.unmount();
+  });
+
+  it("handles null id cleanly", async () => {
+    const cache = createCache();
+    const client = fakeClient();
+    const { view, last } = harness(client, cache, () => useWorkflowResume(null));
+    await view.settle();
+
+    const result = last() as ReturnType<typeof useWorkflowResume>;
+    assert.equal(result.workflow.status, "idle");
+    assert.equal(result.hint, null);
+    assert.equal(result.isResuming, false);
+    assert.equal(result.canSign, false);
+    assert.equal(result.isTerminal, false);
+    view.unmount();
+  });
+});
+
+describe("tenant isolation in hooks", () => {
+  it("isolates cache keys by tenantId in CapitalProvider", async () => {
+    const cache = createCache();
+    const client = fakeClient();
+
+    const { view: viewA } = harness(client, cache, () => useMarkets(), { tenantId: "tenant_alpha" });
+    await viewA.settle();
+
+    const { view: viewB } = harness(client, cache, () => useMarkets(), { tenantId: "tenant_beta" });
+    await viewB.settle();
+
+    assert.deepEqual(cache.keys().sort(), [
+      cacheKey({ network: "mainnet", address: "SP1", tenantId: "tenant_alpha" }, "markets"),
+      cacheKey({ network: "mainnet", address: "SP1", tenantId: "tenant_beta" }, "markets"),
+    ]);
+
+    viewA.unmount();
+    viewB.unmount();
+  });
+
+  it("derives tenantId from client.clientId when not passed explicitly", async () => {
+    const cache = createCache();
+    const client = fakeClient({ clientId: "tenant_from_client" });
+
+    const { view } = harness(client, cache, () => useMarkets());
+    await view.settle();
+
+    assert.deepEqual(cache.keys(), [
+      cacheKey({ network: "mainnet", address: "SP1", tenantId: "tenant_from_client" }, "markets"),
+    ]);
+
+    view.unmount();
   });
 });

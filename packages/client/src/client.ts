@@ -71,6 +71,9 @@ export type CapitalClient = {
   /** True if the client is authenticated with a user session token. */
   readonly hasSession: boolean;
 
+  /** The publishable client id / tenant identifier, if configured. */
+  readonly clientId?: string | undefined;
+
   /**
    * Lists available money markets with pagination.
    * Evidence: Returns telemetry context and current block height.
@@ -337,6 +340,7 @@ export function createClient(options: ClientOptions): CapitalClient {
   const client: CapitalClient = {
     network,
     hasSession: options.sessionToken !== undefined,
+    clientId: options.clientId,
 
     markets: (page) => listPage<Market>("/v1/markets", page),
     capabilities: (page) => listPage<MarketCapability>("/v1/capabilities", page),

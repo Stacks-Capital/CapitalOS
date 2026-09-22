@@ -9,6 +9,8 @@ export type CapitalProviderProps = {
   client: CapitalClient;
   /** The connected wallet address, or null when nobody is signed in. */
   address?: string | null;
+  /** Optional tenant identifier override (defaults to client.clientId). */
+  tenantId?: string | null;
   /** Share one cache across providers, or leave it out to get a fresh one. */
   cache?: Cache;
   children?: ReactNode;
@@ -19,8 +21,9 @@ export function CapitalProvider(props: CapitalProviderProps) {
   const cache = props.cache ?? fallback;
   const network = props.client.network;
   const address = props.address ?? null;
+  const tenantId = props.tenantId !== undefined ? props.tenantId : (props.client.clientId ?? null);
 
-  const scope = useMemo<Scope>(() => ({ network, address }), [network, address]);
+  const scope = useMemo<Scope>(() => ({ network, address, tenantId }), [network, address, tenantId]);
   const previous = useRef<Scope | null>(null);
 
   // Switching wallet or network drops everything the old one cached, quotes included (page 01, WF-01).

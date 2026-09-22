@@ -1,7 +1,7 @@
 import type { StacksNetwork } from "@stacks-capital/core";
 
-/** Everything cached belongs to one network and one address. Nothing is shared across either. */
-export type Scope = { network: StacksNetwork; address: string | null };
+/** Everything cached belongs to one network, one address, and optionally one tenant. Nothing is shared across either. */
+export type Scope = { network: StacksNetwork; address: string | null; tenantId?: string | null };
 
 export type EntryStatus = "idle" | "loading" | "ready" | "error";
 export type Entry<T> = {
@@ -18,6 +18,12 @@ export const RESOURCES = {
   workflow: "workflow",
   positions: "positions",
   quote: "quote",
+  portfolio: "portfolio",
+  earnPerformance: "earnPerformance",
+  prices: "prices",
+  priceValuations: "priceValuations",
+  earnOptions: "earnOptions",
+  risk: "risk",
 } as const;
 
 export type Resource = (typeof RESOURCES)[keyof typeof RESOURCES] | (string & {});
@@ -26,11 +32,16 @@ const IDLE: Entry<never> = { status: "idle", data: undefined, error: undefined, 
 export const DEFAULT_STALE_MS = 30_000;
 
 export function scopeKey(scope: Scope): string {
-  return `${scope.network}|${scope.address ?? "anonymous"}`;
+  const tenantPrefix = scope.tenantId ? `${scope.tenantId}|` : "";
+  return `${tenantPrefix}${scope.network}|${scope.address ?? "anonymous"}`;
 }
 
 export function sameScope(left: Scope, right: Scope): boolean {
-  return left.network === right.network && left.address === right.address;
+  return (
+    left.network === right.network &&
+    left.address === right.address &&
+    (left.tenantId ?? null) === (right.tenantId ?? null)
+  );
 }
 
 export function cacheKey(scope: Scope, resource: Resource, params: Record<string, unknown> = {}): string {

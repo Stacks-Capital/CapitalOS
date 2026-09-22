@@ -1,6 +1,6 @@
 {
   "task": "K39",
-  "generatedAt": "2026-09-22T09:53:00.193Z",
+  "generatedAt": "2026-09-22T10:15:56.289Z",
   "releaseCandidate": "0.1.0",
   "environment": {
     "node": "v24.21.0",
@@ -8,15 +8,9 @@
     "cwd": "/home/modev/Stacks Ecosystem/CapitalOS"
   },
   "compatibility": {
-    "nodeMajor": [
-      22,
-      24
-    ],
+    "nodeMajor": [22, 24],
     "react": "^19.0.0",
-    "wallets": [
-      "leather",
-      "xverse"
-    ],
+    "wallets": ["leather", "xverse"],
     "schemaVersion": "1.0",
     "releaseCandidate": "0.1.0"
   },
@@ -96,43 +90,43 @@
     {
       "id": "pack:@stacks-capital/core",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-core-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-core-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/config",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-config-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-config-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/wallets",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-wallets-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-wallets-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/sdk",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-sdk-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-sdk-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/client",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-client-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-client-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/react",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-react-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-react-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/ui",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-pm0Qx4/stacks-capital-ui-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-XR1TJ1/stacks-capital-ui-0.1.0.tgz",
       "category": "pack"
     },
     {

@@ -26,6 +26,22 @@ describe("cache keys", () => {
     assert.equal(sameScope(MAINNET, OTHER_WALLET), false);
   });
 
+  it("isolates tenant, network and address in scopeKey and cacheKey", () => {
+    const TENANT_A = { network: "mainnet" as const, address: "SP1", tenantId: "tenant_a" };
+    const TENANT_B = { network: "mainnet" as const, address: "SP1", tenantId: "tenant_b" };
+    const NO_TENANT = { network: "mainnet" as const, address: "SP1" };
+
+    assert.equal(scopeKey(TENANT_A), "tenant_a|mainnet|SP1");
+    assert.equal(scopeKey(TENANT_B), "tenant_b|mainnet|SP1");
+    assert.equal(scopeKey(NO_TENANT), "mainnet|SP1");
+
+    assert.notEqual(cacheKey(TENANT_A, "markets"), cacheKey(TENANT_B, "markets"));
+    assert.notEqual(cacheKey(TENANT_A, "markets"), cacheKey(NO_TENANT, "markets"));
+    assert.equal(sameScope(TENANT_A, { network: "mainnet", address: "SP1", tenantId: "tenant_a" }), true);
+    assert.equal(sameScope(TENANT_A, TENANT_B), false);
+    assert.equal(sameScope(TENANT_A, NO_TENANT), false);
+  });
+
   it("are stable whatever order the parameters are written in, and ignore missing ones", () => {
     assert.equal(
       cacheKey(MAINNET, "markets", { limit: 20, cursor: "abc" }),

@@ -27,10 +27,11 @@ export function stageFor(workflowState: string | null): EarnStage {
 }
 
 export type Pending = { workflowId: string; stepId: string };
-export type Scope = { network: StacksNetwork; address: string };
+export type Scope = { network: StacksNetwork; address: string; tenantId?: string | null };
 
 export function pendingKey(scope: Scope): string {
-  return `capitalos:pending:${scope.network}:${scope.address}`;
+  const tenantPrefix = scope.tenantId ? `${scope.tenantId}:` : "";
+  return `capitalos:pending:${tenantPrefix}${scope.network}:${scope.address}`;
 }
 
 type Storage = {
