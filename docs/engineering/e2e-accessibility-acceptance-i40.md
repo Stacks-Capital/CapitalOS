@@ -13,13 +13,22 @@
 ## 2. Test Architecture & Coverage Matrix
 
 ### 2.1 Browser & Device Profiles
-Testing is executed under Playwright with real browser engines against isolated sandbox database instances and an authentic JSON-RPC wallet provider:
+Playwright runs against the real API on an isolated seeded schema, with market reads served from
+fixtures. Two profiles are configured in `apps/e2e/playwright.config.ts`:
 1. **Desktop Chrome**: `1280x800` viewport, full keyboard navigation, focus trap verification in workflow drawer.
 2. **Mobile (Pixel 7)**: `412x915` viewport, touch targets, horizontal overflow assertion (`scrollWidth <= innerWidth`) across every screen.
 
+**Both profiles are Chromium.** Firefox and WebKit are not exercised, so no Safari or Firefox
+evidence exists. The supported browser matrix required by the P3 gate is therefore **not complete**,
+and the supported set must be declared as Chromium-only or the missing engines added before launch.
+
 ### 2.2 Wallet Provider Matrix
-- **Provider Protocol**: Leather / Xverse JSON-RPC Stacks standard provider (`window.LeatherProvider` / `window.StacksProvider`).
-- **Signature Modes**: Real cryptographic curve signatures (`stx_signMessage`), contract call intents (`stx_callContract`), rejection handling, and malformed responses (`no-txid` missing hash).
+- **Provider**: a stand-in for Leather, in `apps/e2e/tests/wallet.ts`, injected at
+  `window.LeatherProvider.request` where the app looks for the real one. It signs with a real
+  secp256k1 key in the test process, so the API verifies a genuine signature, but **no released
+  Leather or Xverse build is exercised.** Real-wallet evidence is still outstanding.
+- **Signature Modes**: `stx_signMessage`, contract call intents (`stx_callContract`), rejection
+  handling, and malformed responses (`no-txid` missing hash).
 - **Session Lifecycle**: Multi-account isolation (`wallet.switchAccount()`), mid-flight reloads returning to unfinished workflow step, and explicit disconnection session teardown.
 
 ### 2.3 Ten Canonical Screens Accessibility Audit (WCAG 2.1 AA)
@@ -58,15 +67,45 @@ Axe-core automated accessibility audits inspect both signed-in and signed-out st
 
 ## 4. Operational Acceptance & Monitoring Verification
 
-### 4.1 Production Dashboards & Telemetry
-- **Prometheus Metrics**: Ingestion pipeline lag, oracle quorum consensus health, quote generation latency (P95/P99), workflow terminal status rates.
-- **Circuit Breakers**: Automatic quotation freeze when oracle quorum drops below threshold ($M \ge 2$) or spread diverges beyond 200 bps.
+### 4.1 Telemetry that exists today
+The worker exposes an HTTP surface in `apps/worker/src/health.ts`, and that is the whole of the
+telemetry this release ships:
 
-### 4.2 Runbooks & Outage Procedures
-- Production runbooks verified in `docs/runbooks/` and `docs/engineering/operations.md`:
-  - Worker crash and state recovery from PostgreSQL durable log.
-  - RPC endpoint failover and block reorganization re-indexing.
-  - Stale oracle recovery and emergency market pausing.
+| Endpoint | Reports |
+|---|---|
+| `GET /health`, `GET /livez` | Process liveness only. |
+| `GET /readyz` | Database reachability; 503 when the connection fails. |
+| `GET /status` | Ingestion checkpoint height, hash and timestamp, and an `ok` / `degraded` / `unhealthy` roll-up; 503 when unhealthy. |
+
+There is no metrics exporter, no dashboard and no alert router in this repository. Anything that
+scrapes, charts or pages on these endpoints is deployment infrastructure that has not been built
+or verified, and no pilot may assume it. **This is an open gap against the P3 requirement to verify
+monitoring dashboards and alerts, and it is not closed by this task.**
+
+### 4.2 Protective behaviour that exists today
+There is no automatic quotation freeze. Protection is per-asset and per-capability instead:
+
+- **Price quorum fails closed per asset.** `valuePosition` in `packages/core/src/valuation.ts`
+  withholds the price entirely (`price: null`, `disagreement: true`) when independent sources
+  disagree by more than `DEFAULT_MAX_QUORUM_SPREAD_BPS`, which is **300 bps**. Unrelated assets
+  keep their verified values.
+- **Stale or disputed oracles block borrow actions.** `isActionSafeToProceed` in
+  `apps/web/src/borrowState.ts` refuses to request a quote when either oracle is stale or in
+  disagreement.
+- **Stale market evidence cannot rank.** `compareEarn` in `packages/ui/src/compare.ts` refuses to
+  rank a reading older than `EARN_OPTION_MAX_AGE_MS` (300 seconds).
+- **Capabilities are paused by hand, not automatically.** `pnpm ops:pause` and `pnpm ops:disable`
+  move a market action to `paused` or `disabled`; exit capabilities survive a write pause by
+  design. See `apps/worker/src/ops.ts`.
+
+### 4.3 Runbooks & Outage Procedures
+Runbooks reviewed for this task, in `docs/runbooks/` and `docs/engineering/operations.md`:
+  - `backup-restore.md`: database restore and worker catch-up.
+  - `rollback.md`: release rollback and registry rollback.
+  - `incidents.md`: severity scale, reorg replay and market pausing.
+
+Drill evidence for restore and rollback is K38's, recorded in `docs/release/evidence/`, and is not
+reproduced here.
 
 ---
 

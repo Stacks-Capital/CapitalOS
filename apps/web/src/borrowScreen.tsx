@@ -38,6 +38,7 @@ import {
   calculateDebtAccounting,
   calculateEasyRisk,
   isActionSafeToProceed,
+  quotedBorrowFee,
 } from "./borrowState.ts";
 
 const MARKET = "granite.sbtc.isolated";
@@ -143,9 +144,13 @@ export function Borrow({
   const easyRisk = calculateEasyRisk(projection?.health ?? null, riskData);
   const safetyCheck = isActionSafeToProceed(projection, riskData);
 
-  // Repay & Borrow explicit accounting
+  // Repay & Borrow explicit accounting. The fee comes from the quote, so it is unknown until one exists.
   const repayAccounting = calculateDebtAccounting(debtBefore, amount);
-  const borrowAccounting = calculateBorrowAccounting(debtBefore, amount);
+  const borrowAccounting = calculateBorrowAccounting(
+    debtBefore,
+    amount,
+    quoted === null ? null : quotedBorrowFee(quoted.quote),
+  );
 
   async function getQuote() {
     if (!safetyCheck.canProceed) return;
@@ -414,15 +419,19 @@ export function Borrow({
                 </span>
               </div>
               <div className="debt-card">
-                <span className="debt-card-label">Est. Protocol Origination Fee (0.3%)</span>
+                <span className="debt-card-label">Protocol Fee</span>
                 <span className="debt-card-value muted">
-                  {(Number(borrowAccounting.estimatedFee) / 1e6).toLocaleString()} USDCx
+                  {borrowAccounting.quotedFee === null
+                    ? "Not known until quoted"
+                    : `${(Number(borrowAccounting.quotedFee) / 1e6).toLocaleString()} USDCx`}
                 </span>
               </div>
               <div className="debt-card">
                 <span className="debt-card-label">Net USDCx Received</span>
                 <span className="debt-card-value success-text">
-                  {(Number(borrowAccounting.netReceived) / 1e6).toLocaleString()} USDCx
+                  {borrowAccounting.netReceived === null
+                    ? "Not known until quoted"
+                    : `${(Number(borrowAccounting.netReceived) / 1e6).toLocaleString()} USDCx`}
                 </span>
               </div>
               <div className="debt-card highlight">

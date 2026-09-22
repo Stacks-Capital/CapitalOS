@@ -264,7 +264,8 @@ test("swap routing journey quotes Bitflow AMM, displays impact and route hops", 
   await expect(page.getByRole("heading", { name: "Review before signing" })).toBeVisible();
   await expect(page.locator(".route-contract").getByText(/dlmm-swap-router/)).toBeVisible();
   await expect(page.getByText("Price Impact", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Validation required|Sign in your wallet/ })).toBeVisible();
+  // The quote's asset identifiers must reconcile against the registry, or this stays "Validation required".
+  await expect(page.getByRole("button", { name: "Sign in your wallet" })).toBeVisible();
 });
 
 test("risk and alerts journey allows view toggle and advisory consent", async ({ page }) => {

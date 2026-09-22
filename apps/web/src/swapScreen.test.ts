@@ -13,8 +13,10 @@ import {
   verifyMinimumOutputEnforcement,
 } from "./swapState.ts";
 
-const SBTC_MAINNET = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token";
-const USDCX_MAINNET = "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token::usdcx-token";
+// Canonical asset identifiers, exactly as the signed registry and formatAssetId produce them.
+// scripts/checks/web-registry-assets.test.ts pins these principals against packages/config.
+const SBTC_MAINNET = "stacks:mainnet:contract:SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token:sbtc-token";
+const USDCX_MAINNET = "stacks:mainnet:contract:SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx:usdcx-token";
 const NOW = new Date("2026-09-22T12:00:00.000Z");
 
 function sampleQuoteWire(overrides: Partial<QuoteWire> = {}): QuoteWire {
@@ -58,7 +60,7 @@ function samplePlanWire(quote: QuoteWire, minOut: string = "6467500000"): PlanWi
           functionArgs: [
             { type: "principal", value: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.sbtc-usdcx-dlmm-fixture" },
             { type: "principal", value: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token" },
-            { type: "principal", value: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token" },
+            { type: "principal", value: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx" },
             { type: "uint", value: "10000000" },
             { type: "uint", value: minOut },
             { type: "uint", value: "8" },

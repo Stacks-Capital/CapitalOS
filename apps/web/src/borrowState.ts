@@ -26,8 +26,10 @@ export type RepayAccounting = {
 export type BorrowAccounting = {
   currentDebt: bigint;
   requestedBorrow: bigint;
-  estimatedFee: bigint;
-  netReceived: bigint;
+  /** Null until a quote states the fee. An unquoted fee is unknown, never zero and never assumed. */
+  quotedFee: bigint | null;
+  /** Null while the fee is unknown, because what reaches the wallet cannot be stated without it. */
+  netReceived: bigint | null;
   newTotalDebt: bigint;
 };
 
@@ -129,24 +131,55 @@ export function calculateDebtAccounting(debtBefore: bigint, repayInput: string):
   };
 }
 
+export type QuotedFees = {
+  expectedOutput: readonly { asset: string; quantity: string }[];
+  fees: readonly { amount: { asset?: string | undefined; quantity: string } }[];
+};
+
 /**
- * Calculates explicit borrow accounting (requested borrow, protocol fees, net received, new total debt).
+ * Reads the borrow fee out of a quote, in the borrowed asset's base units.
+ *
+ * Only fees denominated in the borrowed asset are counted: a network fee paid in STX does not
+ * reduce the USDCx that reaches the wallet. Returns null when the quote names no borrowed asset,
+ * so the caller reports the fee as unknown rather than as zero.
+ */
+export function quotedBorrowFee(quote: QuotedFees): bigint | null {
+  const borrowed = quote.expectedOutput[0];
+  if (borrowed === undefined) return null;
+
+  let total = 0n;
+  for (const fee of quote.fees) {
+    if (fee.amount.asset !== borrowed.asset) continue;
+    try {
+      total += BigInt(fee.amount.quantity);
+    } catch {
+      return null;
+    }
+  }
+  return total;
+}
+
+/**
+ * Calculates explicit borrow accounting (requested borrow, quoted fees, net received, new total debt).
+ *
+ * The fee is whatever the quote states, in the borrowed asset's base units. There is no default
+ * rate: CapitalOS does not invent rates, and a borrow origination fee cannot be known before the
+ * protocol quotes it. Pass null before a quote exists and the fee and net received stay unknown.
  */
 export function calculateBorrowAccounting(
   debtBefore: bigint,
   borrowInput: string,
-  feeBps = 30, // default 0.30% protocol borrow origination fee
+  quotedFee: bigint | null,
 ): BorrowAccounting {
   const cleanInput = borrowInput.trim();
   const requestedBorrow = /^[0-9]+$/.test(cleanInput) ? BigInt(cleanInput) : 0n;
-  const estimatedFee = (requestedBorrow * BigInt(feeBps)) / 10000n;
-  const netReceived = requestedBorrow > estimatedFee ? requestedBorrow - estimatedFee : 0n;
+  const netReceived = quotedFee === null ? null : requestedBorrow > quotedFee ? requestedBorrow - quotedFee : 0n;
   const newTotalDebt = debtBefore + requestedBorrow;
 
   return {
     currentDebt: debtBefore,
     requestedBorrow,
-    estimatedFee,
+    quotedFee,
     netReceived,
     newTotalDebt,
   };
