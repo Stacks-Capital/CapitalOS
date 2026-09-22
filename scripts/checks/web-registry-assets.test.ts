@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ASSETS } from "../../packages/config/src/deployments.ts";
-import { SBTC_DEF, USDCX_DEF } from "../../apps/web/src/liquidityState.ts";
+import { ASSETS, BITFLOW_ALLOWED_POOLS, CAPABILITIES } from "../../packages/config/src/deployments.ts";
+import { ALLOWED_POOL_PRINCIPALS, SBTC_DEF, USDCX_DEF } from "../../apps/web/src/liquidityState.ts";
+import { getStakingRoutes } from "../../apps/web/src/stakingState.ts";
 import { CANONICAL_SWAP_ASSETS, reconcileSwapAssets } from "../../apps/web/src/swapState.ts";
 
 /*
@@ -73,5 +74,39 @@ describe("the web app's asset table matches the signed registry", () => {
       "mainnet",
     );
     assert.equal(result.reconciled, false);
+  });
+});
+
+/*
+ * The liquidity and staking screens carry their own copies of registry state too. Both are
+ * currently empty or unavailable, which is correct, but nothing made them follow the registry
+ * when it changes. These checks fail the moment the registry enables something the screens
+ * still present as unavailable, which is the point at which they need wiring up.
+ */
+describe("the web app's capability copies follow the registry", () => {
+  it("keeps the liquidity pool allowlist equal to the registry's", () => {
+    assert.deepEqual([...ALLOWED_POOL_PRINCIPALS], [...BITFLOW_ALLOWED_POOLS]);
+  });
+
+  it("marks a staking route unavailable exactly when the registry has no enabled capability", () => {
+    // Stated both ways on purpose. Only checking the enabled direction would pass vacuously
+    // today, because no staking protocol is enabled yet, and would keep passing if a route were
+    // quietly hardcoded as executable.
+    for (const network of ["mainnet", "testnet"] as const) {
+      for (const route of getStakingRoutes(network)) {
+        const enabled = CAPABILITIES.some(
+          (capability) =>
+            capability.protocol === route.protocol && capability.network === network && capability.state === "enabled",
+        );
+        assert.equal(
+          route.capabilityState === "unavailable",
+          !enabled,
+          enabled
+            ? `the registry enables ${route.protocol} on ${network}, but the staking screen hardcodes it unavailable`
+            : `the staking screen offers ${route.protocol} on ${network}, but the registry enables no such capability`,
+        );
+        assert.equal(route.executable, enabled, `${route.protocol} on ${network} executable flag`);
+      }
+    }
   });
 });

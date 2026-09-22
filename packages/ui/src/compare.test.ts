@@ -183,11 +183,23 @@ describe("what is never ranked", () => {
     assert.equal(comparison.groups[0]?.rows[0]?.rank, 1);
   });
 
-  it("mentions unknown liquidity without refusing to rank", () => {
+  it("refuses to rank when available liquidity is unknown", () => {
     const comparison = compareEarn([option({ availableLiquidity: null })], NOW);
     const row = rowFor(comparison, "zest.sbtc.vault");
-    assert.equal(row?.rank, 1);
-    assert.ok(row?.notes.some((note) => note.includes("liquidity is unknown")));
+    assert.equal(row?.rank, null);
+    assert.ok(row?.notes.some((note) => note.includes("Available liquidity is unknown")));
+  });
+
+  it("refuses to rank when the supply cap is unknown", () => {
+    const comparison = compareEarn([option({ capacity: null })], NOW);
+    const row = rowFor(comparison, "zest.sbtc.vault");
+    assert.equal(row?.rank, null);
+    assert.ok(row?.notes.some((note) => note.includes("Supply cap is unknown")));
+  });
+
+  it("ranks when both capacity and liquidity are evidenced", () => {
+    const comparison = compareEarn([option({ capacity: "500000000000", availableLiquidity: "66022279734" })], NOW);
+    assert.equal(rowFor(comparison, "zest.sbtc.vault")?.rank, 1);
   });
 
   it("accepts exactly 300-second-old evidence and rejects it at 301 seconds", () => {
