@@ -7,6 +7,7 @@ import {
   calculateDebtAccounting,
   calculateEasyRisk,
   isActionSafeToProceed,
+  quotedBorrowFee,
 } from "./borrowState.ts";
 
 describe("Borrow, Repay, and Collateral Management Screen (I35)", () => {
@@ -115,18 +116,55 @@ describe("Borrow, Repay, and Collateral Management Screen (I35)", () => {
   });
 
   describe("borrow accounting", () => {
-    it("calculates requested borrow, origination fees, net received, and new debt balance", () => {
+    it("uses the fee the quote states, not an assumed rate", () => {
       const debtBefore = 10000000000n; // 10,000 USDCx
-      const res = calculateBorrowAccounting(debtBefore, "5000000000", 30); // Borrow 5,000 USDCx at 30 bps (0.3%)
+      const res = calculateBorrowAccounting(debtBefore, "5000000000", 15000000n); // Borrow 5,000, quoted fee 15
 
       assert.equal(res.currentDebt, 10000000000n);
       assert.equal(res.requestedBorrow, 5000000000n);
-      // Fee = 5,000 * 0.003 = 15 USDCx = 15000000
-      assert.equal(res.estimatedFee, 15000000n);
-      // Net = 5,000 - 15 = 4,985 USDCx = 4985000000
+      assert.equal(res.quotedFee, 15000000n);
+      // Net = 5,000 - 15 = 4,985 USDCx
       assert.equal(res.netReceived, 4985000000n);
       // New total debt = 10,000 + 5,000 = 15,000 USDCx
       assert.equal(res.newTotalDebt, 15000000000n);
+    });
+
+    it("leaves the fee and net received unknown before a quote, never zero", () => {
+      const res = calculateBorrowAccounting(10000000000n, "5000000000", null);
+
+      assert.equal(res.quotedFee, null);
+      assert.equal(res.netReceived, null);
+      // The debt the borrow creates is known without a fee, so it is still stated.
+      assert.equal(res.newTotalDebt, 15000000000n);
+    });
+  });
+
+  describe("reading the fee out of a quote", () => {
+    const borrowed = "stacks:mainnet:contract:SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx:usdcx-token";
+
+    it("counts only fees denominated in the borrowed asset", () => {
+      const fee = quotedBorrowFee({
+        expectedOutput: [{ asset: borrowed, quantity: "5000000000" }],
+        fees: [
+          { amount: { asset: borrowed, quantity: "12000000" } },
+          { amount: { asset: "stacks:mainnet:native:stx", quantity: "180000" } },
+        ],
+      });
+
+      assert.equal(fee, 12000000n);
+    });
+
+    it("reports no borrowed asset as unknown", () => {
+      assert.equal(quotedBorrowFee({ expectedOutput: [], fees: [] }), null);
+    });
+
+    it("reports a quote with no fee in the borrowed asset as zero, not unknown", () => {
+      const fee = quotedBorrowFee({
+        expectedOutput: [{ asset: borrowed, quantity: "5000000000" }],
+        fees: [{ amount: { asset: "stacks:mainnet:native:stx", quantity: "180000" } }],
+      });
+
+      assert.equal(fee, 0n);
     });
   });
 
