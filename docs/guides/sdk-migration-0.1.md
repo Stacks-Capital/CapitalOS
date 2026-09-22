@@ -12,7 +12,7 @@ For the complete step-by-step external developer guide, see the [Partner Integra
 ## Breaking
 
 - **No default network.** `requireNetwork(undefined)` and any SDK entry that needs a network throw. Pass `"mainnet"` or `"testnet"` explicitly.
-- **SDK never broadcasts.** `createCapitalOS(...).submit()` throws `UNSUPPORTED_ACTION`. The host wallet broadcasts after `assertReadyToSign` / `toWalletRequest`.
+- **SDK never broadcasts.** `createStacks Capital(...).submit()` throws `UNSUPPORTED_ACTION`. The host wallet broadcasts after `assertReadyToSign` / `toWalletRequest`.
 - **Staking stays disabled.** `executable("stake", …)` is false on both networks.
 - **API envelope locked.** `schemaVersion` must be `"1.0"`. Clients that omit it fail closed.
 - **Money stays strings.** Quote/plan wire quantities that arrive as JavaScript numbers are rejected.
@@ -50,14 +50,14 @@ Quote and plan come from the Capital API. The SDK only validates and holds workf
 
 ### Entry Flow (Supply)
 ```ts
-const os = createCapitalOS({ network: "mainnet" });
+const os = createStacks Capital({ network: "mainnet" });
 const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender });
 os.assertReadyToSign(parsePlan(plan), parseQuote(quote), { sender });
 ```
 
 ### Exit Flow (Withdraw Supply / Redeem)
 ```ts
-const os = createCapitalOS({ network: "mainnet" });
+const os = createStacks Capital({ network: "mainnet" });
 const checked = os.validate(parsePlan(exitPlan), parseQuote(exitQuote), { sender });
 os.assertReadyToSign(parsePlan(exitPlan), parseQuote(exitQuote), { sender });
 ```

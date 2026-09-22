@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { createCapitalOS } from "@stacks-capital/sdk";
+import { createStacksCapital } from "@stacks-capital/sdk";
 import { startDemoCapitalApi, type DemoServer } from "./demo-server.ts";
 import {
   DISPOSABLE_TEST_MNEMONIC,
@@ -72,7 +72,7 @@ describe("partner example", () => {
   it("derives the disposable mnemonic, signs the unsigned plan, and does not broadcast", {
     skip: isMnemonic(DISPOSABLE_TEST_MNEMONIC) ? false : "no disposable mnemonic configured",
   }, async () => {
-    const os = createCapitalOS({ network: "mainnet" });
+    const os = createStacksCapital({ network: "mainnet" });
     const owner = ownerFromMnemonic(DISPOSABLE_TEST_MNEMONIC, "mainnet").address;
     assert.match(owner, /^SP/);
     assert.equal(os.networkGuard({ stx: owner }), null);

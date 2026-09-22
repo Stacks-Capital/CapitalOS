@@ -20,7 +20,7 @@ function installed(command: string, args: string[]): boolean {
 }
 
 function tempTree(files: Record<string, string>): string {
-  const dir = mkdtempSync(join(tmpdir(), "capitalos-gates-"));
+  const dir = mkdtempSync(join(tmpdir(), "stacks-capital-gates-"));
   temps.push(dir);
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });

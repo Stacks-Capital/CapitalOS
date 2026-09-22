@@ -137,7 +137,7 @@ export async function createNonce(
   const nonceId = `non_${randomBytes(16).toString("hex")}`;
   const expiresAt = new Date(input.now.getTime() + input.ttlSeconds * 1000);
   const message = [
-    "Capital OS wants you to sign in with your Stacks account:",
+    "Stacks Capital wants you to sign in with your Stacks account:",
     input.address,
     "",
     `Origin: ${input.origin}`,

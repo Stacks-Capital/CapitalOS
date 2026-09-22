@@ -61,7 +61,7 @@
          |  - Auto-refresh oracle, debt, and limits on action change |
          |  - Stale oracle or quorum disagreement blocks plan        |
          |  - LTV projection limit breach blocks quote creation      |
-         |  - Offline SDK plan validation (canSign, createCapitalOS) |
+         |  - Offline SDK plan validation (canSign, createStacks Capital) |
          |  - Scoped storage persistence for reload resilience       |
          +-----------------------------------------------------------+
 ```
@@ -101,10 +101,10 @@
    - Includes Mode Toggle (`Easy` vs `Advanced`) with persistent selection.
    - Dedicated "Repay Full Debt" convenience button that fills the maximum outstanding liability.
    - Integrated quote lifecycle management: form $\to$ quoting $\to$ reviewing $\to$ signing $\to$ confirming $\to$ confirmed.
-   - Offline plan validation using `createCapitalOS({ network }).validate(plan)` before wallet handoff.
+   - Offline plan validation using `createStacks Capital({ network }).validate(plan)` before wallet handoff.
 
 2. **Design System & Accessibility (`styles.css`)**:
-   - Built on CapitalOS CSS variables (`--bg-canvas`, `--border-default`, `--accent-primary`, etc.).
+   - Built on Stacks Capital CSS variables (`--bg-canvas`, `--border-default`, `--accent-primary`, etc.).
    - 100% WCAG 2.1 AA compliant color contrast (safe green `#10b981`, moderate amber `#f59e0b`, danger rose `#ef4444`).
    - Responsive flexbox and grid layouts for both desktop and mobile viewports.
 

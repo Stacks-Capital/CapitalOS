@@ -7,7 +7,7 @@ import {
   serializeQuote,
 } from "../../packages/core/src/index.ts";
 import { createExecutionEngine, executable, loadServerReads } from "../../packages/engine/src/index.ts";
-import { createCapitalOS } from "../../packages/sdk/src/index.ts";
+import { createStacksCapital } from "../../packages/sdk/src/index.ts";
 import {
   FIXTURE_NOW,
   MAINNET_OWNER,
@@ -80,7 +80,7 @@ const engine = createExecutionEngine({
   owner: MAINNET_OWNER,
   now,
 });
-const os = createCapitalOS({ network: "mainnet", now });
+const os = createStacksCapital({ network: "mainnet", now });
 const signing = { sender: MAINNET_OWNER };
 
 try {

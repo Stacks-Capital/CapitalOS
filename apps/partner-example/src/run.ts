@@ -1,4 +1,4 @@
-import { createCapitalOS } from "@stacks-capital/sdk";
+import { createStacksCapital } from "@stacks-capital/sdk";
 import { startDemoCapitalApi } from "./demo-server.ts";
 import { FALLBACK_SANDBOX_OWNER, getDisposableMnemonic } from "./disposable-test-account.ts";
 import { ownerFromMnemonic, signUnsignedPlan } from "./host-sign.ts";
@@ -19,7 +19,7 @@ const owner =
 const demo = apiBase === undefined || apiBase === "" ? await startDemoCapitalApi({ live }) : null;
 
 try {
-  console.log("Capital OS partner example");
+  console.log("Stacks Capital partner example");
   console.log(`  mode: ${live ? "live Hiro/Emily/DIA" : "fixtures"}`);
   console.log(`  api: ${demo?.url ?? apiBase}`);
   console.log(`  owner: ${owner}`);
@@ -40,7 +40,7 @@ try {
 
   if (canSign) {
     const signedSupply = await signUnsignedPlan(supplyResult.plan, mnemonic, "mainnet");
-    const outcome = createCapitalOS({ network: "mainnet" }).inspectWalletResult(signedSupply);
+    const outcome = createStacksCapital({ network: "mainnet" }).inspectWalletResult(signedSupply);
     console.log(
       `  host sign: ${outcome} ${signedSupply.functionName} ${signedSupply.contractId} (${String(signedSupply.transaction.length)} hex chars, not broadcast)`,
     );
@@ -64,7 +64,7 @@ try {
 
   if (canSign) {
     const signedExit = await signUnsignedPlan(exitResult.plan, mnemonic, "mainnet");
-    const outcome = createCapitalOS({ network: "mainnet" }).inspectWalletResult(signedExit);
+    const outcome = createStacksCapital({ network: "mainnet" }).inspectWalletResult(signedExit);
     console.log(
       `  host sign: ${outcome} ${signedExit.functionName} ${signedExit.contractId} (${String(signedExit.transaction.length)} hex chars, not broadcast)`,
     );

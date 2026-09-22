@@ -43,7 +43,7 @@ export async function loadMigrations(dir: string): Promise<Migration[]> {
 export async function migrate(sql: Sql, dir: string): Promise<MigrationResult> {
   const migrations = await loadMigrations(dir);
   return sql.begin(async (tx) => {
-    await tx`SELECT pg_advisory_xact_lock(hashtext('capitalos_migrations'))`;
+    await tx`SELECT pg_advisory_xact_lock(hashtext('stacks_capital_migrations'))`;
     await tx`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         version text PRIMARY KEY,

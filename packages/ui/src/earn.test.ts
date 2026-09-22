@@ -76,9 +76,9 @@ describe("resuming after a reload", () => {
     assert.equal(loadPending(storage, otherTenantScope), null);
     assert.equal(loadPending(storage, defaultScope), null);
 
-    assert.equal(pendingKey(tenantScope), `capitalos:pending:tenant_partner_1:mainnet:${OWNER}`);
-    assert.equal(pendingKey(otherTenantScope), `capitalos:pending:tenant_partner_2:mainnet:${OWNER}`);
-    assert.equal(pendingKey(defaultScope), `capitalos:pending:mainnet:${OWNER}`);
+    assert.equal(pendingKey(tenantScope), `stacks-capital:pending:tenant_partner_1:mainnet:${OWNER}`);
+    assert.equal(pendingKey(otherTenantScope), `stacks-capital:pending:tenant_partner_2:mainnet:${OWNER}`);
+    assert.equal(pendingKey(defaultScope), `stacks-capital:pending:mainnet:${OWNER}`);
   });
 
   it("forgets it when the flow is finished", () => {

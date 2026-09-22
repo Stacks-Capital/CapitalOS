@@ -1,7 +1,7 @@
 import type { QuotedPlan } from "@stacks-capital/client";
 import { useCapital, usePrices } from "@stacks-capital/react";
 import {
-  createCapitalOS,
+  createStacksCapital,
   parsePlan,
   parseQuote,
   type PlanWire,
@@ -67,7 +67,7 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
   const [problem, setProblem] = useState<string | null>(null);
 
   const network: StacksNetwork = (wallet?.network as StacksNetwork) || "mainnet";
-  const storageKey = wallet ? `capital_os_swap_workflow_${network}_${wallet.address}` : null;
+  const storageKey = wallet ? `stacks_capital_swap_workflow_${network}_${wallet.address}` : null;
 
   // Restore pending workflow on mount or wallet change
   useEffect(() => {
@@ -203,7 +203,7 @@ export function Swap({ wallet, signedIn }: { wallet: ConnectedWallet | null; sig
         throw new Error("The connected wallet provider is unavailable.");
       }
 
-      const os = createCapitalOS({ network: started.data.plan.network });
+      const os = createStacksCapital({ network: started.data.plan.network });
       const validation = os.validate(parsePlan(started.data.plan as PlanWire), parseQuote(quoted.quote as QuoteWire), {
         sender: wallet.address,
       });

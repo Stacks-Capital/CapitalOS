@@ -1,4 +1,4 @@
-# Capital OS docs
+# Stacks Capital docs
 
 ## Start here
 

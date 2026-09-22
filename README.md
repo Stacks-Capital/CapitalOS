@@ -1,10 +1,10 @@
-# Everything Stacks
+# Stacks Capital
 
-Everything Stacks is a non-custodial application for Bitcoin capital on Stacks. It moves BTC into sBTC, compares verified yield, borrows against Bitcoin collateral, swaps, provides liquidity, and takes capital back out, with the risk and the evidence behind every number visible before anything is signed.
+Stacks Capital is a non-custodial application for Bitcoin capital on Stacks. It moves BTC into sBTC, compares verified yield, borrows against Bitcoin collateral, swaps, provides liquidity, and takes capital back out, with the risk and the evidence behind every number visible before anything is signed.
 
-It is built on the CapitalOS platform in this repository: protocol adapters, a signed capability registry, guarded plan construction, a durable workflow engine, and a public SDK. Everything Stacks consumes the same public packages a partner would install. It is consumer number one, not a special case.
+This repository holds both halves: the platform, which is the protocol adapters, the signed capability registry, guarded plan construction, the durable workflow engine and the public SDK, and the application built on top of it. The application imports only the public packages a partner would install, enforced in CI. It is consumer number one, not a special case.
 
-The product is designed around one operating rule: **unknown, stale and unsupported are explicit states, never zero, and the user's wallet signs every transaction directly against the protocol**. CapitalOS never holds keys or funds, never pools capital, and never constructs a call to a contract it has not reviewed.
+The product is designed around one operating rule: **unknown, stale and unsupported are explicit states, never zero, and the user's wallet signs every transaction directly against the protocol**. Stacks Capital never holds keys or funds, never pools capital, and never constructs a call to a contract it has not reviewed.
 
 ## Status
 
@@ -20,7 +20,7 @@ This is not launched. There is no deployed URL, and no user has moved mainnet fu
 
 Open blockers are tracked in [`docs/release/pilot-checklist.md`](docs/release/pilot-checklist.md). We publish these rather than hide them, because a green test suite is not evidence that a product works. Two of the blockers were found by re-running commands and reading code after the suite was already green.
 
-## What CapitalOS provides
+## What Stacks Capital provides
 
 ### Evidence-gated reads
 
@@ -76,7 +76,7 @@ Every action runs the same lifecycle: choose, quote, review, wallet sign, submit
 
 Workflows currently reach `STEP_CONFIRMED` from chain evidence. Completion requires canonical position reconciliation, which is not built yet, so nothing reaches `COMPLETED`.
 
-### Everything Stacks application
+### The application
 
 Ten screens, each built only on public SDK exports, enforced in CI: Overview, Deposit BTC, Earn, Borrow, Swap, Liquidity, Staking, Positions, Risk and Activity.
 
@@ -149,7 +149,7 @@ pnpm db:restore-drill
 ```text
 apps/
   api/                    Versioned HTTP API, tenant scopes, sessions, signed webhooks
-  web/                    Everything Stacks application, ten screens
+  web/                    Stacks Capital application, ten screens
   worker/                 Ingestion, projections, reconciliation, confirmations, health
   e2e/                    Playwright journeys and accessibility scans
   partner-example/        External partner integration, public packages only
@@ -175,7 +175,7 @@ docs/                     Architecture, engineering, runbooks, release evidence
 
 ## Safety status
 
-- CapitalOS holds no private keys and no user funds.
+- Stacks Capital holds no private keys and no user funds.
 - There are no pooled or discretionary vaults.
 - An unreviewed contract cannot produce an executable plan.
 - Prices fail closed on quorum disagreement.

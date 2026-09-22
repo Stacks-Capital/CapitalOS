@@ -36,7 +36,7 @@ import {
 import { classifyWalletError, networkGuard, type WalletId } from "@stacks-capital/wallets";
 import type { CapitalError, ErrorCode } from "@stacks-capital/core";
 
-export type CapitalOSOptions = {
+export type StacksCapitalOptions = {
   network: StacksNetwork;
   now?: Date;
 };
@@ -47,7 +47,7 @@ export type SigningInput = Omit<SigningContext, "network" | "registryVersion" | 
  * Local client for orchestration, plan validation, workflow progression, and wallet classification.
  * Runs in both browser and server environments without depending on Node built-ins or server internals.
  */
-export type CapitalOS = {
+export type StacksCapital = {
   /** Target Stacks network. */
   network: StacksNetwork;
 
@@ -159,7 +159,7 @@ export type CapitalOS = {
   inspectWalletResult(result: unknown): WalletOutcome;
 
   /**
-   * Maps wallet-specific error structures (Leather, Xverse) to canonical CapitalOS ErrorCodes.
+   * Maps wallet-specific error structures (Leather, Xverse) to canonical Stacks Capital ErrorCodes.
    */
   classifyWalletError(wallet: WalletId, error: unknown): ErrorCode;
 
@@ -184,7 +184,7 @@ function assertNetwork(workflow: Workflow, network: StacksNetwork): void {
   }
 }
 
-export function createCapitalOS(options: CapitalOSOptions): CapitalOS {
+export function createStacksCapital(options: StacksCapitalOptions): StacksCapital {
   const network = requireNetwork(options.network);
 
   function signingContext(signing: SigningInput | undefined): SigningContext {

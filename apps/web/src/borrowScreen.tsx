@@ -1,6 +1,6 @@
 import type { QuotedPlan, StartedWorkflow } from "@stacks-capital/client";
 import { useCapital, useMarketRisk, useWorkflow } from "@stacks-capital/react";
-import { createCapitalOS, parsePlan, parseQuote, type PlanWire, type QuoteWire } from "@stacks-capital/sdk";
+import { createStacksCapital, parsePlan, parseQuote, type PlanWire, type QuoteWire } from "@stacks-capital/sdk";
 import type { WalletId } from "@stacks-capital/wallets";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -67,7 +67,7 @@ const storage = (): Storage | null => {
 };
 
 function sdkValidation(plan: QuotedPlan["plan"], quote: QuotedPlan["quote"], sender: string) {
-  const os = createCapitalOS({ network: plan.network });
+  const os = createStacksCapital({ network: plan.network });
   return os.validate(parsePlan(plan as PlanWire), parseQuote(quote as QuoteWire), { sender });
 }
 

@@ -70,7 +70,7 @@ The write path the flow needs did not exist. No task in the split assigned it, s
 
 | Route | What it does |
 |---|---|
-| `POST /v1/quotes` | Runs `createCapitalOS` with server side reads, stores the quote and its plan, returns both |
+| `POST /v1/quotes` | Runs `createStacks Capital` with server side reads, stores the quote and its plan, returns both |
 | `POST /v1/workflows` | Turns a quote into a workflow at `AWAITING_SIGNATURE` with its steps. One workflow per idempotency key |
 | `POST /v1/workflows/{id}/signature` | Records what the wallet answered and moves the workflow |
 

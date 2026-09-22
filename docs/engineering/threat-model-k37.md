@@ -7,13 +7,13 @@
 | Depends on | K34–K36 |
 | Date | 2026-09-21 |
 
-Review of signing, allowlists, slippage, oracle, reorg, adapter and tenant boundaries after plan hardening, workflow recovery and risk semantics. Findings are closed in code/tests or listed as explicit launch blocks. Scope stays non-custodial: the host wallet broadcasts; CapitalOS does not operate a pooled discretionary vault.
+Review of signing, allowlists, slippage, oracle, reorg, adapter and tenant boundaries after plan hardening, workflow recovery and risk semantics. Findings are closed in code/tests or listed as explicit launch blocks. Scope stays non-custodial: the host wallet broadcasts; Stacks Capital does not operate a pooled discretionary vault.
 
 ## Scope and stance
 
 - In-scope writes: sBTC deposit/withdraw, Zest supply/redeem, Granite supply/borrow/repay/withdraw_supply, Bitflow swap.
 - Explicitly out: staking lockups (capability disabled), Zest user borrow (redirect to Granite), live Bitflow pools until pinned.
-- Non-custodial: `createCapitalOS().submit()` throws; deny-mode post-conditions bind the sender; no CapitalOS custody of keys or pooled strategy vault (`zvstBTC` excluded).
+- Non-custodial: `createStacks Capital().submit()` throws; deny-mode post-conditions bind the sender; no Stacks Capital custody of keys or pooled strategy vault (`zvstBTC` excluded).
 
 ## Control matrix
 

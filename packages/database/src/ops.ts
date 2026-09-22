@@ -237,7 +237,7 @@ export async function effectiveCapability(
  * Returns true if the lock was acquired, false if another worker process is already running.
  */
 export async function tryAcquireWorkerLock(sql: Sql, processName: string, network: NetworkName): Promise<boolean> {
-  const lockKey = `capitalos:worker:${processName}:${network}`;
+  const lockKey = `stacks-capital:worker:${processName}:${network}`;
   const [row] = await sql<{ acquired: boolean }[]>`
     SELECT pg_try_advisory_lock(hashtext(${lockKey})) AS acquired
   `;
@@ -248,7 +248,7 @@ export async function tryAcquireWorkerLock(sql: Sql, processName: string, networ
  * Releases the session-level advisory lock for a worker process on a network.
  */
 export async function releaseWorkerLock(sql: Sql, processName: string, network: NetworkName): Promise<boolean> {
-  const lockKey = `capitalos:worker:${processName}:${network}`;
+  const lockKey = `stacks-capital:worker:${processName}:${network}`;
   const [row] = await sql<{ released: boolean }[]>`
     SELECT pg_advisory_unlock(hashtext(${lockKey})) AS released
   `;

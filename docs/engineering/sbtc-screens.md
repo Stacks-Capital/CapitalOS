@@ -18,7 +18,7 @@ Pending BTC (Bitcoin in transit or waiting for signer mint) and spendable sBTC (
 
 ### 2.1 Deposit Lifecycle (K25)
 
-CapitalOS treats a Bitcoin transaction, Emily signer status, and a canonical Stacks mint as three distinct facts:
+Stacks Capital treats a Bitcoin transaction, Emily signer status, and a canonical Stacks mint as three distinct facts:
 - **`submitted`**: Bitcoin deposit transaction broadcast to the network.
 - **`confirming`**: Bitcoin observer tracks block height and confirmations against the required threshold.
 - **`signer_processing`**: Public Emily reports status (`pending`, `accepted`, `confirmed`).
@@ -31,7 +31,7 @@ CapitalOS treats a Bitcoin transaction, Emily signer status, and a canonical Sta
 
 ### 2.2 Withdrawal Lifecycle (K26)
 
-CapitalOS separates the Stacks request, signer status, canonical accounting, and Bitcoin payout:
+Stacks Capital separates the Stacks request, signer status, canonical accounting, and Bitcoin payout:
 - **`request_confirming`**: Stacks transaction initiated via `sbtc-withdrawal` contract call.
 - **`signer_processing`**: Emily reports status for the request ID. Expected fulfillment txids and heights from Emily are labeled as estimates.
 - **`signer_rejection_pending`**: If signers reject the request (`status: "failed"` in Emily), funds remain locked in the contract until the canonical registry records the rejection status. It is **never** presented as recovered funds until that on-chain transaction unlocks the funds atomically.

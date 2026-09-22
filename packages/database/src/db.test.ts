@@ -72,7 +72,7 @@ describe("database", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : f
     });
 
     it("refuse to continue when an applied file was edited", async () => {
-      const folder = await mkdtemp(join(tmpdir(), "capitalos-migrations-"));
+      const folder = await mkdtemp(join(tmpdir(), "stacks-capital-migrations-"));
       folders.push(folder);
       await cp(MIGRATIONS, folder, { recursive: true });
       const sql = await freshSchema(false);
@@ -82,7 +82,7 @@ describe("database", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : f
     });
 
     it("refuse to continue when an applied file is missing", async () => {
-      const folder = await mkdtemp(join(tmpdir(), "capitalos-migrations-"));
+      const folder = await mkdtemp(join(tmpdir(), "stacks-capital-migrations-"));
       folders.push(folder);
       await cp(MIGRATIONS, folder, { recursive: true });
       const sql = await freshSchema(false);

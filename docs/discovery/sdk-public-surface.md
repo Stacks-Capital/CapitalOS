@@ -3,18 +3,18 @@
 | | |
 |---|---|
 | Task | Public SDK facade (validate unsigned plans) |
-| Requirements | SDK-first architecture: partners and Everything Stacks use the same public client |
+| Requirements | SDK-first architecture: partners and Stacks Capital use the same public client |
 | Owner / reviewer | kenzman / IBK |
 | Depends on | K03–K14 adapters and the server engine. Does not implement I07 HTTP client, I10 UI, or K16 staking. |
 
-The browser product is this client. `@stacks-capital/web` and partner apps must call `createCapitalOS`. They must not import protocol adapters, `@stacks-capital/engine`, or transaction builders. Quotes and plans are minted by the Capital API (`POST /v1/quotes`, `POST /v1/plans`) using server-side Hiro/DIA reads.
+The browser product is this client. `@stacks-capital/web` and partner apps must call `createStacks Capital`. They must not import protocol adapters, `@stacks-capital/engine`, or transaction builders. Quotes and plans are minted by the Capital API (`POST /v1/quotes`, `POST /v1/plans`) using server-side Hiro/DIA reads.
 
 ## What the SDK does
 
 ```ts
-import { createCapitalOS, parseQuote, parsePlan } from "@stacks-capital/sdk";
+import { createStacks Capital, parseQuote, parsePlan } from "@stacks-capital/sdk";
 
-const os = createCapitalOS({ network: "mainnet" });
+const os = createStacks Capital({ network: "mainnet" });
 const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender: owner });
 ```
 
@@ -34,6 +34,6 @@ Market routing is by market id (`sbtc.deposit`, `zest.sbtc.vault`, `granite.sbtc
 
 - I07 partner HTTP client wrapping the API.
 - I05 workflow persistence of minted quotes and plans.
-- I10 Everything Stacks UI.
+- I10 Stacks Capital UI.
 - K16 Bitcoin L1 lockup signing (staking stays disabled).
 - Host wallet signing (I02 prototype remains separate; SDK only classifies wallet errors).

@@ -38,7 +38,7 @@ drillUrl.pathname = `/${database}`;
 type Check = { name: string; ok: boolean; detail: string };
 const checks: Check[] = [];
 const admin = connect(url);
-const workdir = await mkdtemp(join(tmpdir(), "capitalos-rollback-"));
+const workdir = await mkdtemp(join(tmpdir(), "stacks-capital-rollback-"));
 let api: ReturnType<typeof spawn> | undefined;
 
 async function versions(): Promise<string[]> {

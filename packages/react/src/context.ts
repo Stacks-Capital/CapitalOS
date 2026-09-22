@@ -38,6 +38,6 @@ export function CapitalProvider(props: CapitalProviderProps) {
 
 export function useCapital(): CapitalValue {
   const value = useContext(CapitalContext);
-  if (value === null) throw new Error("Capital OS hooks must be used inside a CapitalProvider");
+  if (value === null) throw new Error("Stacks Capital hooks must be used inside a CapitalProvider");
   return value;
 }

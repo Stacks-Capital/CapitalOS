@@ -1,6 +1,6 @@
 # Protocol adapter certification
 
-CapitalOS adapters are admitted through a deterministic conformance harness before any live workflow certification. Fixture conformance is necessary, but it is not a claim that a protocol or production workflow is live-certified.
+Stacks Capital adapters are admitted through a deterministic conformance harness before any live workflow certification. Fixture conformance is necessary, but it is not a claim that a protocol or production workflow is live-certified.
 
 Run the gate with:
 

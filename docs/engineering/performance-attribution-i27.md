@@ -13,7 +13,7 @@ Deliverables: Reconcile deposits, withdrawals, fees, rewards, and share-rate cha
 ## Architecture
 
 ### 1. Cash-Flow Attribution Engine
-Capital OS strictly avoids mistaking arbitrary balance increases for earned yield:
+Stacks Capital strictly avoids mistaking arbitrary balance increases for earned yield:
 - An external deposit, token transfer, or unmodeled balance increase is **never** labeled as yield.
 - Every position change is audited against canonical cash flows:
   - **`deposit`**: Inflows of capital that establish or increase cost basis.
@@ -57,7 +57,7 @@ Historical performance charts are strictly grounded in canonical observations:
   - `hasChart: false`
   - `points: []` (empty array)
   - `reason: "Insufficient canonical observations: history charts require two or more canonical observations and never synthetic points"`
-- Under no circumstances does Capital OS inject synthetic zero points (e.g. `(0, 0)`), fabricated genesis points, or flatline placeholders.
+- Under no circumstances does Stacks Capital inject synthetic zero points (e.g. `(0, 0)`), fabricated genesis points, or flatline placeholders.
 
 ## API & Client Interface
 

@@ -1,12 +1,12 @@
-# Capital OS Partner Integration Guide
+# Stacks Capital Partner Integration Guide
 
-A complete, end-to-end guide for external partners integrating with Capital OS using public packages (`@stacks-capital/sdk`, `@stacks-capital/client`, `@stacks-capital/react`, `@stacks-capital/ui`).
+A complete, end-to-end guide for external partners integrating with Stacks Capital using public packages (`@stacks-capital/sdk`, `@stacks-capital/client`, `@stacks-capital/react`, `@stacks-capital/ui`).
 
 ---
 
 ## 1. Overview & Architecture
 
-Capital OS operates under a **hybrid execution architecture**:
+Stacks Capital operates under a **hybrid execution architecture**:
 1. **Server API (`apps/api`)**: Mints versioned, deterministic quotes and execution plans, evaluates risk and oracle quorums, tracks durable workflows, and delivers authenticated webhooks.
 2. **Client SDK (`@stacks-capital/sdk`)**: Runs in the partner application (Node.js or browser). Validates unsigned plans against the active on-chain contract registry, evaluates wallet safety guards, and tracks workflow state up to signature readiness.
 3. **Host Wallet / Broadcast**: The partner or user wallet (e.g. Leather, Xverse) inspects post-conditions, signs transactions, and broadcasts directly to the Stacks or Bitcoin network. **The SDK never holds private keys and never broadcasts writes.**
@@ -22,7 +22,7 @@ Capital OS operates under a **hybrid execution architecture**:
                | HTTP                      | Unsigned Plan            | Direct RPC
                v                           |                          v
 +--------------+-------------+             |              +-----------+-------------+
-|      Capital OS API        |-------------+              | Stacks / Bitcoin Network|
+|      Stacks Capital API        |-------------+              | Stacks / Bitcoin Network|
 |  - Engine & Adapters       |                            |                         |
 |  - Oracle Quorum Validator |                            |  5. On-chain Events     |
 |  - Webhook Dispatcher      |                            +-----------+-------------+
@@ -66,7 +66,7 @@ pnpm add @stacks-capital/react @stacks-capital/ui
 
 ## 3. Authentication & Tenant Scoping
 
-Capital OS uses scoped credentials to authenticate API calls:
+Stacks Capital uses scoped credentials to authenticate API calls:
 
 ### Server-to-Server Authentication
 For backend microservices minting quotes or managing webhooks, include an API bearer token:
@@ -138,7 +138,7 @@ try {
 
 ## 5. Quoting & Planning Lifecycle
 
-Capital OS enforces deterministic two-step transactions:
+Stacks Capital enforces deterministic two-step transactions:
 1. **Quote**: Represents financial terms (amounts, minimum outputs, fees, oracle snapshots, expiry).
 2. **Plan**: Represents the exact execution steps (contract calls, post-conditions, recipient, function args).
 
@@ -148,7 +148,7 @@ Entry flows deposit assets into protocols (e.g. sBTC into Zest v0-vault) and rec
 
 ```typescript
 import {
-  createCapitalOS,
+  createStacks Capital,
   parsePlan,
   parseQuote,
   requireNetwork,
@@ -156,7 +156,7 @@ import {
 
 export async function supplyZest(apiBase: string, ownerAddress: string) {
   requireNetwork("mainnet");
-  const os = createCapitalOS({ network: "mainnet" });
+  const os = createStacks Capital({ network: "mainnet" });
 
   // 1. Mint quote and plan from Capital API
   const response = await fetch(`${apiBase}/v1/quotes`, {
@@ -198,7 +198,7 @@ Exit flows redeem claim tokens back into underlying assets (e.g. zsBTC back to s
 ```typescript
 export async function withdrawZest(apiBase: string, ownerAddress: string) {
   requireNetwork("mainnet");
-  const os = createCapitalOS({ network: "mainnet" });
+  const os = createStacks Capital({ network: "mainnet" });
 
   // 1. Request redemption quote and plan
   const response = await fetch(`${apiBase}/v1/quotes`, {
@@ -271,7 +271,7 @@ try {
 
 ## 7. Webhook Integration & Verification
 
-Capital OS delivers asynchronous notifications for state updates (e.g. quote expiry, transaction confirmation, workflow completion, liquidation risk alerts).
+Stacks Capital delivers asynchronous notifications for state updates (e.g. quote expiry, transaction confirmation, workflow completion, liquidation risk alerts).
 
 ### Managing Endpoints
 Create a webhook subscription using the API:
@@ -289,7 +289,7 @@ The response returns a signing secret formatted as `whsec_<48-hex>`. **Store thi
 
 ### Signature Verification (Node.js)
 
-Capital OS signs every webhook payload with HMAC-SHA256:
+Stacks Capital signs every webhook payload with HMAC-SHA256:
 - Header: `x-capital-signature: t=<timestamp>,v1=<signature>`
 - Signed message format: `${timestamp}.${rawBody}`
 
@@ -338,7 +338,7 @@ export function verifyWebhookSignature(
 
 ## 8. Failure Modes, Reorgs & Recovery
 
-Distributed crypto execution occasionally encounters chain reorganizations, stale oracles, or network timeouts. Capital OS classifies errors into actionable recovery paths:
+Distributed crypto execution occasionally encounters chain reorganizations, stale oracles, or network timeouts. Stacks Capital classifies errors into actionable recovery paths:
 
 | Error Code | Meaning | Recovery Action |
 |---|---|---|
@@ -370,7 +370,7 @@ switch (hint) {
 
 ## 9. Disposable Sandbox Credentials
 
-The partner example application (`apps/partner-example`) provides isolated, revocable test credentials in [`disposable-test-account.ts`](file:///home/modev/Stacks%20Ecosystem/CapitalOS/apps/partner-example/src/disposable-test-account.ts):
+The partner example application (`apps/partner-example`) provides isolated, revocable test credentials in [`disposable-test-account.ts`](../../apps/partner-example/src/disposable-test-account.ts):
 
 - **Zero Funding Invariant**: Sandbox phrases must never receive real funds.
 - **Explicit Revocation**: Credentials can be revoked in memory (`revokeDisposableCredentials()`) or through key management CLI (`pnpm keys:revoke`).

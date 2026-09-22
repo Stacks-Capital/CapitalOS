@@ -1,6 +1,6 @@
 # Signed capability and deployment registry
 
-CapitalOS treats contract principals, reviewed assets, adapter versions, and action states as release material. They live in `packages/config/src/deployments.ts` and are included in the Ed25519-signed payload in `packages/config/src/signedRegistry.ts`.
+Stacks Capital treats contract principals, reviewed assets, adapter versions, and action states as release material. They live in `packages/config/src/deployments.ts` and are included in the Ed25519-signed payload in `packages/config/src/signedRegistry.ts`.
 
 ## Runtime guarantees
 

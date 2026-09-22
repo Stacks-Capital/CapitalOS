@@ -82,7 +82,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const raw = unwrap(
       await (provider(wallet) as unknown as RawProvider).request("wallet_connect", {
         addresses: ["payment", "ordinals", "stacks"],
-        message: "Capital OS I02 feasibility",
+        message: "Stacks Capital I02 feasibility",
       }),
     );
     return { summary: "raw wallet_connect answered", raw };
@@ -92,7 +92,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const raw = unwrap(
       await (provider(wallet) as unknown as RawProvider).request("getAddresses", {
         purposes: ["payment", "ordinals", "stacks"],
-        message: "Capital OS I02 feasibility",
+        message: "Stacks Capital I02 feasibility",
       }),
     );
     return { summary: "raw getAddresses answered", raw };
@@ -112,7 +112,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const raw = unwrap(
       await (provider(wallet) as unknown as RawProvider).request("wallet_connect", {
         addresses: ["payment", "ordinals", "stacks"],
-        message: "Capital OS I02 feasibility",
+        message: "Stacks Capital I02 feasibility",
         network: "testnet",
       }),
     );
@@ -144,7 +144,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
   },
 
   async signMessage(wallet) {
-    const message = `Capital OS I02 nonce ${crypto.randomUUID()} at ${new Date().toISOString()}`;
+    const message = `Stacks Capital I02 nonce ${crypto.randomUUID()} at ${new Date().toISOString()}`;
     const result = await request({ provider: provider(wallet) }, "stx_signMessage", { message });
     return { summary: `signature of ${result.signature.length} hex chars`, raw: { message, ...result } };
   },
@@ -155,7 +155,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const result = await request({ provider: provider(wallet) }, "stx_transferStx", {
       recipient: TRANSFER_RECIPIENT,
       amount: "1",
-      memo: "capital-os i02",
+      memo: "stacks-capital i02",
       network: NETWORK,
     });
     if (result.txid) state[wallet].lastTxid = result.txid;
@@ -168,7 +168,7 @@ const tests: Record<string, (wallet: WalletId) => Promise<Result>> = {
     const result = await request({ provider: provider(wallet) }, "stx_transferStx", {
       recipient: stx,
       amount: "1",
-      memo: "capital-os i02",
+      memo: "stacks-capital i02",
       network: NETWORK,
     });
     return { summary: `outcome ${walletOutcome(result)}`, raw: result };

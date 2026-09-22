@@ -1,6 +1,6 @@
 # Certified sBTC withdrawal lifecycle (K26)
 
-CapitalOS separates the Stacks request, signer status, canonical sBTC accounting and Bitcoin payout. The Stacks transaction is never presented as a completed withdrawal. Completion requires an accepted canonical registry request, its canonical completion event, and the exact canonical Bitcoin output.
+Stacks Capital separates the Stacks request, signer status, canonical sBTC accounting and Bitcoin payout. The Stacks transaction is never presented as a completed withdrawal. Completion requires an accepted canonical registry request, its canonical completion event, and the exact canonical Bitcoin output.
 
 ## Accounting shown to the user
 
@@ -26,7 +26,7 @@ The K26 adapter certifies the parsing and reconciliation model, not a live end-t
 
 Expected fulfillment txids and heights from Emily are labeled as estimates and do not drive completion because the public schema says they can change through replacement. The final fulfillment, canonical completion event and Bitcoin output must agree on transaction, output, block and fee.
 
-Testnet currently returns an explicit unavailable state because its signed capability record is disabled; CapitalOS does not silently substitute mainnet or invent a signer path.
+Testnet currently returns an explicit unavailable state because its signed capability record is disabled; Stacks Capital does not silently substitute mainnet or invent a signer path.
 
 ## Certification
 

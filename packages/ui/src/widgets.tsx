@@ -9,7 +9,7 @@ import { ResponsiveTable } from "./table.tsx";
 
 /*
  * Widgets a partner drops into their own page. Each one reads through the hooks, so it only needs a
- * CapitalProvider above it, and each keeps the same honesty rules as the Capital OS app:
+ * CapitalProvider above it, and each keeps the same honesty rules as the Stacks Capital app:
  * unknown is shown as unknown, and nothing incomparable is ranked.
  */
 

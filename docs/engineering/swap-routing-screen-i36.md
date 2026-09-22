@@ -103,7 +103,7 @@ If any of these conditions are missing or tampered with, `enforced: false` is re
 
 ### 2.4 Workflow Recovery & Scoped Storage
 
-- Persistent recovery across browser reloads: Pending and submitted workflows are saved to `localStorage` under `capital_os_swap_workflow_${network}_${wallet.address}`.
+- Persistent recovery across browser reloads: Pending and submitted workflows are saved to `localStorage` under `stacks_capital_swap_workflow_${network}_${wallet.address}`.
 - If the wallet rejects or aborts, the error is caught and displayed cleanly.
 - If the broadcast is unconfirmed or returns no txid, `FailedDelayedStateView` is rendered with the workflow ID and a one-click copy button, advising the user that nothing is retried automatically.
 - Once submitted, `SubmittedStateView` tracks the Hiro Explorer link and workflow progress.

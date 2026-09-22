@@ -59,7 +59,7 @@ function isBrowser(): boolean {
 }
 
 /**
- * Primary HTTP API client for CapitalOS.
+ * Primary HTTP API client for Stacks Capital.
  * Works seamlessly across browser and server environments.
  * Every query returns both the response payload and canonical telemetry context
  * (requestId, network, observedAt, blockHeight, blockHash, staleness, and warnings).

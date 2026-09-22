@@ -13,7 +13,8 @@ coverage/
 *.log
 .DS_Store
 
-embedded-sbtc-sdk-everything-stacks-technical-architecture.pdf
+# Briefs and plan documents are shared out of band, never committed.
+*.pdf
 
 # Browser test output. CI keeps it as an artifact instead.
 playwright-report/

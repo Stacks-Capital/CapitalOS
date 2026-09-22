@@ -4,7 +4,7 @@ import type { Action, StacksNetwork } from "@stacks-capital/core";
 /**
  * K28: Zest Protocol has no user-executable collateral / borrow / repay surface on reviewed
  * deployments. Earn is v0-vault-sbtc. User credit is Granite v0-8-market (K32). This module
- * certifies that split so Capital OS never invents a Zest borrow path.
+ * certifies that split so Stacks Capital never invents a Zest borrow path.
  */
 
 export const ZEST_CREDIT_ACTIONS = ["supply", "withdraw_supply", "borrow", "repay"] as const;

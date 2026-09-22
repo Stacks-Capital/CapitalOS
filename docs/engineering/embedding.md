@@ -12,7 +12,7 @@ Deliverable from the task page: export reusable UI and build a clean second app 
 
 ## Two halves of integration
 
-A partner integrates Capital OS from two places, and each half has a reference in this repo.
+A partner integrates Stacks Capital from two places, and each half has a reference in this repo.
 
 | Half | Holds | Reference |
 |---|---|---|
@@ -40,11 +40,11 @@ The browser never holds an API key and never talks to a provider or an adapter. 
 
 The logic is exported too (`compareEarn`, `projectBorrow`, `swapView`, `scenarios`, `buildPortfolio`, `signIn`, `connectWallet` and the rest), so a partner can build their own components on the same rules without React.
 
-`apps/web` now imports all of this from `@stacks-capital/ui` as well, so the Capital OS app and a partner's page run the same code.
+`apps/web` now imports all of this from `@stacks-capital/ui` as well, so the Stacks Capital app and a partner's page run the same code.
 
 ## The partner example
 
-`apps/embed-example` is Acme Wallet's page: its own header and layout, with Capital OS embedded in the middle.
+`apps/embed-example` is Acme Wallet's page: its own header and layout, with Stacks Capital embedded in the middle.
 
 ```tsx
 const client = createClient({ baseUrl, network, clientId: "pk_acme_live" });

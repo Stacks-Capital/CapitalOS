@@ -195,7 +195,7 @@ export function ShellHeader({
     <header className="shell-header">
       <div className="shell-brand-group">
         <span className="brand-title">
-          everything<strong>.stacks</strong>
+          stacks<strong>.capital</strong>
         </span>
         <fieldset className="network-pill-group">
           <legend className="sr-only">Network selector</legend>

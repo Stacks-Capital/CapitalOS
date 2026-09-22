@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { canSubmitWrite } from "../../packages/core/src/index.ts";
 import { createExecutionEngine } from "../../packages/engine/src/index.ts";
 import { FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS } from "../../packages/fixtures/src/index.ts";
-import { createCapitalOS } from "../../packages/sdk/src/index.ts";
+import { createStacksCapital } from "../../packages/sdk/src/index.ts";
 import { LAUNCH_DECISION } from "../../packages/sdk/src/surface.ts";
 
 type Check = {
@@ -61,7 +61,7 @@ function runSandboxPilotAttempts(): PilotAttempt[] {
     owner: MAINNET_OWNER,
     now,
   });
-  const os = createCapitalOS({ network: "mainnet", now });
+  const os = createStacksCapital({ network: "mainnet", now });
   const { quote, plan } = engine.quoteAndPlan({
     action: "supply",
     marketId: "zest.sbtc.vault",
@@ -178,13 +178,14 @@ for (const gate of ["k38", "k39"] as const) {
   record("gates", `evidence:${gate}`, ok, detail);
 }
 
-const launchDoc = join(root, "docs/release/launch-decision.md");
+const LAUNCH_DOC = "docs/release/launch-decision.md";
+const launchDoc = join(root, LAUNCH_DOC);
 const launchText = existsSync(launchDoc) ? readFileSync(launchDoc, "utf8") : "";
 record(
   "decision",
   "launch-decision-doc",
   /K40/.test(launchText) && /rollback/i.test(launchText) && /Kenzman/.test(launchText) && /IBK/.test(launchText),
-  launchDoc,
+  LAUNCH_DOC,
 );
 
 const generatedAt = new Date().toISOString();

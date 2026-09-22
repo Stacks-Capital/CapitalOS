@@ -112,7 +112,6 @@ const evidence = {
   environment: {
     node: process.version,
     platform: process.platform,
-    cwd: root,
     registryVersion: REGISTRY_VERSION,
     liveReads: live,
     restoreDrill: withRestore || Boolean(process.env.DATABASE_URL),

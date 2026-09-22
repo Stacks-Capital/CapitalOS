@@ -1,22 +1,22 @@
-# Everything Stacks shell and design system
+# Stacks Capital shell and design system
 
 | | |
 |---|---|
-| Task | I31 Implement the Everything Stacks shell and design system |
+| Task | I31 Implement the Stacks Capital shell and design system |
 | Requirements | UI-01, UI-02, UI-03, UI-04, A11Y-01 |
 | Owner / reviewer | IBK / kenzman |
 | Depends on | I01 web app foundation, I09 wallet session, wireframes |
 | Date | 2026-09-21 |
 
-Deliverable from the task page: implement the responsive Everything Stacks shell, unified navigation matching the product wireframes, the workflow drawer, a centralized implementation of the eight canonical states, Simple/Pro view modes, and complete accessibility compliance (WCAG 2.1 AA).
+Deliverable from the task page: implement the responsive Stacks Capital shell, unified navigation matching the product wireframes, the workflow drawer, a centralized implementation of the eight canonical states, Simple/Pro view modes, and complete accessibility compliance (WCAG 2.1 AA).
 
 ## Shell structure and navigation
 
-The application layout reflects the `everything.stacks` product wireframes (`landing.png`, `overview.png`):
+The application layout reflects the `stacks.capital` product wireframes (`landing.png`, `overview.png`):
 
 | Element | Description | Implementation |
 |---|---|---|
-| Brand | `everything.stacks` wordmark linking to home / overview | `ShellHeader` in `@stacks-capital/ui` |
+| Brand | `stacks.capital` wordmark linking to home / overview | `ShellHeader` in `@stacks-capital/ui` |
 | Network indicator | Current network badge (`mocknet` / `testnet` / `mainnet`) | Header status badge |
 | Block height | Current block height chip with live visual indicator | `BlockHeightChip` |
 | Address chip | Truncated address (`SP2C2Y…9YZR`) with click-to-copy, feedback tooltip, and live region | `AddressChip` in `@stacks-capital/ui` |

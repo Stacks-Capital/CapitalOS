@@ -20,7 +20,7 @@
 
 ```
 +-----------------------------------------------------------------------------+
-|                           CapitalOS Web Application                         |
+|                           Stacks Capital Web Application                         |
 +-----------------------------------------------------------------------------+
                                        |
                    +-------------------+-------------------+
@@ -46,8 +46,8 @@
          +-----------------------------------------------------------+
          |                      Route & Session                      |
          |  - URL Search Sync: ?tab=Positions / ?tab=Overview        |
-         |  - LocalStorage Tab Fallback: capitalos:active_tab        |
-         |  - Network-Scoped Session: capitalos:session:${network}   |
+         |  - LocalStorage Tab Fallback: stacks-capital:active_tab        |
+         |  - Network-Scoped Session: stacks-capital:session:${network}   |
          |  - Automatic Session Rehydration on Reload               |
          +-----------------------------------------------------------+
 ```
@@ -95,8 +95,8 @@
 
 3. **`apps/web/src/navigation.ts` & `apps/web/src/app.tsx`**:
    - Extracted navigation and session persistence into `navigation.ts`:
-     - `getInitialTab(urlSearch?, storage?)`: Prioritizes URL `?tab=...`, falls back to `localStorage[capitalos:active_tab]`, defaults to `"Overview"`.
-     - `getInitialSession(network, storage?)`: Rehydrates session per active network (`capitalos:session:${network}`).
+     - `getInitialTab(urlSearch?, storage?)`: Prioritizes URL `?tab=...`, falls back to `localStorage[stacks-capital:active_tab]`, defaults to `"Overview"`.
+     - `getInitialSession(network, storage?)`: Rehydrates session per active network (`stacks-capital:session:${network}`).
    - Wired `PositionsScreen` into the shell navigation bar and connected `onNavigate` callbacks across Overview, Earn, Borrow, and Positions.
 
 4. **`apps/web/src/styles.css`**:

@@ -42,25 +42,25 @@ In production, heavy ingestion runs or network-level block reorgs should not sta
 - **Role**: Backfills historical blocks and raw contract logs across a defined height range without running in an infinite loop.
 - **Execution**: Finite. Exits with status code 0 upon reaching `--to-height` or chain tip.
 - **CLI / NPM**: `pnpm worker:backfill --from-height=5000000 --to-height=5000100 --batch-size=50`
-- **Concurrency**: Guarded by advisory lock `capitalos:worker:backfill:<network>`.
+- **Concurrency**: Guarded by advisory lock `stacks-capital:worker:backfill:<network>`.
 
 ### 1.2 `ingest` (Continuous ingestion)
 - **Role**: Tracks the chain tip, ingests canonical blocks, captures raw contract logs as immutable `raw_events`, normalizes them into `canonical_activities`, advances checkpoints, and handles block reorg rewinds without deleting evidence.
 - **Execution**: Continuous tick loop (`intervalMs` cadence, default 60s).
 - **CLI / NPM**: `pnpm worker:ingest`
-- **Concurrency**: Guarded by advisory lock `capitalos:worker:ingest:<network>`.
+- **Concurrency**: Guarded by advisory lock `stacks-capital:worker:ingest:<network>`.
 
 ### 1.3 `observer` (Continuous market & alert observer)
 - **Role**: Pulls DIA oracle prices, reads onchain state for watched markets, computes reward rates, updates position snapshots for known owners, and evaluates operational metrics and alert transitions.
 - **Execution**: Continuous tick loop (`intervalMs` cadence).
 - **CLI / NPM**: `pnpm worker:observe`
-- **Concurrency**: Guarded by advisory lock `capitalos:worker:observer:<network>`.
+- **Concurrency**: Guarded by advisory lock `stacks-capital:worker:observer:<network>`.
 
 ### 1.4 `reconcile` (Continuous state reconciliation)
 - **Role**: Reconciles projected market state against fresh chain reads (`reconciliation_runs`), categorizing results into `match`, `mismatch`, or `unavailable`. Compares workflow steps and transaction attempts against confirmed chain state.
 - **Execution**: Continuous tick loop (`intervalMs` cadence).
 - **CLI / NPM**: `pnpm worker:reconcile`
-- **Concurrency**: Guarded by advisory lock `capitalos:worker:reconcile:<network>`.
+- **Concurrency**: Guarded by advisory lock `stacks-capital:worker:reconcile:<network>`.
 
 ### 1.5 `all` (Unified development mode)
 - **Role**: Preserves 100% backward compatibility for local development (`pnpm worker:run`, `pnpm worker:tick`), running the combined pipeline in a single process.
@@ -73,10 +73,10 @@ To prevent split-brain execution across auto-scaling containers or duplicate cro
 
 ```sql
 -- Acquire lock (non-blocking)
-SELECT pg_try_advisory_lock(hashtext('capitalos:worker:' || :process || ':' || :network)) AS acquired;
+SELECT pg_try_advisory_lock(hashtext('stacks-capital:worker:' || :process || ':' || :network)) AS acquired;
 
 -- Release lock
-SELECT pg_advisory_unlock(hashtext('capitalos:worker:' || :process || ':' || :network)) AS released;
+SELECT pg_advisory_unlock(hashtext('stacks-capital:worker:' || :process || ':' || :network)) AS released;
 ```
 
 - **Session-bound**: If a worker process crashes, terminates abruptly, or loses connection, PostgreSQL automatically releases session advisory locks immediately.

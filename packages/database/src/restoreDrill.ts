@@ -60,13 +60,13 @@ try {
   await before.end();
 
   const backupStarted = Date.now();
-  const dump = compose(["pg_dump", "-U", "capitalos", "-d", "capitalos", "-n", schema, "-Fc"]);
+  const dump = compose(["pg_dump", "-U", "stacks_capital", "-d", "stacks_capital", "-n", schema, "-Fc"]);
   const backupMs = Date.now() - backupStarted;
 
   await admin.unsafe(`DROP SCHEMA ${schema} CASCADE`);
 
   const restoreStarted = Date.now();
-  compose(["pg_restore", "-U", "capitalos", "-d", "capitalos", "--no-owner", "--exit-on-error"], dump);
+  compose(["pg_restore", "-U", "stacks_capital", "-d", "stacks_capital", "--no-owner", "--exit-on-error"], dump);
   const restoreMs = Date.now() - restoreStarted;
 
   const after = connect(url, schema);
