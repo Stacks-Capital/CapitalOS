@@ -52,7 +52,8 @@ function rateOf(value: string | null, scale: number | null): Rate | null {
  *
  * The rule the task names is that nothing incomparable is ranked silently. Options supplying
  * different assets are never ranked against each other, and anything that cannot be compared
- * on equal terms, because it is paused, locked, stale or missing a rate, is listed with the reason.
+ * on equal terms, because it is paused, locked, stale, missing a rate or missing deployable-capacity
+ * evidence, is listed with the reason.
  */
 export function compareEarn(options: EarnOption[], now: Date): Comparison {
   const groups = new Map<string, Candidate[]>();
@@ -107,8 +108,18 @@ export function compareEarn(options: EarnOption[], now: Date): Comparison {
         rankable = false;
       }
     }
+    // Deployable capacity is evidence in its own right. A rate you cannot actually deploy into is
+    // not a recommendation, so exhausted and unknown both stop a ranking rather than annotate one.
     if (option.capacity === "0" || option.availableLiquidity === "0") {
       notes.push("Capacity or available liquidity is exhausted.");
+      rankable = false;
+    }
+    if (option.capacity === null) {
+      notes.push("Supply cap is unknown, so deployable capacity cannot be evidenced.");
+      rankable = false;
+    }
+    if (option.availableLiquidity === null) {
+      notes.push("Available liquidity is unknown, so deployable capacity cannot be evidenced.");
       rankable = false;
     }
     if (option.evidence?.confidence === "low") {
@@ -121,7 +132,6 @@ export function compareEarn(options: EarnOption[], now: Date): Comparison {
     }
     // A missing incentive rate is not the same as no incentive, so the caveat stays visible.
     if (base !== null && incentive === null) notes.push("Incentive rate unknown, so only the base rate is counted.");
-    if (option.availableLiquidity === null) notes.push("Available liquidity is unknown.");
 
     const row: Candidate = {
       option,

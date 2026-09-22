@@ -35,6 +35,9 @@ export const MAINNET_READS: AdapterReads = {
     pausedRedeem: false,
     totalAssets: "66022279734",
     capSupply: "500000000000",
+    // Deployable capacity is evidence a ranking depends on, so the fixture carries it the way a
+    // live read does. Drop it and compareEarn correctly refuses to rank this market.
+    availableAssets: "433977720266",
     shareRateNumerator: "1",
     shareRateDenominator: "1",
   },
@@ -43,6 +46,7 @@ export const MAINNET_READS: AdapterReads = {
     pausedRedeem: false,
     totalAssets: "250000000000",
     capSupply: "500000000000",
+    availableAssets: "250000000000",
     shareRateNumerator: "1",
     shareRateDenominator: "1",
   },
