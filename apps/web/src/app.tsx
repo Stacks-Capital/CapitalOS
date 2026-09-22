@@ -27,6 +27,8 @@ import { PositionsScreen } from "./positionsScreen.tsx";
 import { Risk } from "./riskScreen.tsx";
 import { Activity, Markets, Portfolio } from "./screens.tsx";
 import { Swap } from "./swapScreen.tsx";
+import { LiquidityScreen } from "./liquidityScreen.tsx";
+import { StakingScreen } from "./stakingScreen.tsx";
 
 import {
   getInitialSession,
@@ -236,17 +238,11 @@ function AppShell({
           <>
             <ScreenHeader
               title="Liquidity provision"
-              subtitle="Automated market maker pool deposits."
+              subtitle="Bitflow DLMM pool deposits, IL exposure and exit liquidity."
               mode={mode}
               onModeChange={setMode}
             />
-            <UnsupportedStateView
-              state={{
-                kind: "unsupported",
-                assetOrProtocol: "Bitflow Liquidity Pools",
-                reason: "Live pool principals are not pinned on mainnet (Pilot Blocker B6).",
-              }}
-            />
+            <LiquidityScreen wallet={wallet} signedIn={signedIn} />
           </>
         )}
 
@@ -254,17 +250,11 @@ function AppShell({
           <>
             <ScreenHeader
               title="Bitcoin Staking"
-              subtitle="Stacking and yield generation."
+              subtitle="Native Bitcoin, STX stacking and protocol receipt staking routes."
               mode={mode}
               onModeChange={setMode}
             />
-            <UnsupportedStateView
-              state={{
-                kind: "unsupported",
-                assetOrProtocol: "Proof of Transfer (PoX) Staking",
-                reason: "Stacking is deliberately disabled in Capital OS (K16 exclusion).",
-              }}
-            />
+            <StakingScreen wallet={wallet} signedIn={signedIn} />
           </>
         )}
 
