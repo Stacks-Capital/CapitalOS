@@ -124,3 +124,38 @@ test("disconnecting forgets the session", async ({ page }) => {
   await openTab(page, "Earn");
   await expect(page.getByText("Connect a wallet and sign in to supply into a vault.")).toBeVisible();
 });
+
+test("deposit BTC screen enforces accounting notice and switches between deposit and withdraw modes", async ({
+  page,
+}) => {
+  await connect(page);
+  await openTab(page, "Deposit BTC");
+
+  await expect(page.getByRole("heading", { name: "Deposit Bitcoin" })).toBeVisible();
+  await expect(
+    page.getByText("Pending BTC and in-flight transactions are held strictly distinct from spendable sBTC."),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Withdraw (sBTC → BTC)" }).click();
+  await expect(page.getByRole("heading", { name: "Withdraw sBTC" })).toBeVisible();
+  await expect(page.getByText("Requested Bitcoin output:")).toBeVisible();
+});
+
+test("withdraws sBTC: quotes, reviews initially locked accounting, and submits awaiting request evidence", async ({
+  page,
+}) => {
+  await connect(page);
+  await openTab(page, "Deposit BTC");
+  await page.getByRole("button", { name: "Withdraw (sBTC → BTC)" }).click();
+
+  await page.getByRole("button", { name: "Get withdraw quote" }).click();
+  await expect(page.getByRole("heading", { name: "Review before signing" })).toBeVisible();
+  await expect(page.getByText("Workflow completes only after signer acceptance and the Bitcoin payout")).toBeVisible();
+
+  await page.getByRole("button", { name: "Sign in your wallet" }).click();
+  await expect(page.getByText("withdrawal request submitted; awaiting on-chain request evidence.")).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Transaction submitted" }).getByText("SUBMITTED", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("COMPLETED", { exact: true })).toHaveCount(0);
+});
