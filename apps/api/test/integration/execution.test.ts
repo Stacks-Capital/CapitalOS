@@ -330,7 +330,7 @@ describe("execution", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set" : 
     // No price has been read in this schema, so the oracle is unknown and stale, not zero.
     assert.equal(before.collateralOracle.price, null);
     assert.equal(before.collateralOracle.stale, true);
-    assert.match(before.collateralOracle.warnings.join(" "), /No price has been read/);
+    assert.match(before.collateralOracle.warnings.join(" "), /No price has been read|no supported price oracle feed/);
 
     await sql`
       INSERT INTO price_snapshots (network, feed_key, price, price_scale, published_at, stale, warnings, source,

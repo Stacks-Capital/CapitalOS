@@ -419,3 +419,17 @@ export type EarnPerformanceItemView = {
   forward30dProjection: Forward30dProjectionView;
   chart: PerformanceChartSeriesView;
 };
+
+export type WebhookEndpoint = {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  createdAt: string;
+  secret?: string;
+};
+
+export type CreateWebhookEndpointInput = {
+  url: string;
+  events: string[];
+};

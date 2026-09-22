@@ -235,7 +235,12 @@ describe("tenant access", { skip: DATABASE_URL === "" ? "DATABASE_URL is not set
       assert.equal(response.status, 429);
       assert.equal(response.headers.get("retry-after"), "60");
       const body = ErrorBody.parse(await response.json());
-      assert.deepEqual(body.error, { code: "RATE_LIMITED", message: "Too many requests", retryAfter: 60 });
+      assert.deepEqual(body.error, {
+        code: "RATE_LIMITED",
+        message: "Too many requests",
+        retryAfter: 60,
+        action: "Wait for the number of seconds in retryAfter.",
+      });
 
       const fresh = bearer(await key(FIXTURE_APP.id, ["markets:read"]));
       assert.equal((await limited.request("/v1/markets?network=mainnet", { headers: fresh })).status, 200);

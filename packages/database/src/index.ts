@@ -128,3 +128,16 @@ export {
   type EarnPerformanceMarketData,
   getEarnPerformanceData,
 } from "./performance.ts";
+export {
+  createWebhookEndpoint,
+  deleteWebhookEndpoint,
+  findWebhookEndpoint,
+  listWebhookEndpoints,
+  processWebhookDeliveryAttempt,
+  recordWebhookDelivery,
+  signWebhookPayload,
+  verifyWebhookSignature,
+  type RecordDeliveryResult,
+  type WebhookDeliveryRecord,
+  type WebhookEndpointRecord,
+} from "./webhooks.ts";

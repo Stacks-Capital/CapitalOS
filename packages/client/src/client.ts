@@ -29,6 +29,8 @@ import type {
   StartedWorkflow,
   Workflow,
   WorkflowSummary,
+  WebhookEndpoint,
+  CreateWebhookEndpointInput,
 } from "./types.ts";
 
 export const CLIENT_ID_HEADER = "x-capital-client-id";
@@ -104,6 +106,12 @@ export type CapitalClient = {
     input: { stepId: string; walletResult: unknown },
     options?: CallOptions,
   ): Promise<Result<SignatureOutcome>>;
+  /** Create a new signed webhook endpoint. */
+  createWebhookEndpoint(input: CreateWebhookEndpointInput, options?: CallOptions): Promise<Result<WebhookEndpoint>>;
+  /** List active webhook endpoints for this tenant. */
+  webhookEndpoints(options?: CallOptions): Promise<Result<{ items: WebhookEndpoint[] }>>;
+  /** Deactivate a webhook endpoint by ID. */
+  deleteWebhookEndpoint(id: string, options?: CallOptions): Promise<Result<{ deleted: boolean }>>;
   /** A client bound to a wallet session. The original is unchanged. */
   withSession(sessionToken: string): CapitalClient;
 };
@@ -308,6 +316,31 @@ export function createClient(options: ClientOptions): CapitalClient {
         method: "POST",
         path: `/v1/workflows/${encodeURIComponent(workflowId)}/signature`,
         body: { network, ...input },
+        signal: call_?.signal,
+        retry: false,
+      }),
+
+    createWebhookEndpoint: (input, call_) =>
+      call<WebhookEndpoint>({
+        method: "POST",
+        path: "/v1/webhooks/endpoints",
+        body: input,
+        signal: call_?.signal,
+        retry: false,
+      }),
+
+    webhookEndpoints: (call_) =>
+      call<{ items: WebhookEndpoint[] }>({
+        method: "GET",
+        path: "/v1/webhooks/endpoints",
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    deleteWebhookEndpoint: (id, call_) =>
+      call<{ deleted: boolean }>({
+        method: "DELETE",
+        path: `/v1/webhooks/endpoints/${encodeURIComponent(id)}`,
         signal: call_?.signal,
         retry: false,
       }),

@@ -3,9 +3,11 @@ import {
   CapabilitiesResponse,
   ChallengeRequest,
   ChallengeResponse,
+  CreateWebhookEndpointRequest,
   EarnOptionsResponse,
   EarnPerformanceQuery,
   EarnPerformanceResponse,
+  EndpointParams,
   ErrorBody,
   ListQuery,
   MarketEvidenceResponse,
@@ -27,6 +29,9 @@ import {
   StartWorkflowRequest,
   ValuationsResponse,
   VerifyRequest,
+  WebhookEndpointCreatedResponse,
+  WebhookEndpointsResponse,
+  WebhookEndpointDeleteResponse,
   WorkflowParams,
   WorkflowListQuery,
   WorkflowResponse,
@@ -47,6 +52,7 @@ const errorResponses = {
 const anyCaller = [{ apiKey: [] }, { walletSession: [] }, { clientId: [] }];
 const browserApp = [{ clientId: [] }];
 const keyOrSession = [{ apiKey: [] }, { walletSession: [] }];
+const keyOnly = [{ apiKey: [] }];
 
 const json = <T>(description: string, schema: T) => ({ description, content: { "application/json": { schema } } });
 
@@ -227,6 +233,39 @@ export const workflowRoute = createRoute({
   responses: {
     200: json("Workflow with its state transitions", WorkflowResponse),
     404: error("No workflow with this id for the caller"),
+    ...errorResponses,
+  },
+});
+
+export const createWebhookEndpointRoute = createRoute({
+  method: "post",
+  path: "/v1/webhooks/endpoints",
+  security: keyOnly,
+  request: { body: body(CreateWebhookEndpointRequest) },
+  responses: {
+    201: json("Created webhook endpoint with secret", WebhookEndpointCreatedResponse),
+    ...errorResponses,
+  },
+});
+
+export const listWebhookEndpointsRoute = createRoute({
+  method: "get",
+  path: "/v1/webhooks/endpoints",
+  security: keyOnly,
+  responses: {
+    200: json("Active webhook endpoints for tenant", WebhookEndpointsResponse),
+    ...errorResponses,
+  },
+});
+
+export const deleteWebhookEndpointRoute = createRoute({
+  method: "delete",
+  path: "/v1/webhooks/endpoints/{id}",
+  security: keyOnly,
+  request: { params: EndpointParams },
+  responses: {
+    200: json("Endpoint deactivation result", WebhookEndpointDeleteResponse),
+    404: error("No such webhook endpoint for caller"),
     ...errorResponses,
   },
 });

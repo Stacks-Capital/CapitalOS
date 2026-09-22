@@ -29,6 +29,9 @@ import {
   listWorkflowsForTenant,
   listMarkets,
   getEarnPerformanceData,
+  createWebhookEndpoint,
+  listWebhookEndpoints,
+  deleteWebhookEndpoint,
   type Sql,
 } from "@stacks-capital/database";
 import { cors } from "hono/cors";
@@ -71,6 +74,9 @@ import {
   verifyRoute,
   workflowRoute,
   workflowsRoute,
+  createWebhookEndpointRoute,
+  listWebhookEndpointsRoute,
+  deleteWebhookEndpointRoute,
 } from "./routes.ts";
 import { intentFromBody, mintPlan, quoteOwner, toQuoteWire } from "./quote.ts";
 import { SCHEMA_VERSION } from "./schemas.ts";
@@ -140,7 +146,7 @@ export function createApp(deps: AppDependencies) {
     "*",
     cors({
       origin: async (origin) => (origin !== "" && (await isAllowedOrigin(deps.sql, origin)) ? origin : null),
-      allowMethods: ["GET", "POST"],
+      allowMethods: ["GET", "POST", "DELETE"],
       allowHeaders: ["authorization", "content-type", CLIENT_ID_HEADER],
       exposeHeaders: ["x-request-id", "ratelimit-limit", "ratelimit-remaining", "ratelimit-reset", "retry-after"],
       maxAge: 600,
@@ -965,6 +971,86 @@ export function createApp(deps: AppDependencies) {
         requestId: c.get("requestId"),
         network: `stacks:${input.network}` as const,
         data: outcome,
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(createWebhookEndpointRoute, async (c) => {
+    const input = c.req.valid("json");
+    const principal = await admit(c);
+    if (principal.kind !== "key") throw new ApiError("FORBIDDEN", "API key is required to manage webhooks");
+    requireScope(principal, "webhooks:manage");
+
+    const endpoint = await createWebhookEndpoint(deps.sql, {
+      appId: principal.appId,
+      url: input.url,
+      events: input.events,
+    });
+
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: "stacks:mainnet" as const,
+        data: {
+          id: endpoint.id,
+          url: endpoint.url,
+          events: endpoint.events,
+          active: endpoint.active,
+          createdAt: endpoint.createdAt.toISOString(),
+          secret: endpoint.secret,
+        },
+        context: context(),
+      },
+      201,
+    );
+  });
+
+  app.openapi(listWebhookEndpointsRoute, async (c) => {
+    const principal = await admit(c);
+    if (principal.kind !== "key") throw new ApiError("FORBIDDEN", "API key is required to manage webhooks");
+    requireScope(principal, "webhooks:manage");
+
+    const items = await listWebhookEndpoints(deps.sql, principal.appId);
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: "stacks:mainnet" as const,
+        data: {
+          items: items.map((item) => ({
+            id: item.id,
+            url: item.url,
+            events: item.events,
+            active: item.active,
+            createdAt: item.createdAt.toISOString(),
+          })),
+        },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(deleteWebhookEndpointRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const principal = await admit(c);
+    if (principal.kind !== "key") throw new ApiError("FORBIDDEN", "API key is required to manage webhooks");
+    requireScope(principal, "webhooks:manage");
+
+    const deleted = await deleteWebhookEndpoint(deps.sql, principal.appId, id);
+    if (!deleted) {
+      throw new ApiError("NOT_FOUND", `Webhook endpoint ${id} not found`);
+    }
+
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: "stacks:mainnet" as const,
+        data: { deleted: true },
         context: context(),
       },
       200,

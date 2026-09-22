@@ -129,6 +129,8 @@ describe("OpenAPI document", () => {
       "/v1/prices",
       "/v1/prices/valuations",
       "/v1/quotes",
+      "/v1/webhooks/endpoints",
+      "/v1/webhooks/endpoints/{id}",
       "/v1/workflows",
       "/v1/workflows/{id}",
       "/v1/workflows/{id}/signature",

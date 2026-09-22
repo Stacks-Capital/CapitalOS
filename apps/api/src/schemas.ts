@@ -74,6 +74,7 @@ export const ErrorBody = z
       code: z.string(),
       message: z.string(),
       retryAfter: z.number().int().nonnegative().optional(),
+      action: z.string().optional(),
     }),
   })
   .openapi("Error");
@@ -730,4 +731,41 @@ export const EarnPerformanceItem = z
 export const EarnPerformanceResponse = envelope(
   "EarnPerformanceResponse",
   z.object({ items: z.array(EarnPerformanceItem) }),
+);
+
+export const EndpointParams = z.object({
+  id: z
+    .string()
+    .regex(/^whe_[a-f0-9]{16}$/)
+    .openapi({ description: "Webhook endpoint ID" }),
+});
+
+export const CreateWebhookEndpointRequest = z
+  .object({
+    url: z.string().url().openapi({ description: "Destination URL to receive signed POST webhooks." }),
+    events: z.array(z.string()).min(1).openapi({ description: "List of event types to subscribe to." }),
+  })
+  .openapi("CreateWebhookEndpointRequest");
+
+export const WebhookEndpointView = z
+  .object({
+    id: z.string().openapi({ description: "Unique webhook endpoint ID (whe_...)." }),
+    url: z.string().url(),
+    events: z.array(z.string()),
+    active: z.boolean(),
+    createdAt: z.iso.datetime(),
+    secret: z.string().optional().openapi({ description: "Plaintext webhook secret, returned ONLY upon creation." }),
+  })
+  .openapi("WebhookEndpoint");
+
+export const WebhookEndpointsResponse = envelope(
+  "WebhookEndpointsResponse",
+  z.object({ items: z.array(WebhookEndpointView) }),
+);
+
+export const WebhookEndpointCreatedResponse = envelope("WebhookEndpointCreatedResponse", WebhookEndpointView);
+
+export const WebhookEndpointDeleteResponse = envelope(
+  "WebhookEndpointDeleteResponse",
+  z.object({ deleted: z.boolean() }),
 );

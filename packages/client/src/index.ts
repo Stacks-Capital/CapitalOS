@@ -60,6 +60,8 @@ export type {
   CanonicalPerformancePointView,
   PerformanceChartSeriesView,
   EarnPerformanceItemView,
+  WebhookEndpoint,
+  CreateWebhookEndpointInput,
   Quote,
   QuotedPlan,
   ResponseContext,

@@ -258,6 +258,41 @@ describe("sign in", () => {
   });
 });
 
+describe("webhooks", () => {
+  it("creates, lists and deletes webhook endpoints", async () => {
+    const createdEp = {
+      id: "whe_1",
+      url: "https://example.com/webhook",
+      events: ["workflow.completed"],
+      active: true,
+      createdAt: "2026-09-22T00:00:00.000Z",
+      secret: "whsec_123",
+    };
+    const epList = { items: [createdEp] };
+    const delResult = { deleted: true };
+
+    const { client, calls } = build([envelope(createdEp), envelope(epList), envelope(delResult)]);
+
+    const created = await client.createWebhookEndpoint({
+      url: "https://example.com/webhook",
+      events: ["workflow.completed"],
+    });
+    assert.equal(created.data.id, "whe_1");
+    assert.equal(created.data.secret, "whsec_123");
+    assert.equal(calls[0]?.method, "POST");
+    assert.equal(calls[0]?.url, "https://api.example/v1/webhooks/endpoints");
+
+    const list = await client.webhookEndpoints();
+    assert.equal(list.data.items.length, 1);
+    assert.equal(calls[1]?.method, "GET");
+
+    const deleted = await client.deleteWebhookEndpoint("whe_1");
+    assert.equal(deleted.data.deleted, true);
+    assert.equal(calls[2]?.method, "DELETE");
+    assert.equal(calls[2]?.url, "https://api.example/v1/webhooks/endpoints/whe_1");
+  });
+});
+
 describe("errors", () => {
   it("turn an error body into a typed error with its class and request id", async () => {
     const { client } = build([apiError(403, "FORBIDDEN")]);
