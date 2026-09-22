@@ -72,7 +72,7 @@ function createFakeChain() {
         if (event === undefined) continue;
         const block = state.blocks.find((candidate) => candidate.height === event.blockHeight);
         if (block === undefined) throw new Error(`no block for ${txId}`);
-        return { blockHeight: block.height, blockHash: block.hash, canonical: event.canonical };
+        return { status: "success", blockHeight: block.height, blockHash: block.hash, canonical: event.canonical };
       }
       throw new Error(`no transaction ${txId}`);
     },

@@ -12,6 +12,7 @@ import {
   recordReconciliation,
   type Sql,
 } from "@stacks-capital/database";
+import { advanceSubmittedWorkflows, type AdvanceSummary } from "./confirmations.ts";
 import type { Hiro } from "./hiro.ts";
 import { ingestBlocks, ingestEvents } from "./ingest.ts";
 import { PROJECTION_SOURCE, projectMarket, reconciliation } from "./markets.ts";
@@ -41,6 +42,7 @@ export type TickSummary = {
   positions: { owners: number; written: number; unknown: number };
   rewards: { written: number; stale: number };
   reconciliation: { match: number; mismatch: number; unavailable: number };
+  workflows: AdvanceSummary;
 };
 
 // One pass of the K05 pipeline: evidence first, then projections, then reconciliation.
@@ -72,7 +74,17 @@ export async function tick(deps: TickDeps): Promise<TickSummary> {
     positions: { owners: 0, written: 0, unknown: 0 },
     rewards: { written: 0, stale: 0 },
     reconciliation: { match: 0, mismatch: 0, unavailable: 0 },
+    workflows: { examined: 0, advanced: 0, unchanged: 0, unreadable: 0 },
   };
+
+  // Straight after ingestion, so confirmation is judged against this tick's checkpoint.
+  summary.workflows = await advanceSubmittedWorkflows({
+    sql: deps.sql,
+    hiro: deps.hiro,
+    network: deps.network,
+    at: deps.at,
+    checkpointHeight: block?.height ?? null,
+  });
 
   for (const target of targets) {
     const projected = await latestMarketSnapshot(deps.sql, {

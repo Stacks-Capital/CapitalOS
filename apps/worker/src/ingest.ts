@@ -1,6 +1,7 @@
 import {
   type CheckpointRow,
   findCanonicalBlock,
+  findWorkflowByTxid,
   insertBlock,
   insertRawEvent,
   markReorg,
@@ -127,7 +128,7 @@ export async function ingestEvents(
       if (await rawEventExists(deps.sql, id)) break;
 
       const tx = await deps.hiro.transaction(event.txId);
-      if (!tx.canonical) continue;
+      if (!tx.canonical || tx.blockHeight === null) continue;
       const block = await deps.hiro.blockAt(tx.blockHeight);
       if (block.hash !== tx.blockHash) continue;
 
@@ -152,6 +153,9 @@ export async function ingestEvents(
       result.events += 1;
 
       const action = tupleString(decodeTuple(event.payloadHex), "action") ?? "unknown";
+      // An activity that cannot be traced to the workflow that caused it is why nothing ever moved
+      // past SUBMITTED (pilot blocker B1). The transaction id is the link, and it is already here.
+      const origin = await findWorkflowByTxid(deps.sql, { network: deps.network, txid: event.txId });
       const recorded = await recordActivity(deps.sql, {
         id: `act_${id}`,
         rawEventId: id,
@@ -159,7 +163,7 @@ export async function ingestEvents(
         chain: CHAIN,
         network: deps.network,
         blockHash: block.hash,
-        workflowId: null,
+        workflowId: origin?.workflowId ?? null,
         adapterVersion: target.adapterVersion,
         calculationVersion: CALCULATION_VERSION,
       });
