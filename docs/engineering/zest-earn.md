@@ -1,11 +1,11 @@
 # Certified Zest supply and withdrawal lifecycle (K27)
 
-CapitalOS treats zsBTC as a receipt claim on supplied sBTC. A supply or redeem is complete only when a canonical vault settlement matches the intended asset and share deltas, including the on-chain min-out bound.
+Stacks Capital treats zsBTC as a receipt claim on supplied sBTC. A supply or redeem is complete only when a canonical vault settlement matches the intended asset and share deltas, including the on-chain min-out bound.
 
 ## Reads and APR semantics
 
 - Vault evidence comes from `get-total-assets`, `get-available-assets`, `get-cap-supply`, `get-pause-states`, `get-interest-rate`, and a share preview (`convert-to-shares` / share-rate sample).
-- `get-interest-rate` is shown as protocol basis points with scale 4. Capital OS does not annualise, compound, or invent APY from that value.
+- `get-interest-rate` is shown as protocol basis points with scale 4. Stacks Capital does not annualise, compound, or invent APY from that value.
 - A missing rate disables earn ranking and projected-earnings displays. A missing share rate leaves the underlying claim unknown rather than guessing one.
 
 ## Receipt valuation

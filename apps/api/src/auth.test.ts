@@ -17,7 +17,7 @@ function signed(network: "mainnet" | "testnet") {
   const privateKey = randomPrivateKey();
   const publicKey = publicKeyToHex(privateKeyToPublic(privateKey));
   const address = getAddressFromPublicKey(publicKey, network);
-  const message = `Capital OS wants you to sign in with your Stacks account:\n${address}\n\nOrigin: ${ORIGIN}`;
+  const message = `Stacks Capital wants you to sign in with your Stacks account:\n${address}\n\nOrigin: ${ORIGIN}`;
   const messageHash = Buffer.from(hashMessage(message)).toString("hex");
   const nonce: PendingNonce = { address, network, origin: ORIGIN, message };
   return { nonce, proof: { publicKey, signature: signMessageHashRsv({ messageHash, privateKey }) } };
@@ -34,6 +34,8 @@ describe("sign in signatures", () => {
       address: "ST20YV8P5YG5RZ59QPCBAN4FEVP2F20EABVGZCPK0",
       network: "testnet",
       origin: ORIGIN,
+      // Verbatim text a real Leather wallet signed during I02. The signature below only verifies
+      // against this exact string, so it keeps the product's former name and must never be renamed.
       message: "Capital OS I02 nonce f6cd1549-75b7-483c-a5b6-346a84580853 at 2026-09-15T09:55:09.279Z",
     };
     const proof = {

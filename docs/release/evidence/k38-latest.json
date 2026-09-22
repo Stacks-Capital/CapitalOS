@@ -1,11 +1,10 @@
 {
   "task": "K38",
-  "generatedAt": "2026-09-22T16:17:50.009Z",
+  "generatedAt": "2026-09-22T22:10:04.069Z",
   "mode": "sandbox",
   "environment": {
     "node": "v24.21.0",
     "platform": "linux",
-    "cwd": "/home/modev/Stacks Ecosystem/CapitalOS",
     "registryVersion": "0.1.0",
     "liveReads": false,
     "restoreDrill": false

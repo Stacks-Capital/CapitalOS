@@ -70,7 +70,7 @@ type Row = Record<string, unknown>;
 
 const at = (seconds: number): string => new Date(Date.parse(FIXTURE_NOW) + seconds * 1000).toISOString();
 const fixtureHash = (label: string): string =>
-  `0x${createHash("sha256").update(`capitalos-fixture:${label}`).digest("hex")}`;
+  `0x${createHash("sha256").update(`stacks-capital-fixture:${label}`).digest("hex")}`;
 
 // Onchain fungible token names, verified against Hiro contract interfaces on 2026-09-17.
 const sbtc = (network: StacksNetwork): AssetId =>

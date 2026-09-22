@@ -24,7 +24,7 @@ export function messageFor(error: unknown): { message: string; canRetry: boolean
       FORBIDDEN: "This app is not allowed to read that.",
       NOT_FOUND: "Not found.",
       RATE_LIMITED: `Too many requests. Try again in ${error.retryAfter ?? 60} seconds.`,
-      TEMPORARY_UNAVAILABLE: "Capital OS is busy. Try again shortly.",
+      TEMPORARY_UNAVAILABLE: "Stacks Capital is busy. Try again shortly.",
       NETWORK_MISMATCH: "That belongs to another network.",
     };
     return { message: messages[error.code] ?? error.message, canRetry, requestId: error.requestId };
@@ -33,8 +33,8 @@ export function messageFor(error: unknown): { message: string; canRetry: boolean
     const messages: Record<string, string> = {
       timeout: "The request took too long. Try again.",
       aborted: "Cancelled.",
-      network: "Cannot reach Capital OS. Check your connection.",
-      protocol: "Capital OS answered something this app does not understand.",
+      network: "Cannot reach Stacks Capital. Check your connection.",
+      protocol: "Stacks Capital answered something this app does not understand.",
     };
     return {
       message: messages[error.kind] ?? "Something went wrong.",

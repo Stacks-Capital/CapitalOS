@@ -7,7 +7,7 @@ import {
   CapitalConfigError,
   CapitalFinancialError,
   CapitalTransportError,
-  createCapitalOS,
+  createStacksCapital,
   createClient,
   formatQuantity,
   formatUnits,
@@ -24,7 +24,7 @@ import {
   safeBigIntReplacer,
   serializeFinancialJson,
   type CapitalClient,
-  type CapitalOS,
+  type StacksCapital,
   type Plan,
   type Quote,
 } from "./index.ts";
@@ -113,14 +113,14 @@ describe("I29: Clean Consumer Compatibility & SDK Surface", () => {
       assert.match(recordedUrls[1] ?? "", /v1\/prices\?network=mainnet/);
     });
 
-    it("orchestrates local quote, plan validation, and state machine transitions through CapitalOS", () => {
+    it("orchestrates local quote, plan validation, and state machine transitions through Stacks Capital", () => {
       const engine = createExecutionEngine({
         network: "mainnet",
         reads: MAINNET_READS,
         owner: MAINNET_OWNER,
         now: new Date(FIXTURE_NOW),
       });
-      const os: CapitalOS = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
+      const os: StacksCapital = createStacksCapital({ network: "mainnet", now: new Date(FIXTURE_NOW) });
       assert.equal(os.network, "mainnet");
 
       const intent = { action: "supply" as const, marketId: "zest.sbtc.vault", amount: "99999000" };

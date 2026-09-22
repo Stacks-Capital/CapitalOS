@@ -50,7 +50,7 @@ export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
   limitationsAcknowledged: false,
 };
 
-export const STORAGE_ALERT_KEY = "capitalos:risk_alert_settings";
+export const STORAGE_ALERT_KEY = "stacks-capital:risk_alert_settings";
 
 export const ALERT_DELIVERY_LIMITATIONS: readonly string[] = [
   "Client-Side Only: Alerts run in the active browser tab via polling. Inactive, throttled, or closed tabs cannot dispatch notifications.",

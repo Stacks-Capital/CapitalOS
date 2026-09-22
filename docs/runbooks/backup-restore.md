@@ -1,6 +1,6 @@
 # Backup and restore
 
-How to back up the Capital OS database, restore it, and prove the procedure works. Commands assume the Docker Compose setup from the [quickstart](../guides/quickstart.md). For a managed Postgres, run the same `pg_dump` and `pg_restore` against its connection string.
+How to back up the Stacks Capital database, restore it, and prove the procedure works. Commands assume the Docker Compose setup from the [quickstart](../guides/quickstart.md). For a managed Postgres, run the same `pg_dump` and `pg_restore` against its connection string.
 
 ## What needs a backup
 
@@ -21,9 +21,9 @@ Secrets are not in a backup in usable form. API keys and sessions are stored as 
 ## Back up
 
 ```bash
-mkdir -p ~/capitalos-backups
+mkdir -p ~/stacks-capital-backups
 docker compose --env-file .env.local exec -T postgres \
-  pg_dump -U capitalos -d capitalos -Fc > ~/capitalos-backups/capitalos-$(date -u +%Y%m%dT%H%MZ).dump
+  pg_dump -U stacks_capital -d stacks_capital -Fc > ~/stacks-capital-backups/stacks-capital-$(date -u +%Y%m%dT%H%MZ).dump
 ```
 
 - `-Fc` is the custom format: compressed, and `pg_restore` can restore it selectively.
@@ -33,7 +33,7 @@ docker compose --env-file .env.local exec -T postgres \
 Check it is readable:
 
 ```bash
-docker compose --env-file .env.local exec -T postgres pg_restore --list < ~/capitalos-backups/<file>.dump | head
+docker compose --env-file .env.local exec -T postgres pg_restore --list < ~/stacks-capital-backups/<file>.dump | head
 ```
 
 ## Restore
@@ -43,7 +43,7 @@ docker compose --env-file .env.local exec -T postgres pg_restore --list < ~/capi
 
    ```bash
    docker compose --env-file .env.local exec -T postgres \
-     pg_restore -U capitalos -d capitalos --clean --if-exists --no-owner --exit-on-error < ~/capitalos-backups/<file>.dump
+     pg_restore -U stacks_capital -d stacks_capital --clean --if-exists --no-owner --exit-on-error < ~/stacks-capital-backups/<file>.dump
    ```
 
    On an empty database (a new volume), leave out `--clean --if-exists`.

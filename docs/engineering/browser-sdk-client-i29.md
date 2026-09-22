@@ -12,7 +12,7 @@
 - **Acceptance Evidence**:
   1. *SDK has no dependency on internal adapters or web application code* (verified via `pnpm boundaries`).
   2. *A clean consumer compiles in browser and server environments* (verified via `consumer.test.ts` and `apps/partner-example`).
-  3. *All public methods document evidence and failure semantics* (verified via TSDoc on `CapitalOS` and `CapitalClient`).
+  3. *All public methods document evidence and failure semantics* (verified via TSDoc on `Stacks Capital` and `CapitalClient`).
 
 ---
 
@@ -28,7 +28,7 @@
              | imports from @stacks-capital/sdk              |
              v                                               v
 +-----------------------------+               +-------------------------------+
-|        CapitalClient        |               |           CapitalOS           |
+|        CapitalClient        |               |           Stacks Capital           |
 | (HTTP Read, Quote, Workflow)|               | (Local Validation & Workflow) |
 +--------------+--------------+               +---------------+---------------+
                |                                              |
@@ -50,7 +50,7 @@
    - Enforces browser security: prevents `apiKey` usage in browsers (throws `CapitalConfigError`), requiring `clientId` and wallet `sessionToken` instead.
    - Automatically retries transient reads with exponential backoff and server `Retry-After` honoring, while never automatically retrying single-attempt writes.
 
-2. **`CapitalOS` (`@stacks-capital/sdk`)**:
+2. **`Stacks Capital` (`@stacks-capital/sdk`)**:
    - Executes purely offline/in-memory without backend or Node dependencies.
    - Evaluates plan structure, quote binding, expiry, and registered contract principals (`validate`, `assertReadyToSign`).
    - Drives the non-custodial workflow state machine (`CREATED`/`DRAFT` → `QUOTED` → `AWAITING_SIGNATURE` → `SUBMITTED` → `CONFIRMING` → `RECONCILING` → `COMPLETED`).
@@ -176,4 +176,4 @@ pnpm gate:k38 && pnpm gate:k39 && pnpm gate:k40
    - Proven via `packages/sdk/src/consumer.test.ts` and `apps/partner-example`.
    - Browser client prevents credential exposure. Server client enables service key authentication.
 3. **Evidence and failure semantics documented**:
-   - Complete TSDoc annotations on `CapitalClient` and `CapitalOS` describing returned telemetry, failure exceptions (`@throws`), and retry policies.
+   - Complete TSDoc annotations on `CapitalClient` and `Stacks Capital` describing returned telemetry, failure exceptions (`@throws`), and retry policies.

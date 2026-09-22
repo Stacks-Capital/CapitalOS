@@ -62,7 +62,7 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
 
 export type RedisConnection = ReturnType<typeof redisClient>;
 
-export function redisLimiter(client: RedisConnection, prefix = "capitalos:rl", timeoutMs = 1_000): RateLimiter {
+export function redisLimiter(client: RedisConnection, prefix = "stacks-capital:rl", timeoutMs = 1_000): RateLimiter {
   return {
     async hit(bucket, limit, windowSeconds, now) {
       const { index, resetSeconds } = windowOf(now, windowSeconds);

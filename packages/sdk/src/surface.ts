@@ -24,7 +24,7 @@ export const PUBLIC_VALUE_EXPORTS = {
     "classifyWalletError",
     "completeFromReconciliation",
     "concentrationByQuantity",
-    "createCapitalOS",
+    "createStacksCapital",
     "createClient",
     "executable",
     "formatQuantity",

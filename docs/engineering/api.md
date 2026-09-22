@@ -84,7 +84,7 @@ Secrets are 32 random bytes. Only their SHA256 hashes are stored and compared in
 1. The app calls `POST /v1/auth/challenge` with `network` and `address`. An address from the other network gives `NETWORK_MISMATCH`. The API stores a nonce for the app and origin, valid for 5 minutes, and returns the message:
 
    ```text
-   Capital OS wants you to sign in with your Stacks account:
+   Stacks Capital wants you to sign in with your Stacks account:
    <address>
 
    Origin: <origin>

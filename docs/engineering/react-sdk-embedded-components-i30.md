@@ -12,7 +12,7 @@
 - **Acceptance Evidence**:
   1. *Cache keys isolate tenant, network and address* (verified via `scopeKey`, `cacheKey`, `sameScope`, `CapitalProvider`, and hook tests).
   2. *Workflow state resumes after reload* (verified via `pendingKey`, `loadPending`, `savePending`, and `useWorkflowResume`).
-  3. *Everything Stacks consumes the same public package exports as partners* (verified via `apps/web` and `apps/embed-example` consuming public packages only).
+  3. *Stacks Capital consumes the same public package exports as partners* (verified via `apps/web` and `apps/embed-example` consuming public packages only).
 
 ---
 
@@ -127,7 +127,7 @@ export type WorkflowResumeResult = {
 
 ## 4. UI Embedded Workflow Components Reference (`@stacks-capital/ui`)
 
-`@stacks-capital/ui` provides drop-in components adhering to CapitalOS design tokens:
+`@stacks-capital/ui` provides drop-in components adhering to Stacks Capital design tokens:
 
 ### 4.1 Review Components
 - `ReviewStateView`: Renders pre-execution review panels with parameter verification, asset impacts, and fee summaries.

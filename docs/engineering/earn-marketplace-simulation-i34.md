@@ -48,7 +48,7 @@
          |              Dual Supply & Withdrawal Review              |
          |  - Action Toggle: Supply vs Withdrawal                    |
          |  - Client Quoting (/v1/quote with action parameter)       |
-         |  - Public SDK Plan Validation (canSign, createCapitalOS)  |
+         |  - Public SDK Plan Validation (canSign, createStacks Capital)  |
          |  - State Machine (review -> signing -> confirming -> done)|
          |  - Reload Resilience via Tenant & Network-Scoped Storage  |
          +-----------------------------------------------------------+
@@ -86,7 +86,7 @@ $$\text{Projected Balance} = \text{Principal} + \text{Base Yield} + \text{Incent
 ### 2.3 Public SDK Plan Review & Execution
 
 - Supports both `"supply"` and `"withdraw_supply"` actions.
-- Quotes are verified using `createCapitalOS({ network }).validate(plan, quote, { sender })`.
+- Quotes are verified using `createStacks Capital({ network }).validate(plan, quote, { sender })`.
 - Review state displays give amount, receive amount, minimum output, fees, protocol contract, and expiry timer.
 - Signature requests use `askWallet` with typed errors.
 - Progress transitions through `AWAITING_SIGNATURE`, `SUBMITTED`, `CONFIRMING`, and `COMPLETED`, while `BROADCAST_UNKNOWN` triggers manual recovery without duplicate write retries.

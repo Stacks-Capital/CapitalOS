@@ -31,7 +31,7 @@ export type Scope = { network: StacksNetwork; address: string; tenantId?: string
 
 export function pendingKey(scope: Scope): string {
   const tenantPrefix = scope.tenantId ? `${scope.tenantId}:` : "";
-  return `capitalos:pending:${tenantPrefix}${scope.network}:${scope.address}`;
+  return `stacks-capital:pending:${tenantPrefix}${scope.network}:${scope.address}`;
 }
 
 type Storage = {

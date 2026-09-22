@@ -6,7 +6,7 @@ import {
 } from "./valuation.ts";
 
 /**
- * The six canonical capital categories recognized across CapitalOS.
+ * The six canonical capital categories recognized across Stacks Capital.
  */
 export type CapitalCategory = "wallet" | "supplied" | "lp" | "collateral" | "debt" | "locked";
 

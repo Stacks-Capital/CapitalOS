@@ -1,6 +1,6 @@
 # Certified sBTC deposit lifecycle (K25)
 
-CapitalOS treats a BTC transaction, Emily signer status, and a canonical sBTC mint as three different facts. A deposit is complete only when the canonical `completed-deposit` evidence matches the exact Bitcoin txid, output index, recipient, and a minted amount within the signed maximum-fee bound.
+Stacks Capital treats a BTC transaction, Emily signer status, and a canonical sBTC mint as three different facts. A deposit is complete only when the canonical `completed-deposit` evidence matches the exact Bitcoin txid, output index, recipient, and a minted amount within the signed maximum-fee bound.
 
 ## Evidence and states
 

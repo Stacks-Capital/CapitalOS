@@ -29,7 +29,7 @@ export type RegistryActivation = {
   mode: RegistryMode;
 };
 
-const KEY_ID = "capitalos-release-2026-01";
+const KEY_ID = "stacks-capital-release-2026-01";
 
 // The matching private key is deliberately not stored in the repository.
 export const REGISTRY_PUBLIC_KEYS: Readonly<Record<string, string>> = {

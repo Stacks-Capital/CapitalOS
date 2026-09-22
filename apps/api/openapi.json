@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Capital OS API",
+    "title": "Stacks Capital API",
     "version": "1.0"
   },
   "components": {

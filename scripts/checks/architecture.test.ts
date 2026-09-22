@@ -8,7 +8,7 @@ import { architectureViolations } from "./architecture.ts";
 const temps: string[] = [];
 
 function tree(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), "capitalos-boundaries-"));
+  const root = mkdtempSync(join(tmpdir(), "stacks-capital-boundaries-"));
   temps.push(root);
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -58,7 +58,7 @@ describe("native architecture boundary gate", () => {
     );
   });
 
-  it("requires the partner program to consume CapitalOS through the public SDK", () => {
+  it("requires the partner program to consume Stacks Capital through the public SDK", () => {
     const root = tree({
       "packages/engine/src/index.ts": "export const engine = true;\n",
       "apps/partner-example/src/program.ts":

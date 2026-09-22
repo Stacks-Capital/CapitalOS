@@ -8,7 +8,7 @@ const NODE = process.execPath;
 const NODE_SCRIPT = ["--experimental-strip-types", "--env-file-if-exists=.env.local"] as const;
 
 /**
- * One command for local Everything Stacks: Postgres, Redis, migrate, seed, API, web.
+ * One command for local Stacks Capital: Postgres, Redis, migrate, seed, API, web.
  * Invokes those tools directly so Corepack's pnpm-native binary is never passed to node.
  */
 function fail(result: { status: number | null }): never {
@@ -39,7 +39,7 @@ const web = spawn(join(ROOT, "apps/web/node_modules/.bin/vite"), [], {
   stdio: "inherit",
 });
 
-console.log("Capital OS: API http://127.0.0.1:3000  web http://localhost:5180");
+console.log("Stacks Capital: API http://127.0.0.1:3000  web http://localhost:5180");
 
 function stop(): void {
   api.kill("SIGTERM");

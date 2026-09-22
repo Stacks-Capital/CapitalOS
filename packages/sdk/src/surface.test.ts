@@ -69,7 +69,7 @@ describe("K19 SDK release compatibility", () => {
   it("refuses to broadcast and refuses a default network", () => {
     assert.throws(() => sdk.requireNetwork(undefined), /no default network/);
     assert.throws(
-      () => sdk.createCapitalOS({ network: "mainnet" }).submit(),
+      () => sdk.createStacksCapital({ network: "mainnet" }).submit(),
       (error: unknown) =>
         typeof error === "object" && error !== null && "code" in error && error.code === "UNSUPPORTED_ACTION",
     );

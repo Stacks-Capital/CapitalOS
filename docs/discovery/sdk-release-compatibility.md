@@ -29,7 +29,7 @@ Adapters, the engine, the database and fixtures stay off that list. The embed-ex
 | Item | Result |
 |---|---|
 | Clean Vite/workspace install; no server secret in the browser bundle | Met. `readEmbedConfig` refuses `key_` / `ses_` in any `VITE_` value. |
-| Network switching invalidates quotes and plans | Met. Cache keys start with network and address (`sameScope`). Switching network in Everything Stacks drops the wallet session. |
+| Network switching invalidates quotes and plans | Met. Cache keys start with network and address (`sameScope`). Switching network in Stacks Capital drops the wallet session. |
 | Review matches the unsigned plan | Met. `toWalletRequest` / `validatePlan`; SDK `submit()` throws `UNSUPPORTED_ACTION`. |
 | Earn workflow resumes after reload | Met in I18 browser tests (fake wallet). Real wallets remain I20 manual checks. |
 | Webhook HMAC, timestamp tolerance, event-id deduplication | **Not certified.** No partner webhooks exist (I20 N10). K20 records that as out of surface. |

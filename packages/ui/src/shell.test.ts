@@ -157,7 +157,7 @@ describe("signing in", () => {
     const wallet = { id: "xverse", address: MAINNET_ADDRESS, network: "mainnet" } as const;
     const client = fakeClient({
       challenge: async () => {
-        throw new CapitalTransportError("network", "Cannot reach Capital OS");
+        throw new CapitalTransportError("network", "Cannot reach Stacks Capital");
       },
     });
     const result = await signIn(client, wallet, async () => ({ signature: "ff", publicKey: "02ab" }));

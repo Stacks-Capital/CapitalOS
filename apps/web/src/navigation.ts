@@ -16,8 +16,8 @@ export const NAV_TABS = [
 
 export type NavTab = (typeof NAV_TABS)[number] | "Portfolio";
 
-export const STORAGE_TAB_KEY = "capitalos:active_tab";
-export const STORAGE_SESSION_PREFIX = "capitalos:session:";
+export const STORAGE_TAB_KEY = "stacks-capital:active_tab";
+export const STORAGE_SESSION_PREFIX = "stacks-capital:session:";
 
 export function getInitialTab(urlSearch?: string, storage?: { getItem: (k: string) => string | null }): NavTab {
   try {

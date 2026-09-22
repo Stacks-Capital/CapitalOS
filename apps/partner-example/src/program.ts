@@ -1,6 +1,6 @@
 import {
   canSubmitWrite,
-  createCapitalOS,
+  createStacksCapital,
   executable,
   parsePlan,
   parseQuote,
@@ -66,7 +66,7 @@ async function postJson<T>(options: PartnerOptions, path: string, body: unknown)
  */
 export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuccess> {
   requireNetwork(options.network);
-  const os = createCapitalOS({ network: options.network });
+  const os = createStacksCapital({ network: options.network });
   const intent = { action: "supply" as const, marketId: "zest.sbtc.vault", amount: "100000000" };
 
   const minted = await postJson<{ quote: QuoteWire; plan: PlanWire }>(options, "/v1/quotes", {
@@ -116,7 +116,7 @@ export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuc
  */
 export async function runZestWithdrawSupply(options: PartnerOptions, amount = "50000000"): Promise<PartnerSuccess> {
   requireNetwork(options.network);
-  const os = createCapitalOS({ network: options.network });
+  const os = createStacksCapital({ network: options.network });
   const intent = { action: "withdraw_supply" as const, marketId: "zest.sbtc.vault", amount };
 
   const minted = await postJson<{ quote: QuoteWire; plan: PlanWire }>(options, "/v1/quotes", {

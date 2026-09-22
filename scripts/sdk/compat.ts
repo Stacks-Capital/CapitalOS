@@ -47,7 +47,7 @@ record("SDK requires a network", noDefault, "no default network");
 
 let submitCode = "";
 try {
-  sdk.createCapitalOS({ network: "mainnet" }).submit();
+  sdk.createStacksCapital({ network: "mainnet" }).submit();
 } catch (error) {
   submitCode = codeOf(error);
 }
@@ -99,7 +99,7 @@ for (const name of RELEASE_PACKAGES) {
   );
 }
 
-const packDir = mkdtempSync(join(tmpdir(), "capitalos-pack-"));
+const packDir = mkdtempSync(join(tmpdir(), "stacks-capital-pack-"));
 try {
   for (const name of RELEASE_PACKAGES) {
     const packed = spawnSync("pnpm", ["--filter", name, "pack", "--pack-destination", packDir], {

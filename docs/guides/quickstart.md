@@ -1,6 +1,6 @@
 # Quickstart
 
-From a fresh clone to the API, the worker, the Capital OS app and the partner example running locally. Every command runs from the repository root.
+From a fresh clone to the API, the worker, the Stacks Capital app and the partner example running locally. Every command runs from the repository root.
 
 ## 1. Prerequisites
 
@@ -40,7 +40,7 @@ The seed creates two tenants:
 
 | App | Client id | Allowed origin |
 |---|---|---|
-| `app_fixture` | `pk_fixture_sandbox` | `http://localhost:5173` (the Capital OS app) |
+| `app_fixture` | `pk_fixture_sandbox` | `http://localhost:5173` (the Stacks Capital app) |
 | `app_other` | `pk_other_sandbox` | `http://localhost:5174` (the partner example) |
 
 ## 4. Run it
@@ -50,7 +50,7 @@ Each in its own terminal:
 ```bash
 pnpm api:dev          # API on http://127.0.0.1:3000, needs REDIS_URL
 pnpm worker:tick      # one ingestion tick against mainnet; worker:run keeps going
-pnpm web:dev          # Capital OS app on http://localhost:5173
+pnpm web:dev          # Stacks Capital app on http://localhost:5173
 pnpm embed:dev        # partner example on http://localhost:5174
 ```
 

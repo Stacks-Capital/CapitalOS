@@ -163,7 +163,7 @@ export function quotedBorrowFee(quote: QuotedFees): bigint | null {
  * Calculates explicit borrow accounting (requested borrow, quoted fees, net received, new total debt).
  *
  * The fee is whatever the quote states, in the borrowed asset's base units. There is no default
- * rate: CapitalOS does not invent rates, and a borrow origination fee cannot be known before the
+ * rate: Stacks Capital does not invent rates, and a borrow origination fee cannot be known before the
  * protocol quotes it. Pass null before a quote exists and the fee and net received stay unknown.
  */
 export function calculateBorrowAccounting(

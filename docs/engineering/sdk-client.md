@@ -83,7 +83,7 @@ const workflow = useWorkflow(workflowId);    // null id means nothing is read ye
 
 ## Decision: where quoting runs
 
-Page 01 describes a server side quote and plan service. Kenzman's SDK on main takes reads as an injected dependency, so `createCapitalOS` can run in either place. We decided to quote on the server, and the API will run his SDK rather than duplicate the math. Recorded here because it shapes the client, the hooks and the earn screens (I10).
+Page 01 describes a server side quote and plan service. Kenzman's SDK on main takes reads as an injected dependency, so `createStacks Capital` can run in either place. We decided to quote on the server, and the API will run his SDK rather than duplicate the math. Recorded here because it shapes the client, the hooks and the earn screens (I10).
 
 Why:
 
@@ -96,11 +96,11 @@ Why:
 What it means in practice:
 
 - `POST /v1/quotes` and the plan it returns belong to a later task; nothing in I07 or I08 depends on it landing first.
-- The API imports `@stacks-capital/sdk` and calls `createCapitalOS` with server side reads, so the quote math stays in one package.
+- The API imports `@stacks-capital/sdk` and calls `createStacks Capital` with server side reads, so the quote math stays in one package.
 - The `quotes:write` scope on API keys (I05) is what that endpoint will check.
 - The client gains `quote()` when the endpoint exists. The cache already reserves the `quote` resource and drops it on a wallet switch, so the hook is a loader away.
 
-If the team prefers quoting in the browser, the change is small on this side: the hook calls `createCapitalOS` instead of the endpoint, and the API grows reads endpoints instead of a quote endpoint.
+If the team prefers quoting in the browser, the change is small on this side: the hook calls `createStacks Capital` instead of the endpoint, and the API grows reads endpoints instead of a quote endpoint.
 
 ## Tests
 

@@ -1,5 +1,5 @@
-export { createCapitalOS, executable, marketsComparable, parsePlan, parseQuote } from "./client.ts";
-export type { CapitalOS, CapitalOSOptions, SigningInput } from "./client.ts";
+export { createStacksCapital, executable, marketsComparable, parsePlan, parseQuote } from "./client.ts";
+export type { StacksCapital, StacksCapitalOptions, SigningInput } from "./client.ts";
 export {
   COMPATIBILITY_MATRIX,
   LAUNCH_DECISION,

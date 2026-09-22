@@ -94,7 +94,7 @@ type Env = { Variables: { requestId: string } };
 
 export const OPENAPI_CONFIG = {
   openapi: "3.1.0",
-  info: { title: "Capital OS API", version: SCHEMA_VERSION },
+  info: { title: "Stacks Capital API", version: SCHEMA_VERSION },
 } as const;
 
 export const NONCE_TTL_SECONDS = 300;

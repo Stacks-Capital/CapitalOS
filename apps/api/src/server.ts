@@ -20,5 +20,5 @@ await Promise.race([
 
 const sql = connect(requireDatabaseUrl(process.env.DATABASE_URL));
 serve({ fetch: createApp({ sql, limiter: redisLimiter(redis) }).fetch, hostname: "127.0.0.1", port }, (info) => {
-  console.log(`Capital OS API listening on http://127.0.0.1:${info.port}`);
+  console.log(`Stacks Capital API listening on http://127.0.0.1:${info.port}`);
 });

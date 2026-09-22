@@ -2,7 +2,7 @@ import { capabilityFor, findContract } from "@stacks-capital/config";
 import { mulDiv, parseQuantity, type StacksNetwork } from "@stacks-capital/core";
 import type { VaultSnapshot } from "../reads.ts";
 
-/** Protocol `get-interest-rate` returns basis points; Capital OS never annualises or compounds it. */
+/** Protocol `get-interest-rate` returns basis points; Stacks Capital never annualises or compounds it. */
 export const ZEST_RATE_SCALE = 4;
 
 export type ZestEarnAction = "supply" | "withdraw_supply";
@@ -204,7 +204,7 @@ export function valueZestReceipt(
 
 export function zestSupplyApr(interestRateBps: string | null): ZestSupplyApr {
   const meaning =
-    "Zest v0-vault-sbtc get-interest-rate returns a supply rate in basis points (scale 4). Capital OS shows that protocol value as-is and does not annualise, compound, or invent APY.";
+    "Zest v0-vault-sbtc get-interest-rate returns a supply rate in basis points (scale 4). Stacks Capital shows that protocol value as-is and does not annualise, compound, or invent APY.";
   if (interestRateBps === null) {
     return {
       rateBps: null,
@@ -314,7 +314,7 @@ export function evaluateZestEarn(input: {
     return lifecycle("unavailable", "UNAVAILABLE", false, {
       warnings: [
         capability?.reason ??
-          "Zest v0-vault-sbtc is not an enabled capability on this network. Capital OS does not substitute mainnet or invent a vault path.",
+          "Zest v0-vault-sbtc is not an enabled capability on this network. Stacks Capital does not substitute mainnet or invent a vault path.",
       ],
     });
   }

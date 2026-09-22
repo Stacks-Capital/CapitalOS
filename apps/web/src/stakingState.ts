@@ -71,7 +71,7 @@ const NATIVE_BITCOIN_DISTINCTIONS: readonly string[] = [
   "Native Bitcoin / PoX staking locks L1 Bitcoin. It is not sBTC DeFi supply.",
   "zsBTC earn receipts are not staking positions.",
   "pox-5 also exposes unstake / unstake-sbtc; those stay disabled with the same lockup-signing gate.",
-  "Wallet lockup-signing evidence is still missing; Capital OS will not invent a stake plan.",
+  "Wallet lockup-signing evidence is still missing; Stacks Capital will not invent a stake plan.",
 ];
 
 // ---------------------------------------------------------------------------

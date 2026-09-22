@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import type { EmbedConfig } from "./config.ts";
 
 /**
- * A partner's own page: their header, their layout, Capital OS embedded in the middle.
+ * A partner's own page: their header, their layout, Stacks Capital embedded in the middle.
  * It uses only the public packages: the client for the API, the hooks for state, the ui for widgets.
  * Quoting, planning and provider reads all stay behind the API (see docs/engineering/embedding.md).
  */
@@ -66,7 +66,7 @@ export function PartnerPage({ config }: { config: EmbedConfig }) {
       <PositionsSummary signedIn={session !== null} />
       <WorkflowHistory signedIn={session !== null} />
 
-      <p className="muted">Earn data provided by Capital OS.</p>
+      <p className="muted">Earn data provided by Stacks Capital.</p>
     </CapitalProvider>
   );
 }

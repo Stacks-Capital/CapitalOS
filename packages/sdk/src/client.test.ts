@@ -4,7 +4,7 @@ import { canSubmitWrite } from "@stacks-capital/core";
 import { createExecutionEngine } from "@stacks-capital/engine";
 import { FIXTURE_NOW, MAINNET_OWNER, MAINNET_READS } from "@stacks-capital/fixtures";
 import {
-  createCapitalOS,
+  createStacksCapital,
   executable,
   parsePlan,
   parseQuote,
@@ -16,7 +16,7 @@ import {
 describe("public SDK", () => {
   it("requires an explicit network and does not broadcast", () => {
     assert.throws(() => requireNetwork(undefined), /no default network/);
-    const os = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
+    const os = createStacksCapital({ network: "mainnet", now: new Date(FIXTURE_NOW) });
     assert.throws(
       () => os.submit(),
       (error: unknown) =>
@@ -31,7 +31,7 @@ describe("public SDK", () => {
       owner: MAINNET_OWNER,
       now: new Date(FIXTURE_NOW),
     });
-    const os = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
+    const os = createStacksCapital({ network: "mainnet", now: new Date(FIXTURE_NOW) });
     const intent = { action: "supply" as const, marketId: "zest.sbtc.vault", amount: "99999000" };
     const { quote, plan } = engine.quoteAndPlan(intent);
     assert.equal(os.validate(plan, quote, { sender: MAINNET_OWNER }).ok, true);
@@ -50,7 +50,7 @@ describe("public SDK", () => {
       owner: MAINNET_OWNER,
       now: new Date(FIXTURE_NOW),
     });
-    const os = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
+    const os = createStacksCapital({ network: "mainnet", now: new Date(FIXTURE_NOW) });
     const { quote, plan } = engine.quoteAndPlan({ action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" });
     let flow = os.startWorkflow({ id: "wf_sdk", idempotencyKey: "sdk" });
     flow = os.recordQuote(flow, quote);
@@ -75,7 +75,7 @@ describe("public SDK", () => {
       owner: MAINNET_OWNER,
       now: new Date(FIXTURE_NOW),
     });
-    const os = createCapitalOS({ network: "mainnet", now: new Date(FIXTURE_NOW) });
+    const os = createStacksCapital({ network: "mainnet", now: new Date(FIXTURE_NOW) });
     const { quote, plan } = engine.quoteAndPlan({ action: "supply", marketId: "zest.sbtc.vault", amount: "100000000" });
 
     let rejected = os.startWorkflow({ id: "wf_rej", idempotencyKey: "rej" });

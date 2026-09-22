@@ -101,7 +101,7 @@ for (const wallet of COMPATIBILITY_MATRIX.wallets) {
 }
 
 // --- Pack all release packages ---
-const packRoot = mkdtempSync(join(tmpdir(), "capitalos-k39-pack-"));
+const packRoot = mkdtempSync(join(tmpdir(), "stacks-capital-k39-pack-"));
 const tarballs: Record<string, string> = {};
 try {
   for (const name of RELEASE_PACKAGES) {
@@ -130,7 +130,7 @@ try {
   writeFileSync(join(workspaceRoot, "pnpm-workspace.yaml"), "packages:\n  - pkgs/*\n  - consumer\n");
   writeFileSync(
     join(workspaceRoot, "package.json"),
-    `${JSON.stringify({ name: "capitalos-k39-workspace", private: true }, null, 2)}\n`,
+    `${JSON.stringify({ name: "stacks-capital-k39-workspace", private: true }, null, 2)}\n`,
   );
 
   for (const name of RELEASE_PACKAGES) {
@@ -152,7 +152,7 @@ try {
     join(consumerRoot, "package.json"),
     `${JSON.stringify(
       {
-        name: "capitalos-k39-consumer",
+        name: "stacks-capital-k39-consumer",
         private: true,
         type: "module",
         dependencies: {
@@ -166,13 +166,13 @@ try {
   );
   writeFileSync(
     join(consumerRoot, "smoke.mjs"),
-    `const { createCapitalOS, RELEASE_CANDIDATE_VERSION, COMPATIBILITY_MATRIX, requireNetwork } = await import("@stacks-capital/sdk");
+    `const { createStacksCapital, RELEASE_CANDIDATE_VERSION, COMPATIBILITY_MATRIX, requireNetwork } = await import("@stacks-capital/sdk");
 const { SCHEMA_VERSION } = await import("@stacks-capital/client");
 const { classifyWalletError } = await import("@stacks-capital/wallets");
 if (RELEASE_CANDIDATE_VERSION !== "${RELEASE_CANDIDATE_VERSION}") throw new Error("version mismatch");
 if (SCHEMA_VERSION !== "${COMPATIBILITY_MATRIX.schemaVersion}") throw new Error("schema mismatch");
 requireNetwork("mainnet");
-createCapitalOS({ network: "mainnet" });
+createStacksCapital({ network: "mainnet" });
 if (classifyWalletError("leather", { code: 4001 }) !== "USER_REJECTED") throw new Error("leather");
 if (classifyWalletError("xverse", { code: -32001 }) !== "UNSUPPORTED_WALLET") throw new Error("xverse");
 if (!COMPATIBILITY_MATRIX.wallets.includes("leather")) throw new Error("matrix");
@@ -246,17 +246,18 @@ run("partner:example", "pnpm", ["partner:example"], "partner");
 run("sdk:compat", "pnpm", ["sdk:compat"], "partner");
 
 // --- Migration notes present ---
-const migration = join(root, "docs/guides/sdk-migration-0.1.md");
+const MIGRATION_DOC = "docs/guides/sdk-migration-0.1.md";
+const migration = join(root, MIGRATION_DOC);
 try {
   const text = readFileSync(migration, "utf8");
   record(
     "migration",
     "migration-notes",
     text.includes(RELEASE_CANDIDATE_VERSION) && text.includes("Breaking"),
-    migration,
+    MIGRATION_DOC,
   );
 } catch {
-  record("migration", "migration-notes", false, `missing ${migration}`);
+  record("migration", "migration-notes", false, `missing ${MIGRATION_DOC}`);
 }
 
 const generatedAt = new Date().toISOString();
@@ -268,7 +269,6 @@ const evidence = {
   environment: {
     node: process.version,
     platform: process.platform,
-    cwd: root,
   },
   compatibility: COMPATIBILITY_MATRIX,
   limitations: [
