@@ -1022,3 +1022,161 @@ th {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+/* =========================================================================
+   Earn Marketplace & Strategy Simulator Styles (I34)
+   ========================================================================= */
+
+.earn-subnav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.5rem;
+}
+
+.subnav-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.subnav-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.subnav-btn-active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  font-weight: 600;
+}
+
+.earn-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.earn-filter-bar span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.button-active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.button-active:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.earn-group-section {
+  margin-bottom: 2rem;
+}
+
+.earn-group-section h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.earn-action-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.earn-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.simulation-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-subtle);
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.simulation-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.simulation-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.simulation-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.simulation-card.highlight {
+  border-color: var(--accent);
+  background: var(--bg-card-hover);
+}
+
+.simulation-card-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.simulation-card-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.simulation-card-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.simulation-disclosures-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.simulation-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.simulation-action-bar {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}

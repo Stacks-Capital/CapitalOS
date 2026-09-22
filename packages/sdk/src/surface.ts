@@ -110,6 +110,7 @@ export const PUBLIC_VALUE_EXPORTS = {
     "quoteSafety",
     "reviewQuote",
     "signIn",
+    "simulateEarn",
     "swapView",
     "toWalletRequest",
   ],

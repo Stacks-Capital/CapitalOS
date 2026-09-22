@@ -159,3 +159,9 @@ export {
   validateBtcRecipient,
   type WithdrawalAccounting,
 } from "./sbtc.ts";
+export {
+  type SimulationHorizon,
+  type SimulationInput,
+  type SimulationResult,
+  simulateEarn,
+} from "./simulation.ts";
