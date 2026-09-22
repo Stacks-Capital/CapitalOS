@@ -8,6 +8,7 @@ import {
   requireDatabaseUrl,
   tryAcquireWorkerLock,
 } from "@stacks-capital/database";
+import { auditProjections } from "./audit.ts";
 import { evaluateAlerts, reconcileAlerts } from "./alerts.ts";
 import { startHealthServer } from "./health.ts";
 import { createHiro } from "./hiro.ts";
@@ -82,10 +83,24 @@ const sleep = (ms: number) =>
   });
 
 switch (selectedProcess) {
+  case "audit": {
+    const report = await auditProjections({
+      sql,
+      network,
+    });
+    console.log(JSON.stringify(report, null, 2));
+    if (!report.isHealthy) {
+      process.exitCode = 1;
+    }
+    break;
+  }
+
   case "backfill": {
     const fromHeightRaw = parseArg("from-height") ?? process.env.BACKFILL_FROM_HEIGHT;
     const toHeightRaw = parseArg("to-height") ?? process.env.BACKFILL_TO_HEIGHT;
     const batchSizeRaw = parseArg("batch-size") ?? process.env.BACKFILL_BATCH_SIZE;
+    const reproject = process.argv.includes("--reproject");
+    const audit = process.argv.includes("--audit");
 
     const fromHeight = fromHeightRaw ? Number(fromHeightRaw) : undefined;
     const toHeight = toHeightRaw ? Number(toHeightRaw) : undefined;
@@ -98,8 +113,10 @@ switch (selectedProcess) {
       ...(fromHeight !== undefined ? { fromHeight } : {}),
       ...(toHeight !== undefined ? { toHeight } : {}),
       ...(maxBlocksPerBatch !== undefined ? { maxBlocksPerBatch } : {}),
+      ...(reproject ? { reproject: true } : {}),
+      ...(audit ? { audit: true } : {}),
     });
-    console.log(JSON.stringify(result));
+    console.log(JSON.stringify(result, null, 2));
     break;
   }
 

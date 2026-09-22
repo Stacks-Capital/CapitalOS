@@ -4,9 +4,10 @@
 |---|---|
 | From | `0.0.0` workspace packages |
 | To | `@stacks-capital/*@0.1.0` release candidate |
-| Task | K39 |
+| Task | K39 / I39 |
 
 Packages stay **private**. This documents the partner contract for the first release candidate; it is not a registry publish.
+For the complete step-by-step external developer guide, see the [Partner Integration Guide](partner-integration.md).
 
 ## Breaking
 
@@ -20,6 +21,8 @@ Packages stay **private**. This documents the partner contract for the first rel
 ## Non-breaking additions in 0.1.0
 
 - `RELEASE_CANDIDATE_VERSION`, `RELEASE_PACKAGES`, `COMPATIBILITY_MATRIX` on `@stacks-capital/sdk`
+- Complete sandbox entry (`supply`) and exit (`withdraw_supply` / `redeem`) in `@stacks-capital/partner-example`
+- Isolated and revocable disposable test credentials in `apps/partner-example/src/disposable-test-account.ts`
 - Plan validation / wallet gate hardening (K34)
 - Workflow recovery helpers (`completeFromReconciliation`, `resumeHint`, …) (K35)
 - Risk helpers (`interpretGraniteHealth`, `graniteProtectiveActions`, …) (K36)
@@ -45,8 +48,18 @@ Until a registry publish lands, consume workspace packages or the tarballs produ
 
 Quote and plan come from the Capital API. The SDK only validates and holds workflow state through `AWAITING_SIGNATURE`:
 
+### Entry Flow (Supply)
 ```ts
 const os = createCapitalOS({ network: "mainnet" });
 const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender });
 os.assertReadyToSign(parsePlan(plan), parseQuote(quote), { sender });
 ```
+
+### Exit Flow (Withdraw Supply / Redeem)
+```ts
+const os = createCapitalOS({ network: "mainnet" });
+const checked = os.validate(parsePlan(exitPlan), parseQuote(exitQuote), { sender });
+os.assertReadyToSign(parsePlan(exitPlan), parseQuote(exitQuote), { sender });
+```
+
+See [apps/partner-example](../../apps/partner-example/src/program.ts) and [Partner Integration Guide](partner-integration.md) for complete implementations.

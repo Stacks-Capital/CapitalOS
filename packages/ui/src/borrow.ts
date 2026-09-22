@@ -73,9 +73,18 @@ export function projectBorrow(risk: MarketRisk, inputs: BorrowInputs, now: Date)
 
   const collateralOracle = toOracle(risk.collateralOracle);
   const debtOracle = toOracle(risk.debtOracle);
-  if (collateralOracle === null) blockers.push(`No price for ${risk.collateralOracle.feedKey}.`);
+  if (risk.collateralOracle.disagreement)
+    blockers.push(
+      `The ${risk.collateralOracle.feedKey} price sources disagree (quorum disagreement). Financial actions fail closed.`,
+    );
+  else if (collateralOracle === null) blockers.push(`No price for ${risk.collateralOracle.feedKey}.`);
   else if (!oracleFresh(collateralOracle, now)) blockers.push(`The ${risk.collateralOracle.feedKey} price is stale.`);
-  if (debtOracle === null) blockers.push(`No price for ${risk.debtOracle.feedKey}.`);
+
+  if (risk.debtOracle.disagreement)
+    blockers.push(
+      `The ${risk.debtOracle.feedKey} price sources disagree (quorum disagreement). Financial actions fail closed.`,
+    );
+  else if (debtOracle === null) blockers.push(`No price for ${risk.debtOracle.feedKey}.`);
   else if (!oracleFresh(debtOracle, now)) blockers.push(`The ${risk.debtOracle.feedKey} price is stale.`);
 
   if (risk.params === null) blockers.push("The protocol's risk parameters could not be read.");

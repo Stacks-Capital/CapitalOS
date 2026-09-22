@@ -34,6 +34,7 @@ The class says what a caller can do, and is what code should branch on:
 | `CAPABILITY_DISABLED` | 403 | `user_action` | no | The action is disabled or paused, by the registry or by an operator. The message gives the reason. | Do not retry. Show the reason; the action returns when it is switched back on. |
 | `FORBIDDEN` | 403 | `user_action` | no | Valid credentials that may not do this: a missing scope, a browser client id on a server route, a key sent from a browser. | Use a caller with the right scope. Never send an API key from a browser. |
 | `NOT_FOUND` | 404 | `user_action` | no | No such route, quote, market or workflow for this caller. Another tenant's workflow also reads as not found. | Check the id and the network. |
+| `QUORUM_DISAGREEMENT` | 409 | `requote` | no | Independent price sources disagree beyond the quorum tolerance threshold. | Ask for a new quote once oracle price sources converge. |
 | `QUOTE_EXPIRED` | 409 | `requote` | no | The quote is past its expiry, so it is not signed. | Ask for a new quote. |
 | `RATE_LIMITED` | 429 | `retryable_read` | yes | Too many requests from this key, session or app in the current window. | Wait for the number of seconds in retryAfter. |
 | `BROADCAST_UNKNOWN` | 500 | `investigation` | no | The wallet answered without a transaction id, so it is not known whether anything was sent. | Never resubmit. Check the chain for the transaction, then contact support with the workflow id. |

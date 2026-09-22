@@ -46,14 +46,17 @@ export {
   type ActivityRow,
   type BlockRow,
   type ChainName,
+  type CheckpointRecord,
   type CheckpointRow,
   type EventRow,
   findCanonicalBlock,
+  getMissingSnapshotTargets,
   insertBlock,
   insertMarketSnapshot,
   insertPriceSnapshot,
   insertRawEvent,
   latestMarketSnapshot,
+  listAllCheckpoints,
   listProjectionTargets,
   markReorg,
   type MarketSnapshotRow,
@@ -68,6 +71,7 @@ export {
   recordReconciliation,
 } from "./ingestion.ts";
 export { type EarnOptionRow, listEarnOptions } from "./earn.ts";
+export { getMarketEvidence, type MarketEvidenceRecord, type MarketObservation } from "./markets.ts";
 export {
   type AlertInput,
   type AlertKind,
@@ -98,6 +102,9 @@ export {
   insertRewardSnapshot,
   latestPositions,
   latestPrices,
+  latestPriceObservations,
+  latestPriceValuations,
+  latestWalletBalances,
   listKnownOwners,
   listMarketAssets,
   type MarketAssets,
@@ -106,6 +113,7 @@ export {
   type PositionSnapshotRow,
   type PriceRow,
   type RewardSnapshotRow,
+  type WalletBalanceRow,
 } from "./positions.ts";
 export {
   type CapabilityRecord,
@@ -116,3 +124,20 @@ export {
   type NetworkName,
   type Page,
 } from "./registry.ts";
+export {
+  type EarnPerformanceMarketData,
+  getEarnPerformanceData,
+} from "./performance.ts";
+export {
+  createWebhookEndpoint,
+  deleteWebhookEndpoint,
+  findWebhookEndpoint,
+  listWebhookEndpoints,
+  processWebhookDeliveryAttempt,
+  recordWebhookDelivery,
+  signWebhookPayload,
+  verifyWebhookSignature,
+  type RecordDeliveryResult,
+  type WebhookDeliveryRecord,
+  type WebhookEndpointRecord,
+} from "./webhooks.ts";

@@ -3,9 +3,14 @@ import {
   CapabilitiesResponse,
   ChallengeRequest,
   ChallengeResponse,
+  CreateWebhookEndpointRequest,
   EarnOptionsResponse,
+  EarnPerformanceQuery,
+  EarnPerformanceResponse,
+  EndpointParams,
   ErrorBody,
   ListQuery,
+  MarketEvidenceResponse,
   MarketRiskResponse,
   MarketsResponse,
   NetworkQuery,
@@ -14,6 +19,7 @@ import {
   QuoteRequest,
   QuoteResponse,
   PositionQuery,
+  PortfolioAccountingResponse,
   PricesResponse,
   PositionsResponse,
   SessionResponse,
@@ -21,7 +27,11 @@ import {
   SignatureResponse,
   StartedWorkflowResponse,
   StartWorkflowRequest,
+  ValuationsResponse,
   VerifyRequest,
+  WebhookEndpointCreatedResponse,
+  WebhookEndpointsResponse,
+  WebhookEndpointDeleteResponse,
   WorkflowParams,
   WorkflowListQuery,
   WorkflowResponse,
@@ -42,6 +52,7 @@ const errorResponses = {
 const anyCaller = [{ apiKey: [] }, { walletSession: [] }, { clientId: [] }];
 const browserApp = [{ clientId: [] }];
 const keyOrSession = [{ apiKey: [] }, { walletSession: [] }];
+const keyOnly = [{ apiKey: [] }];
 
 const json = <T>(description: string, schema: T) => ({ description, content: { "application/json": { schema } } });
 
@@ -127,12 +138,37 @@ export const earnOptionsRoute = createRoute({
   responses: { 200: json("What each earn market pays and allows", EarnOptionsResponse), ...errorResponses },
 });
 
+export const earnPerformanceRoute = createRoute({
+  method: "get",
+  path: "/v1/earn/performance",
+  security: keyOrSession,
+  request: { query: EarnPerformanceQuery },
+  responses: {
+    200: json(
+      "Earned yield attribution, three-tier earnings separation, and historical performance",
+      EarnPerformanceResponse,
+    ),
+    ...errorResponses,
+  },
+});
+
 export const pricesRoute = createRoute({
   method: "get",
   path: "/v1/prices",
   security: anyCaller,
   request: { query: NetworkQuery },
   responses: { 200: json("Latest price for each feed the platform reads", PricesResponse), ...errorResponses },
+});
+
+export const priceValuationsRoute = createRoute({
+  method: "get",
+  path: "/v1/prices/valuations",
+  security: anyCaller,
+  request: { query: NetworkQuery },
+  responses: {
+    200: json("Reconciled price quorum valuations for supported assets", ValuationsResponse),
+    ...errorResponses,
+  },
 });
 
 export const marketRiskRoute = createRoute({
@@ -147,12 +183,38 @@ export const marketRiskRoute = createRoute({
   },
 });
 
+export const marketEvidenceRoute = createRoute({
+  method: "get",
+  path: "/v1/markets/{id}/evidence",
+  security: anyCaller,
+  request: { params: WorkflowParams, query: NetworkQuery },
+  responses: {
+    200: json(
+      "Full source-tagged evidence, telemetry age, confidence and disagreement for one market",
+      MarketEvidenceResponse,
+    ),
+    404: error("No such market"),
+    ...errorResponses,
+  },
+});
+
 export const positionsRoute = createRoute({
   method: "get",
   path: "/v1/positions",
   security: keyOrSession,
   request: { query: PositionQuery },
   responses: { 200: json("Positions for one address", PositionsResponse), ...errorResponses },
+});
+
+export const portfolioRoute = createRoute({
+  method: "get",
+  path: "/v1/portfolio",
+  security: keyOrSession,
+  request: { query: PositionQuery },
+  responses: {
+    200: json("Canonical portfolio and debt accounting for one address", PortfolioAccountingResponse),
+    ...errorResponses,
+  },
 });
 
 export const workflowsRoute = createRoute({
@@ -171,6 +233,39 @@ export const workflowRoute = createRoute({
   responses: {
     200: json("Workflow with its state transitions", WorkflowResponse),
     404: error("No workflow with this id for the caller"),
+    ...errorResponses,
+  },
+});
+
+export const createWebhookEndpointRoute = createRoute({
+  method: "post",
+  path: "/v1/webhooks/endpoints",
+  security: keyOnly,
+  request: { body: body(CreateWebhookEndpointRequest) },
+  responses: {
+    201: json("Created webhook endpoint with secret", WebhookEndpointCreatedResponse),
+    ...errorResponses,
+  },
+});
+
+export const listWebhookEndpointsRoute = createRoute({
+  method: "get",
+  path: "/v1/webhooks/endpoints",
+  security: keyOnly,
+  responses: {
+    200: json("Active webhook endpoints for tenant", WebhookEndpointsResponse),
+    ...errorResponses,
+  },
+});
+
+export const deleteWebhookEndpointRoute = createRoute({
+  method: "delete",
+  path: "/v1/webhooks/endpoints/{id}",
+  security: keyOnly,
+  request: { params: EndpointParams },
+  responses: {
+    200: json("Endpoint deactivation result", WebhookEndpointDeleteResponse),
+    404: error("No such webhook endpoint for caller"),
     ...errorResponses,
   },
 });

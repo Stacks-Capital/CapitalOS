@@ -219,6 +219,9 @@
               "retryAfter": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "action": {
+                "type": "string"
               }
             },
             "required": [
@@ -462,6 +465,9 @@
           },
           "adapterVersion": {
             "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EarnOptionEvidence"
           }
         },
         "required": [
@@ -482,6 +488,708 @@
           "warnings",
           "observedAt",
           "adapterVersion"
+        ]
+      },
+      "EarnOptionEvidence": {
+        "type": "object",
+        "properties": {
+          "ageSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "disagreement": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "match",
+              "mismatch",
+              "unavailable",
+              null
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ageSeconds",
+          "blockHeight",
+          "blockHash",
+          "confidence",
+          "source",
+          "disagreement",
+          "isIndependentRead"
+        ]
+      },
+      "EarnPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EarnPerformanceItem"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "EarnPerformanceItem": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/CashFlowAttribution"
+          },
+          "realizedEarnings": {
+            "$ref": "#/components/schemas/RealizedEarnings"
+          },
+          "accruedEstimate": {
+            "$ref": "#/components/schemas/AccruedEstimate"
+          },
+          "forward30dProjection": {
+            "$ref": "#/components/schemas/Forward30dProjection"
+          },
+          "chart": {
+            "$ref": "#/components/schemas/PerformanceChartSeries"
+          }
+        },
+        "required": [
+          "marketId",
+          "assetId",
+          "attribution",
+          "realizedEarnings",
+          "accruedEstimate",
+          "forward30dProjection",
+          "chart"
+        ]
+      },
+      "CashFlowAttribution": {
+        "type": "object",
+        "properties": {
+          "depositsTotal": {
+            "type": "string"
+          },
+          "withdrawalsTotal": {
+            "type": "string"
+          },
+          "netDeposits": {
+            "type": "string"
+          },
+          "feesTotal": {
+            "type": "string"
+          },
+          "claimedRewardsTotal": {
+            "type": "string"
+          },
+          "costBasis": {
+            "type": "string"
+          },
+          "currentValue": {
+            "type": "string"
+          },
+          "unattributedInflow": {
+            "type": "string"
+          },
+          "hasUnattributedInflow": {
+            "type": "boolean"
+          },
+          "earnedYield": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "depositsTotal",
+          "withdrawalsTotal",
+          "netDeposits",
+          "feesTotal",
+          "claimedRewardsTotal",
+          "costBasis",
+          "currentValue",
+          "unattributedInflow",
+          "hasUnattributedInflow",
+          "earnedYield",
+          "warnings"
+        ]
+      },
+      "RealizedEarnings": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "usdValue",
+          "assetId"
+        ]
+      },
+      "AccruedEstimate": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "shareAppreciationAmount": {
+            "type": "string"
+          },
+          "unclaimedRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnclaimedReward"
+            }
+          }
+        },
+        "required": [
+          "amount",
+          "usdValue",
+          "assetId",
+          "shareAppreciationAmount",
+          "unclaimedRewards"
+        ]
+      },
+      "UnclaimedReward": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "amount",
+          "usdValue",
+          "observedAt"
+        ]
+      },
+      "Forward30dProjection": {
+        "type": "object",
+        "properties": {
+          "isProjectionAvailable": {
+            "type": "boolean"
+          },
+          "projected30dAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projected30dUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateUsedBps": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateStatus": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unverified",
+              "stale",
+              "disputed",
+              "missing"
+            ]
+          },
+          "unavailableReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "isProjectionAvailable",
+          "projected30dAmount",
+          "projected30dUsd",
+          "rateUsedBps",
+          "rateStatus",
+          "unavailableReason"
+        ]
+      },
+      "PerformanceChartSeries": {
+        "type": "object",
+        "properties": {
+          "hasChart": {
+            "type": "boolean"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CanonicalPerformancePoint"
+            }
+          },
+          "observationCount": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "hasChart",
+          "points",
+          "observationCount",
+          "reason"
+        ]
+      },
+      "CanonicalPerformancePoint": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "shareRate": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "numerator": {
+                "type": "string"
+              },
+              "denominator": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "numerator",
+              "denominator"
+            ]
+          },
+          "positionShares": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "underlyingValue": {
+            "type": "string"
+          },
+          "cumulativeYield": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "blockHeight",
+          "blockHash",
+          "source",
+          "shareRate",
+          "positionShares",
+          "underlyingValue",
+          "cumulativeYield"
+        ]
+      },
+      "MarketEvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketEvidence"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "MarketEvidence": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "evidenceAgeSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "disagreement": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "match",
+              "mismatch",
+              "unavailable",
+              null
+            ]
+          },
+          "disagreementDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          },
+          "rate": {
+            "type": "object",
+            "properties": {
+              "supplyRate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "borrowRate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rateScale": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "supplyRate",
+              "borrowRate",
+              "rateScale",
+              "stale"
+            ]
+          },
+          "liquidity": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "capacity": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "available",
+              "capacity",
+              "stale"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketObservation"
+            }
+          }
+        },
+        "required": [
+          "marketId",
+          "network",
+          "protocol",
+          "source",
+          "blockHeight",
+          "blockHash",
+          "observedAt",
+          "evidenceAgeSeconds",
+          "confidence",
+          "disagreement",
+          "disagreementDetail",
+          "isIndependentRead",
+          "rate",
+          "liquidity",
+          "warnings",
+          "observations"
+        ]
+      },
+      "MarketObservation": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "independent",
+              "provider_reported"
+            ]
+          },
+          "isIndependentRead": {
+            "type": "boolean"
+          },
+          "availableLiquidity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capacity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplyRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borrowRate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateScale": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paused": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "sourceType",
+          "isIndependentRead",
+          "availableLiquidity",
+          "capacity",
+          "supplyRate",
+          "borrowRate",
+          "rateScale",
+          "paused",
+          "stale",
+          "warnings",
+          "observedAt",
+          "blockHeight",
+          "blockHash"
         ]
       },
       "PricesResponse": {
@@ -566,6 +1274,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "sourceSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disagreement": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "disputed",
+              "stale",
+              "unsupported"
+            ]
           }
         },
         "required": [
@@ -576,6 +1305,113 @@
           "observedAt",
           "source",
           "stale",
+          "warnings"
+        ]
+      },
+      "ValuationsResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssetValuation"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "AssetValuation": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scale": {
+            "type": "integer"
+          },
+          "sourceSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "disputed",
+              "stale",
+              "unsupported"
+            ]
+          },
+          "disagreement": {
+            "type": "boolean"
+          },
+          "spreadBps": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "assetId",
+          "price",
+          "scale",
+          "sourceSet",
+          "timestamp",
+          "status",
+          "disagreement",
+          "spreadBps",
           "warnings"
         ]
       },
@@ -760,8 +1596,10 @@
             "enum": [
               "wallet",
               "supplied",
-              "debt",
+              "lp",
               "collateral",
+              "debt",
+              "locked",
               "pending_deposit",
               "pending_withdrawal",
               "staked"
@@ -816,6 +1654,9 @@
           },
           "calculationVersion": {
             "type": "string"
+          },
+          "linkedCollateral": {
+            "$ref": "#/components/schemas/LinkedCollateral"
           }
         },
         "required": [
@@ -832,6 +1673,344 @@
           "rewardScale",
           "adapterVersion",
           "calculationVersion"
+        ]
+      },
+      "LinkedCollateral": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "protocolKey": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "marketId",
+          "assetId"
+        ]
+      },
+      "PortfolioAccountingResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/PortfolioAccounting"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "PortfolioAccounting": {
+        "type": "object",
+        "properties": {
+          "grossAssetsUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossDebtUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netWorthUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/PortfolioCoverage"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountingEntry"
+            }
+          },
+          "byCategory": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryAccountingSummary"
+            }
+          },
+          "incomplete": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "grossAssetsUsd",
+          "grossDebtUsd",
+          "netWorthUsd",
+          "coverage",
+          "entries",
+          "byCategory",
+          "incomplete",
+          "warnings"
+        ]
+      },
+      "PortfolioCoverage": {
+        "type": "object",
+        "properties": {
+          "isComplete": {
+            "type": "boolean"
+          },
+          "valuedCount": {
+            "type": "integer"
+          },
+          "unvaluedCount": {
+            "type": "integer"
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "coverageBps": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "valuedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unvaluedAssets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assetId": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "assetId",
+                "reason",
+                "quantity"
+              ]
+            }
+          }
+        },
+        "required": [
+          "isComplete",
+          "valuedCount",
+          "unvaluedCount",
+          "totalCount",
+          "coverageBps",
+          "valuedAssets",
+          "unvaluedAssets"
+        ]
+      },
+      "AccountingEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "wallet",
+              "supplied",
+              "lp",
+              "collateral",
+              "debt",
+              "locked"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marketId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "protocolKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isReceipt": {
+            "type": "boolean"
+          },
+          "countsTowardTotal": {
+            "type": "boolean"
+          },
+          "linkedCollateral": {
+            "$ref": "#/components/schemas/LinkedCollateral"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "assetId",
+          "quantity",
+          "marketId",
+          "protocolKey",
+          "isReceipt",
+          "countsTowardTotal",
+          "linkedCollateral",
+          "stale",
+          "warnings"
+        ]
+      },
+      "CategoryAccountingSummary": {
+        "type": "object",
+        "properties": {
+          "totalUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuedHoldingItem"
+            }
+          }
+        },
+        "required": [
+          "totalUsd",
+          "count",
+          "items"
+        ]
+      },
+      "ValuedHoldingItem": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valued",
+              "unsupported",
+              "stale",
+              "disputed",
+              "missing_quantity"
+            ]
+          },
+          "unvaluedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valuation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetValuation"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "assetId",
+          "quantity",
+          "decimals",
+          "usdValue",
+          "status",
+          "unvaluedReason",
+          "valuation"
         ]
       },
       "ChallengeResponse": {
@@ -2094,6 +3273,186 @@
           "stepId",
           "walletResult"
         ]
+      },
+      "WebhookEndpointCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/WebhookEndpoint"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique webhook endpoint ID (whe_...)."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Plaintext webhook secret, returned ONLY upon creation."
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "events",
+          "active",
+          "createdAt"
+        ]
+      },
+      "CreateWebhookEndpointRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Destination URL to receive signed POST webhooks."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "List of event types to subscribe to."
+          }
+        },
+        "required": [
+          "url",
+          "events"
+        ]
+      },
+      "WebhookEndpointsResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WebhookEndpoint"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "WebhookEndpointDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "deleted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "deleted"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
       }
     },
     "parameters": {}
@@ -2456,6 +3815,247 @@
         }
       }
     },
+    "/v1/earn/performance": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "marketId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Earned yield attribution, three-tier earnings separation, and historical performance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarnPerformanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/{id}/evidence": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full source-tagged evidence, telemetry age, confidence and disagreement for one market",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketEvidenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such market",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/prices": {
       "get": {
         "security": [
@@ -2492,6 +4092,109 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PricesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices/valuations": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          },
+          {
+            "clientId": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reconciled price quorum valuations for supported assets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValuationsResponse"
                 }
               }
             }
@@ -2734,6 +4437,117 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PositionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/portfolio": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "Required for an API key, ignored for a session."
+            },
+            "required": false,
+            "description": "Required for an API key, ignored for a session.",
+            "name": "owner",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canonical portfolio and debt accounting for one address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioAccountingResponse"
                 }
               }
             }
@@ -3597,6 +5411,280 @@
           },
           "404": {
             "description": "No such workflow for the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/endpoints": {
+      "post": {
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookEndpointRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created webhook endpoint with secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active webhook endpoints for tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/endpoints/{id}": {
+      "delete": {
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^whe_[a-f0-9]{16}$",
+              "description": "Webhook endpoint ID"
+            },
+            "required": true,
+            "description": "Webhook endpoint ID",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Endpoint deactivation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such webhook endpoint for caller",
             "content": {
               "application/json": {
                 "schema": {

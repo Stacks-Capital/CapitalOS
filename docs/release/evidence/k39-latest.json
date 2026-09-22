@@ -1,11 +1,11 @@
 {
   "task": "K39",
-  "generatedAt": "2026-09-21T17:39:44.071Z",
+  "generatedAt": "2026-09-22T16:17:55.863Z",
   "releaseCandidate": "0.1.0",
   "environment": {
-    "node": "v22.16.0",
-    "platform": "darwin",
-    "cwd": "/Users/apple/Desktop/capitalos/CapitalOS"
+    "node": "v24.21.0",
+    "platform": "linux",
+    "cwd": "/home/modev/Stacks Ecosystem/CapitalOS"
   },
   "compatibility": {
     "nodeMajor": [22, 24],
@@ -72,7 +72,7 @@
     {
       "id": "node-major",
       "ok": true,
-      "detail": "running v22.16.0; supported 22,24",
+      "detail": "running v24.21.0; supported 22,24",
       "category": "matrix"
     },
     {
@@ -90,43 +90,43 @@
     {
       "id": "pack:@stacks-capital/core",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-core-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-core-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/config",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-config-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-config-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/wallets",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-wallets-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-wallets-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/sdk",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-sdk-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-sdk-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/client",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-client-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-client-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/react",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-react-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-react-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/ui",
       "ok": true,
-      "detail": "/var/folders/k3/p4ff2pd52pn5c7l6123ry3bw0000gn/T/capitalos-k39-pack-RXnySe/stacks-capital-ui-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-ojL1T0/stacks-capital-ui-0.1.0.tgz",
       "category": "pack"
     },
     {
@@ -156,7 +156,7 @@
     {
       "id": "migration-notes",
       "ok": true,
-      "detail": "/Users/apple/Desktop/capitalos/CapitalOS/docs/guides/sdk-migration-0.1.md",
+      "detail": "/home/modev/Stacks Ecosystem/CapitalOS/docs/guides/sdk-migration-0.1.md",
       "category": "migration"
     }
   ],

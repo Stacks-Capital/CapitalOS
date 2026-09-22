@@ -25,17 +25,22 @@ export {
   stacksNative,
 } from "./ids.ts";
 
-export type { AssetAmount, Rounding } from "./amounts.ts";
+export type { AssetAmount, FormatUnitsOptions, Rounding } from "./amounts.ts";
 export {
   addAmounts,
   amount,
   assertFinancialInt,
   assertPositive,
   formatQuantity,
+  formatUnits,
   jsonAmount,
   mulDiv,
   parseAmount,
+  parseFinancialJson,
   parseQuantity,
+  parseUnits,
+  safeBigIntReplacer,
+  serializeFinancialJson,
 } from "./amounts.ts";
 export type { QuoteWire, PlanWire } from "./wire.ts";
 export { parsePlan, parseQuote, serializePlan, serializeQuote } from "./wire.ts";
@@ -44,7 +49,17 @@ export type { DataPoint } from "./datapoint.ts";
 export { dataPoint, requireFresh, unknownPoint } from "./datapoint.ts";
 
 export type { CapitalError, ErrorClass, ErrorCode } from "./errors.ts";
-export { allowsWriteRetry, capitalError, ERROR_CLASS, isCapitalError, isRetryableRead } from "./errors.ts";
+export {
+  allowsWriteRetry,
+  capitalError,
+  ERROR_CLASS,
+  isCapitalError,
+  isFinancialError,
+  isInvestigationError,
+  isRequoteError,
+  isRetryableRead,
+  isUserActionError,
+} from "./errors.ts";
 
 export type { Action, Fee, FeeKind, Intent, Quote } from "./quote.ts";
 export { ACTIONS, quoteExpired } from "./quote.ts";
@@ -120,6 +135,7 @@ export {
   ORACLE_MAX_AGE_MS,
   USD_SCALE,
   assertOracleFresh,
+  assertOracleQuorum,
   computeHealth,
   marketsComparable,
   minOutFromSpot,
@@ -156,3 +172,57 @@ export {
   unsupportedCreditRisk,
   wouldLiquidateAtLtv,
 } from "./riskReport.ts";
+
+export type {
+  AssetValuation,
+  PortfolioCoverage,
+  PortfolioValuation,
+  PriceReading,
+  QuorumOptions,
+  ValuationStatus,
+  ValuedHoldingItem,
+} from "./valuation.ts";
+export {
+  DEFAULT_MAX_QUORUM_SPREAD_BPS,
+  DEFAULT_PRICE_SCALE,
+  evaluatePortfolioValuation,
+  reconcilePriceQuorum,
+} from "./valuation.ts";
+
+export type {
+  AccountingEntry,
+  CapitalCategory,
+  CategoryAccountingSummary,
+  LinkedCollateralRef,
+  PortfolioAccountingSummary,
+} from "./accounting.ts";
+export {
+  CAPITAL_CATEGORIES,
+  evaluatePortfolioAccounting,
+  normalizeCapitalCategory,
+} from "./accounting.ts";
+
+export type {
+  AccruedEstimate,
+  AttributeYieldParams,
+  CanonicalObservation,
+  CanonicalPerformancePoint,
+  CashFlowAttribution,
+  CashFlowEvent,
+  CashFlowKind,
+  EarnedPerformanceBreakdown,
+  Forward30dProjection,
+  Forward30dProjectionParams,
+  PerformanceChartSeries,
+  ProjectionRateStatus,
+  RealizedEarnings,
+  ShareRate,
+  UnclaimedReward,
+} from "./performance.ts";
+export {
+  attributeCashFlowYield,
+  buildPerformanceChartSeries,
+  evaluateForward30dProjection,
+  sharesFromUnderlying,
+  underlyingFromShares,
+} from "./performance.ts";

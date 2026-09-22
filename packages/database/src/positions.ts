@@ -1,3 +1,4 @@
+import { type AssetValuation, reconcilePriceQuorum } from "@stacks-capital/core";
 import type { Provenance } from "./ingestion.ts";
 import type { Sql } from "./lib.ts";
 import type { NetworkName } from "./registry.ts";
@@ -122,6 +123,35 @@ export async function latestPositions(
   `;
 }
 
+export type WalletBalanceRow = {
+  network: NetworkName;
+  address: string;
+  assetId: string;
+  quantity: string | null;
+  stale: boolean;
+  warnings: string[];
+  source: string;
+  observedAt: Date;
+  blockHeight: number | null;
+  blockHash: string | null;
+};
+
+/** The latest wallet balances per asset for an address. */
+export async function latestWalletBalances(
+  sql: Sql,
+  input: { network: NetworkName; address: string },
+): Promise<WalletBalanceRow[]> {
+  return sql<WalletBalanceRow[]>`
+    SELECT DISTINCT ON (asset_id)
+           network, address, asset_id AS "assetId", quantity::text AS quantity,
+           stale, warnings, source, observed_at AS "observedAt",
+           block_height::int AS "blockHeight", block_hash AS "blockHash"
+    FROM wallet_balance_snapshots
+    WHERE network = ${input.network} AND address = ${input.address}
+    ORDER BY asset_id, observed_at DESC, id DESC
+  `;
+}
+
 export type PriceRow = {
   feedKey: string;
   price: string | null;
@@ -143,4 +173,54 @@ export async function latestPrices(sql: Sql, network: NetworkName, feeds: string
     WHERE network = ${network} AND feed_key = ANY(${sql.array(feeds)})
     ORDER BY feed_key, observed_at DESC, id DESC
   `;
+}
+
+/** Latest observations for each feed from each distinct source. */
+export async function latestPriceObservations(sql: Sql, network: NetworkName, feeds: string[]): Promise<PriceRow[]> {
+  return sql<PriceRow[]>`
+    SELECT DISTINCT ON (feed_key, source)
+           feed_key AS "feedKey", price::text AS price, price_scale::int AS "priceScale",
+           published_at AS "publishedAt", stale, warnings, source, observed_at AS "observedAt"
+    FROM price_snapshots
+    WHERE network = ${network} AND feed_key = ANY(${sql.array(feeds)})
+    ORDER BY feed_key, source, observed_at DESC, id DESC
+  `;
+}
+
+/**
+ * Reconciles latest multi-source observations into verified or disputed AssetValuations.
+ */
+export async function latestPriceValuations(
+  sql: Sql,
+  network: NetworkName,
+  feeds: string[],
+  options?: { now?: Date; maxSpreadBps?: bigint },
+): Promise<AssetValuation[]> {
+  const observations = await latestPriceObservations(sql, network, feeds);
+  const byFeed = new Map<string, PriceRow[]>();
+  for (const feed of feeds) byFeed.set(feed, []);
+  for (const obs of observations) {
+    const list = byFeed.get(obs.feedKey);
+    if (list) list.push(obs);
+  }
+
+  const valuations: AssetValuation[] = [];
+  for (const [feedKey, readings] of byFeed.entries()) {
+    valuations.push(
+      reconcilePriceQuorum(
+        feedKey,
+        readings.map((r) => ({
+          source: r.source,
+          price: r.price === null ? null : BigInt(r.price),
+          scale: r.priceScale,
+          publishedAt: r.publishedAt,
+          observedAt: r.observedAt,
+          stale: r.stale,
+          warnings: r.warnings,
+        })),
+        options,
+      ),
+    );
+  }
+  return valuations;
 }

@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { type CapitalClient, CLIENT_ID_HEADER, type ClientOptions, createClient } from "./client.ts";
-import { CapitalApiError, CapitalConfigError, CapitalTransportError, errorClassOf, isRetryable } from "./errors.ts";
+import {
+  CapitalApiError,
+  CapitalConfigError,
+  CapitalFinancialError,
+  CapitalTransportError,
+  errorClassOf,
+  isCapitalApiError,
+  isCapitalFinancialError,
+  isRetryable,
+} from "./errors.ts";
 
 const BASE = "https://api.example";
 const MARKET = {
@@ -178,6 +187,57 @@ describe("reads", () => {
     assert.equal(result.data.state, "CONFIRMING");
     assert.equal(result.context.requestId, "req_1");
   });
+
+  it("reads earn performance attribution and charts", async () => {
+    const performanceData = {
+      items: [
+        {
+          marketId: "zest.sbtc.vault",
+          assetId: "sbtc-token",
+          attribution: {
+            depositsTotal: "100000000",
+            withdrawalsTotal: "0",
+            netDeposits: "100000000",
+            feesTotal: "0",
+            claimedRewardsTotal: "0",
+            costBasis: "100000000",
+            currentValue: "105000000",
+            unattributedInflow: "0",
+            hasUnattributedInflow: false,
+            earnedYield: "5000000",
+            warnings: [],
+          },
+          realizedEarnings: { amount: "0", usdValue: null, assetId: "sbtc-token" },
+          accruedEstimate: {
+            amount: "5000000",
+            usdValue: null,
+            assetId: "sbtc-token",
+            shareAppreciationAmount: "5000000",
+            unclaimedRewards: [],
+          },
+          forward30dProjection: {
+            isProjectionAvailable: true,
+            projected30dAmount: "410958",
+            projected30dUsd: null,
+            rateUsedBps: "500",
+            rateStatus: "verified",
+            unavailableReason: null,
+          },
+          chart: {
+            hasChart: true,
+            points: [],
+            observationCount: 2,
+            reason: null,
+          },
+        },
+      ],
+    };
+    const { client, calls } = build([envelope(performanceData)]);
+    const res = await client.earnPerformance({ owner: "SP1", marketId: "zest.sbtc.vault" });
+    assert.equal(calls[0]?.url, `${BASE}/v1/earn/performance?network=mainnet&owner=SP1&marketId=zest.sbtc.vault`);
+    assert.equal(res.data.items[0]?.attribution.earnedYield, "5000000");
+    assert.equal(res.data.items[0]?.forward30dProjection.rateStatus, "verified");
+  });
 });
 
 describe("sign in", () => {
@@ -207,6 +267,41 @@ describe("sign in", () => {
   });
 });
 
+describe("webhooks", () => {
+  it("creates, lists and deletes webhook endpoints", async () => {
+    const createdEp = {
+      id: "whe_1",
+      url: "https://example.com/webhook",
+      events: ["workflow.completed"],
+      active: true,
+      createdAt: "2026-09-22T00:00:00.000Z",
+      secret: "whsec_123",
+    };
+    const epList = { items: [createdEp] };
+    const delResult = { deleted: true };
+
+    const { client, calls } = build([envelope(createdEp), envelope(epList), envelope(delResult)]);
+
+    const created = await client.createWebhookEndpoint({
+      url: "https://example.com/webhook",
+      events: ["workflow.completed"],
+    });
+    assert.equal(created.data.id, "whe_1");
+    assert.equal(created.data.secret, "whsec_123");
+    assert.equal(calls[0]?.method, "POST");
+    assert.equal(calls[0]?.url, "https://api.example/v1/webhooks/endpoints");
+
+    const list = await client.webhookEndpoints();
+    assert.equal(list.data.items.length, 1);
+    assert.equal(calls[1]?.method, "GET");
+
+    const deleted = await client.deleteWebhookEndpoint("whe_1");
+    assert.equal(deleted.data.deleted, true);
+    assert.equal(calls[2]?.method, "DELETE");
+    assert.equal(calls[2]?.url, "https://api.example/v1/webhooks/endpoints/whe_1");
+  });
+});
+
 describe("errors", () => {
   it("turn an error body into a typed error with its class and request id", async () => {
     const { client } = build([apiError(403, "FORBIDDEN")]);
@@ -226,6 +321,20 @@ describe("errors", () => {
     assert.equal(errorClassOf("UNAUTHORIZED"), "user_action");
     assert.equal(errorClassOf("TEMPORARY_UNAVAILABLE"), "retryable_read");
     assert.equal(errorClassOf("SOMETHING_NEW"), "investigation");
+  });
+
+  it("instantiates CapitalFinancialError for financial core codes with classification predicates", async () => {
+    const { client } = build([apiError(400, "QUOTE_EXPIRED", { action: "deposit" })]);
+    await assert.rejects(client.quote({ marketId: "m1", action: "deposit", amount: "100" }), (error: unknown) => {
+      assert.ok(isCapitalApiError(error));
+      assert.ok(isCapitalFinancialError(error));
+      assert.equal(error.action, "deposit");
+      assert.equal(error.isRequote(), true);
+      assert.equal(error.isUserAction(), false);
+      assert.equal(error.isInvestigation(), false);
+      assert.equal(error.isRetryableRead(), false);
+      return true;
+    });
   });
 
   it("report a response that is not our contract as a protocol error", async () => {

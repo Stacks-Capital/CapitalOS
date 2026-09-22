@@ -8,6 +8,8 @@ import {
   releaseWorkerLock,
   tryAcquireWorkerLock,
 } from "@stacks-capital/database";
+import { auditProjections, type ProjectionAuditReport } from "../audit.ts";
+import { observerTick } from "./observer.ts";
 
 const CHAIN = "stacks" as const;
 
@@ -19,6 +21,8 @@ export type BackfillOptions = {
   toHeight?: number | undefined;
   maxBlocksPerBatch?: number | undefined;
   perContract?: number | undefined;
+  reproject?: boolean | undefined;
+  audit?: boolean | undefined;
   at?: Date | undefined;
   onProgress?:
     | ((progress: {
@@ -39,6 +43,7 @@ export type BackfillResult = {
   activitiesIngested: number;
   durationMs: number;
   status: "completed" | "interrupted" | "lock_failed";
+  auditReport?: ProjectionAuditReport | undefined;
 };
 
 /**
@@ -83,7 +88,12 @@ export async function runBackfill(opts: BackfillOptions): Promise<BackfillResult
     } else if (existingCheckpoint !== null) {
       startHeight = existingCheckpoint.height;
     } else {
-      startHeight = 0;
+      // Find minimum numeric deployment revision across targets if available, or default to 0
+      const targets = await listProjectionTargets(opts.sql, opts.network);
+      const revisions = targets
+        .map((t) => Number.parseInt(t.revision, 10))
+        .filter((rev) => Number.isFinite(rev) && rev > 0);
+      startHeight = revisions.length > 0 ? Math.min(...revisions) : 0;
     }
 
     const targetHeight = opts.toHeight !== undefined ? Math.min(opts.toHeight, tip.height) : tip.height;
@@ -154,6 +164,34 @@ export async function runBackfill(opts: BackfillOptions): Promise<BackfillResult
       }
     }
 
+    // Optionally reproject fresh state up to currentHeight
+    if (opts.reproject) {
+      console.log(
+        JSON.stringify({
+          level: "info",
+          process: "backfill",
+          network: opts.network,
+          message: "Reprojecting canonical snapshots after backfill",
+        }),
+      );
+      await observerTick({
+        sql: opts.sql,
+        hiro: opts.hiro,
+        network: opts.network,
+        at,
+      });
+    }
+
+    // Optionally audit projections
+    let auditReport: ProjectionAuditReport | undefined;
+    if (opts.audit) {
+      auditReport = await auditProjections({
+        sql: opts.sql,
+        network: opts.network,
+        chain: CHAIN,
+      });
+    }
+
     console.log(
       JSON.stringify({
         level: "info",
@@ -166,6 +204,7 @@ export async function runBackfill(opts: BackfillOptions): Promise<BackfillResult
         activitiesIngested: totalActivities,
         durationMs: Date.now() - startTime,
         status: "completed",
+        ...(auditReport ? { isHealthy: auditReport.isHealthy } : {}),
       }),
     );
 
@@ -178,6 +217,7 @@ export async function runBackfill(opts: BackfillOptions): Promise<BackfillResult
       activitiesIngested: totalActivities,
       durationMs: Date.now() - startTime,
       status: "completed",
+      ...(auditReport ? { auditReport } : {}),
     };
   } finally {
     await releaseWorkerLock(opts.sql, "backfill", opts.network).catch(() => {});

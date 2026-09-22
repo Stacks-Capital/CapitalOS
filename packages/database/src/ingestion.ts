@@ -279,3 +279,31 @@ export async function latestMarketSnapshot(
   `;
   return row ?? null;
 }
+
+export type CheckpointRecord = {
+  chain: ChainName;
+  network: NetworkName;
+  height: number;
+  hash: string;
+  updatedAt: Date;
+};
+
+export async function listAllCheckpoints(sql: Sql): Promise<CheckpointRecord[]> {
+  return sql<CheckpointRecord[]>`
+    SELECT chain, network, height::int, hash, updated_at AS "updatedAt"
+    FROM ingestion_checkpoints
+    ORDER BY chain, network
+  `;
+}
+
+export async function getMissingSnapshotTargets(sql: Sql, network: NetworkName, source: string): Promise<string[]> {
+  const rows = await sql<{ marketId: string }[]>`
+    SELECT DISTINCT m.id AS "marketId"
+    FROM markets m
+    JOIN capabilities c ON c.network = m.network AND c.market_id = m.id AND c.state <> 'disabled'
+    LEFT JOIN market_snapshots s ON s.network = m.network AND s.market_id = m.id AND s.source = ${source}
+    WHERE m.network = ${network} AND s.id IS NULL
+    ORDER BY m.id
+  `;
+  return rows.map((r) => r.marketId);
+}

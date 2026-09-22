@@ -107,6 +107,18 @@ export function compareEarn(options: EarnOption[], now: Date): Comparison {
         rankable = false;
       }
     }
+    if (option.capacity === "0" || option.availableLiquidity === "0") {
+      notes.push("Capacity or available liquidity is exhausted.");
+      rankable = false;
+    }
+    if (option.evidence?.confidence === "low") {
+      notes.push("Evidence confidence is low; reconciliation detected disagreement or missing verification.");
+      rankable = false;
+    }
+    if (option.evidence?.disagreement === "mismatch") {
+      notes.push("Independent onchain reads disagree with reported values.");
+      rankable = false;
+    }
     // A missing incentive rate is not the same as no incentive, so the caveat stays visible.
     if (base !== null && incentive === null) notes.push("Incentive rate unknown, so only the base rate is counted.");
     if (option.availableLiquidity === null) notes.push("Available liquidity is unknown.");

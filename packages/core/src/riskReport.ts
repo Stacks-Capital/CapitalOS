@@ -1,11 +1,4 @@
-import {
-  computeHealth,
-  type AssetRiskSide,
-  type Health,
-  type OracleQuote,
-  type RiskParams,
-  oracleFresh,
-} from "./risk.ts";
+import { computeHealth, type AssetRiskSide, type Health, type RiskParams, oracleFresh } from "./risk.ts";
 
 /** Bumps when health, scenario or action semantics change. */
 export const RISK_CALCULATION_VERSION = "risk@1.0.0";
@@ -52,8 +45,11 @@ export const GRANITE_HEALTH_LIMITATIONS: readonly string[] = [
 export function interpretGraniteHealth(health: Health, params: RiskParams): GraniteHealthInterpretation {
   const liquidatable = !health.stale && health.debtUsd > 0n && health.currentLtvBps >= params.ltvLiqBps;
   const withinBorrowCap = !health.stale && health.currentLtvBps <= params.ltvBorrowBps;
+  const hasQuorumDispute = health.warnings.some((w) => w.includes("quorum"));
   const meaning = health.stale
-    ? "Oracle evidence is stale; Granite health factor is unavailable."
+    ? hasQuorumDispute
+      ? "Oracle evidence has quorum disagreement; Granite health factor is unavailable."
+      : "Oracle evidence is stale; Granite health factor is unavailable."
     : health.debtUsd === 0n
       ? "No USDCx debt. Sentinel health factor 10.0; liquidation does not apply until debt is opened."
       : liquidatable
@@ -124,19 +120,25 @@ export function graniteProtectiveActions(input: {
     liquidity === undefined ? true : liquidity === null ? false : requested <= 0n || requested <= liquidity;
 
   const canRiskWrite = !input.health.stale && input.health.healthy;
+  const isQuorumDispute = input.health.warnings.some((w) => w.includes("quorum"));
+  const staleOrDisputeReason = (actionLabel: string) =>
+    isQuorumDispute
+      ? `Oracle has quorum disagreement; ${actionLabel} fails closed until price sources agree.`
+      : `Oracle is stale; ${actionLabel} is blocked until a fresh price is evidenced.`;
+
   const actions: ProtectiveAction[] = [
     {
       action: "supply",
       allowed: !input.health.stale,
       reason: input.health.stale
-        ? "Oracle is stale; collateral add is blocked until a fresh price is evidenced."
+        ? staleOrDisputeReason("collateral add")
         : "Adding isolated sBTC collateral is supported when the oracle is fresh.",
     },
     {
       action: "borrow",
       allowed: canRiskWrite && !paused && liquidityOk,
       reason: input.health.stale
-        ? "Oracle is stale; borrow is blocked."
+        ? staleOrDisputeReason("borrow")
         : !input.health.healthy
           ? "Projected health is outside the Granite borrow cap or liquidation buffer."
           : paused
@@ -149,7 +151,7 @@ export function graniteProtectiveActions(input: {
       action: "repay",
       allowed: !input.health.stale,
       reason: input.health.stale
-        ? "Oracle is stale; repay quotes fail closed until a fresh price is evidenced."
+        ? staleOrDisputeReason("repay")
         : "Repay reduces debt and is the primary protective action when LTV is elevated.",
     },
     {

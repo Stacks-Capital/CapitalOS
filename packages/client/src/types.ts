@@ -120,11 +120,20 @@ export type SignatureOutcome = {
   txid: string | null;
 };
 
+export type LinkedCollateral = {
+  marketId: string;
+  assetId: string;
+  protocolKey?: string;
+  quantity?: string | null;
+};
+
 export type PositionKind =
   | "wallet"
   | "supplied"
-  | "debt"
+  | "lp"
   | "collateral"
+  | "debt"
+  | "locked"
   | "pending_deposit"
   | "pending_withdrawal"
   | "staked";
@@ -144,6 +153,17 @@ export type Position = {
   rewardScale: number | null;
   adapterVersion: string;
   calculationVersion: string;
+  linkedCollateral?: LinkedCollateral | null;
+};
+
+export type EarnOptionEvidence = {
+  ageSeconds: number | null;
+  blockHeight: number | null;
+  blockHash: string | null;
+  confidence: "high" | "medium" | "low";
+  source: string;
+  disagreement: "match" | "mismatch" | "unavailable" | null;
+  isIndependentRead: boolean;
 };
 
 export type EarnOption = {
@@ -165,6 +185,52 @@ export type EarnOption = {
   warnings: string[];
   observedAt: string | null;
   adapterVersion: string;
+  evidence?: EarnOptionEvidence | undefined;
+};
+
+export type MarketObservation = {
+  source: string;
+  sourceType: "independent" | "provider_reported";
+  isIndependentRead: boolean;
+  availableLiquidity: string | null;
+  capacity: string | null;
+  supplyRate: string | null;
+  borrowRate: string | null;
+  rateScale: number | null;
+  paused: boolean | null;
+  stale: boolean;
+  warnings: string[];
+  observedAt: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+};
+
+export type MarketEvidence = {
+  marketId: string;
+  network: string;
+  protocol: string;
+  source: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+  observedAt: string | null;
+  evidenceAgeSeconds: number | null;
+  confidence: "high" | "medium" | "low";
+  disagreement: "match" | "mismatch" | "unavailable" | null;
+  disagreementDetail: string | null;
+  isIndependentRead: boolean;
+  rate: {
+    supplyRate: string | null;
+    borrowRate: string | null;
+    rateScale: number | null;
+    stale: boolean;
+  };
+  liquidity: {
+    available: string | null;
+    capacity: string | null;
+    stale: boolean;
+  };
+  warnings: string[];
+  observations: MarketObservation[];
 };
 
 export type OracleQuoteView = {
@@ -175,6 +241,82 @@ export type OracleQuoteView = {
   observedAt: string;
   source: string;
   stale: boolean;
+  warnings: string[];
+  assetId?: string;
+  sourceSet?: string[];
+  disagreement?: boolean;
+  status?: "verified" | "disputed" | "stale" | "unsupported";
+};
+
+export type AssetValuation = {
+  assetId: string;
+  price: string | null;
+  scale: number;
+  sourceSet: string[];
+  timestamp: string;
+  status: "verified" | "disputed" | "stale" | "unsupported";
+  disagreement: boolean;
+  spreadBps: number | null;
+  warnings: string[];
+};
+
+export type PortfolioCoverage = {
+  isComplete: boolean;
+  valuedCount: number;
+  unvaluedCount: number;
+  totalCount: number;
+  coverageBps: number | null;
+  valuedAssets: string[];
+  unvaluedAssets: Array<{ assetId: string; reason: string; quantity: string | null }>;
+};
+
+export type ValuedHoldingItem = {
+  assetId: string;
+  quantity: string | null;
+  decimals: number;
+  usdValue: string | null;
+  status: "valued" | "unsupported" | "stale" | "disputed" | "missing_quantity";
+  unvaluedReason: string | null;
+  valuation: AssetValuation | null;
+};
+
+export type PortfolioValuation = {
+  totalUsd: string | null;
+  coverage: PortfolioCoverage;
+  items: ValuedHoldingItem[];
+  warnings: string[];
+};
+
+export type CapitalCategory = "wallet" | "supplied" | "lp" | "collateral" | "debt" | "locked";
+
+export type AccountingEntryView = {
+  id: string;
+  category: CapitalCategory;
+  assetId: string;
+  quantity: string | null;
+  marketId: string | null;
+  protocolKey: string | null;
+  isReceipt: boolean;
+  countsTowardTotal: boolean;
+  linkedCollateral: LinkedCollateral | null;
+  stale: boolean;
+  warnings: string[];
+};
+
+export type CategoryAccountingSummaryView = {
+  totalUsd: string | null;
+  count: number;
+  items: ValuedHoldingItem[];
+};
+
+export type PortfolioAccountingView = {
+  grossAssetsUsd: string | null;
+  grossDebtUsd: string | null;
+  netWorthUsd: string | null;
+  coverage: PortfolioCoverage;
+  entries: AccountingEntryView[];
+  byCategory: Record<string, CategoryAccountingSummaryView>;
+  incomplete: boolean;
   warnings: string[];
 };
 
@@ -204,4 +346,90 @@ export type WorkflowSummary = {
   createdAt: string;
   updatedAt: string;
   transitionCount: number;
+};
+
+export type CashFlowAttributionView = {
+  depositsTotal: string;
+  withdrawalsTotal: string;
+  netDeposits: string;
+  feesTotal: string;
+  claimedRewardsTotal: string;
+  costBasis: string;
+  currentValue: string;
+  unattributedInflow: string;
+  hasUnattributedInflow: boolean;
+  earnedYield: string;
+  warnings: string[];
+};
+
+export type RealizedEarningsView = {
+  amount: string;
+  usdValue: string | null;
+  assetId: string;
+};
+
+export type UnclaimedRewardView = {
+  assetId: string;
+  amount: string;
+  usdValue: string | null;
+  observedAt: string;
+};
+
+export type AccruedEstimateView = {
+  amount: string;
+  usdValue: string | null;
+  assetId: string;
+  shareAppreciationAmount: string;
+  unclaimedRewards: UnclaimedRewardView[];
+};
+
+export type Forward30dProjectionView = {
+  isProjectionAvailable: boolean;
+  projected30dAmount: string | null;
+  projected30dUsd: string | null;
+  rateUsedBps: string | null;
+  rateStatus: "verified" | "unverified" | "stale" | "disputed" | "missing";
+  unavailableReason: string | null;
+};
+
+export type CanonicalPerformancePointView = {
+  timestamp: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+  source: string;
+  shareRate: { numerator: string; denominator: string } | null;
+  positionShares: string | null;
+  underlyingValue: string;
+  cumulativeYield: string;
+};
+
+export type PerformanceChartSeriesView = {
+  hasChart: boolean;
+  points: CanonicalPerformancePointView[];
+  observationCount: number;
+  reason: string | null;
+};
+
+export type EarnPerformanceItemView = {
+  marketId: string;
+  assetId: string;
+  attribution: CashFlowAttributionView;
+  realizedEarnings: RealizedEarningsView;
+  accruedEstimate: AccruedEstimateView;
+  forward30dProjection: Forward30dProjectionView;
+  chart: PerformanceChartSeriesView;
+};
+
+export type WebhookEndpoint = {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  createdAt: string;
+  secret?: string;
+};
+
+export type CreateWebhookEndpointInput = {
+  url: string;
+  events: string[];
 };

@@ -65,6 +65,22 @@ describe("resuming after a reload", () => {
     assert.notEqual(pendingKey(scope), pendingKey({ network: "testnet", address: OWNER }));
   });
 
+  it("isolates pending workflow by tenant, network and address", () => {
+    const storage = memoryStorage();
+    const tenantScope = { network: "mainnet" as const, address: OWNER, tenantId: "tenant_partner_1" };
+    const otherTenantScope = { network: "mainnet" as const, address: OWNER, tenantId: "tenant_partner_2" };
+    const defaultScope = { network: "mainnet" as const, address: OWNER };
+
+    savePending(storage, tenantScope, { workflowId: "wf_tenant_1", stepId: "step_1" });
+    assert.deepEqual(loadPending(storage, tenantScope), { workflowId: "wf_tenant_1", stepId: "step_1" });
+    assert.equal(loadPending(storage, otherTenantScope), null);
+    assert.equal(loadPending(storage, defaultScope), null);
+
+    assert.equal(pendingKey(tenantScope), `capitalos:pending:tenant_partner_1:mainnet:${OWNER}`);
+    assert.equal(pendingKey(otherTenantScope), `capitalos:pending:tenant_partner_2:mainnet:${OWNER}`);
+    assert.equal(pendingKey(defaultScope), `capitalos:pending:mainnet:${OWNER}`);
+  });
+
   it("forgets it when the flow is finished", () => {
     const storage = memoryStorage();
     savePending(storage, scope, { workflowId: "wf_1", stepId: "step_1" });

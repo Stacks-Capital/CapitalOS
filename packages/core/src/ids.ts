@@ -21,8 +21,10 @@ export type MarketId = string;
 export type PositionKind =
   | "wallet"
   | "supplied"
-  | "debt"
+  | "lp"
   | "collateral"
+  | "debt"
+  | "locked"
   | "pending_deposit"
   | "pending_withdrawal"
   | "staked";

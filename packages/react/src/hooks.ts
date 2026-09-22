@@ -1,18 +1,22 @@
 import {
   cacheKey,
   type Entry,
+  type AssetValuation,
   type EarnOption,
+  type EarnPerformanceItemView,
   type Market,
   type MarketCapability,
   type MarketRisk,
   type OracleQuoteView,
   type Page,
-  RESOURCES,
+  type PortfolioAccountingView,
   type Position,
+  RESOURCES,
   type Result,
   type Workflow,
   type WorkflowSummary,
 } from "@stacks-capital/client";
+import { resumeHint, type ResumeHint } from "@stacks-capital/core";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useCapital } from "./context.ts";
 
@@ -139,4 +143,76 @@ export function useWorkflow(id: string | null, options: QueryOptions = {}): Quer
   const { client, scope } = useCapital();
   const key = id === null ? null : cacheKey(scope, RESOURCES.workflow, { id });
   return useCapitalQuery<Result<Workflow>>(key, (signal) => client.workflow(id ?? "", { signal }), options);
+}
+
+export function usePortfolio(
+  options: QueryOptions & { owner?: string } = {},
+): QueryResult<Result<PortfolioAccountingView>> {
+  const { client, scope } = useCapital();
+  const { owner, ...query } = options;
+  const address = owner ?? scope.address;
+  const key = address === null ? null : cacheKey(scope, RESOURCES.portfolio, { owner: address });
+  return useCapitalQuery<Result<PortfolioAccountingView>>(
+    key,
+    (signal) => client.portfolio({ ...(owner === undefined ? {} : { owner }), signal }),
+    query,
+  );
+}
+
+export function useEarnPerformance(
+  options: QueryOptions & { owner?: string; marketId?: string } = {},
+): QueryResult<Result<{ items: EarnPerformanceItemView[] }>> {
+  const { client, scope } = useCapital();
+  const { owner, marketId, ...query } = options;
+  const address = owner ?? scope.address;
+  const key =
+    address === null
+      ? null
+      : cacheKey(scope, RESOURCES.earnPerformance, {
+          owner: address,
+          ...(marketId === undefined ? {} : { marketId }),
+        });
+  return useCapitalQuery<Result<{ items: EarnPerformanceItemView[] }>>(
+    key,
+    (signal) =>
+      client.earnPerformance({
+        ...(owner === undefined ? {} : { owner }),
+        ...(marketId === undefined ? {} : { marketId }),
+        signal,
+      }),
+    query,
+  );
+}
+
+export function usePriceValuations(options: QueryOptions = {}): QueryResult<Result<{ items: AssetValuation[] }>> {
+  const { client, scope } = useCapital();
+  const key = cacheKey(scope, RESOURCES.priceValuations);
+  return useCapitalQuery<Result<{ items: AssetValuation[] }>>(
+    key,
+    (signal) => client.priceValuations({ signal }),
+    options,
+  );
+}
+
+export type WorkflowResumeResult = {
+  workflow: QueryResult<Result<Workflow>>;
+  hint: ResumeHint | null;
+  isResuming: boolean;
+  canSign: boolean;
+  isTerminal: boolean;
+  refresh: () => Promise<void>;
+};
+
+export function useWorkflowResume(id: string | null, options: QueryOptions = {}): WorkflowResumeResult {
+  const workflow = useWorkflow(id, options);
+  const data = workflow.data?.data;
+  const hint = data ? resumeHint(data as unknown as Parameters<typeof resumeHint>[0]) : null;
+  return {
+    workflow,
+    hint,
+    isResuming: hint?.resumable ?? false,
+    canSign: hint?.canSign ?? false,
+    isTerminal: hint?.terminal ?? false,
+    refresh: workflow.refresh,
+  };
 }

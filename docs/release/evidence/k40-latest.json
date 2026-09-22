@@ -1,6 +1,6 @@
 {
   "task": "K40",
-  "generatedAt": "2026-09-21T17:44:16.303Z",
+  "generatedAt": "2026-09-22T16:17:59.981Z",
   "decision": {
     "production": "no-go",
     "closedEarnPilot": "no-go",
@@ -207,7 +207,7 @@
     {
       "id": "launch-decision-doc",
       "ok": true,
-      "detail": "/Users/apple/Desktop/capitalos/CapitalOS/docs/release/launch-decision.md",
+      "detail": "/home/modev/Stacks Ecosystem/CapitalOS/docs/release/launch-decision.md",
       "category": "decision"
     }
   ],

@@ -6,6 +6,7 @@ export type ErrorCode =
   | "QUOTE_EXPIRED"
   | "CAP_REACHED"
   | "ORACLE_STALE"
+  | "QUORUM_DISAGREEMENT"
   | "USER_REJECTED"
   | "INSUFFICIENT_BALANCE"
   | "NETWORK_MISMATCH"
@@ -24,6 +25,7 @@ export const ERROR_CLASS: Readonly<Record<ErrorCode, ErrorClass>> = {
   QUOTE_EXPIRED: "requote",
   CAP_REACHED: "requote",
   ORACLE_STALE: "requote",
+  QUORUM_DISAGREEMENT: "requote",
   USER_REJECTED: "user_action",
   INSUFFICIENT_BALANCE: "user_action",
   NETWORK_MISMATCH: "user_action",
@@ -49,17 +51,40 @@ export function capitalError(code: ErrorCode, message: string): CapitalError {
 
 export function isCapitalError(error: unknown): error is CapitalError {
   if (typeof error !== "object" || error === null) return false;
-  if (!("code" in error) || !("class" in error) || !("message" in error)) return false;
-  const code = error.code;
+  if (!("code" in error) || !("message" in error)) return false;
+  const code = (error as { code?: unknown }).code;
   if (typeof code !== "string" || !(code in ERROR_CLASS)) return false;
   const typed = code as ErrorCode;
-  return error.class === ERROR_CLASS[typed] && typeof error.message === "string";
+  const cls = "class" in error ? (error as { class: unknown }).class : (error as { errorClass?: unknown }).errorClass;
+  return cls === ERROR_CLASS[typed] && typeof (error as { message?: unknown }).message === "string";
 }
 
-export function isRetryableRead(error: CapitalError): boolean {
-  return error.class === "retryable_read";
+function classOf(error: CapitalError | { class?: ErrorClass; errorClass?: ErrorClass }): ErrorClass | undefined {
+  return "class" in error ? error.class : error.errorClass;
 }
 
-export function allowsWriteRetry(error: CapitalError): boolean {
-  return error.code !== "BROADCAST_UNKNOWN" && error.class !== "investigation";
+export function isRetryableRead(error: CapitalError | { class?: ErrorClass; errorClass?: ErrorClass }): boolean {
+  return classOf(error) === "retryable_read";
+}
+
+export function isRequoteError(error: CapitalError | { class?: ErrorClass; errorClass?: ErrorClass }): boolean {
+  return classOf(error) === "requote";
+}
+
+export function isUserActionError(error: CapitalError | { class?: ErrorClass; errorClass?: ErrorClass }): boolean {
+  return classOf(error) === "user_action";
+}
+
+export function isInvestigationError(error: CapitalError | { class?: ErrorClass; errorClass?: ErrorClass }): boolean {
+  return classOf(error) === "investigation";
+}
+
+export function isFinancialError(error: unknown): error is CapitalError {
+  return isCapitalError(error);
+}
+
+export function allowsWriteRetry(
+  error: CapitalError | { code: ErrorCode; class?: ErrorClass; errorClass?: ErrorClass },
+): boolean {
+  return error.code !== "BROADCAST_UNKNOWN" && classOf(error) !== "investigation";
 }

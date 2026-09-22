@@ -70,6 +70,10 @@ const DESCRIPTIONS: Record<ApiErrorCode, Entry> = {
     meaning: "A price the action depends on is older than the protocol allows.",
     action: "Ask for a new quote once the price has updated.",
   },
+  QUORUM_DISAGREEMENT: {
+    meaning: "Independent price sources disagree beyond the quorum tolerance threshold.",
+    action: "Ask for a new quote once oracle price sources converge.",
+  },
   USER_REJECTED: {
     meaning: "The user declined in their wallet. Nothing was signed or sent.",
     action: "Nothing to fix. Offer to ask the wallet again.",
