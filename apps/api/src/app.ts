@@ -6,6 +6,12 @@ import {
   evaluatePortfolioAccounting,
   normalizeCapitalCategory,
   type AccountingEntry,
+  attributeCashFlowYield,
+  evaluateForward30dProjection,
+  buildPerformanceChartSeries,
+  parseQuantity,
+  mulDiv,
+  type ProjectionRateStatus,
 } from "@stacks-capital/core";
 import {
   createNonce,
@@ -22,6 +28,7 @@ import {
   listMarketAssets,
   listWorkflowsForTenant,
   listMarkets,
+  getEarnPerformanceData,
   type Sql,
 } from "@stacks-capital/database";
 import { cors } from "hono/cors";
@@ -49,6 +56,7 @@ import {
   capabilitiesRoute,
   challengeRoute,
   earnOptionsRoute,
+  earnPerformanceRoute,
   marketEvidenceRoute,
   marketRiskRoute,
   marketsRoute,
@@ -251,6 +259,95 @@ export function createApp(deps: AppDependencies) {
             },
           })),
         },
+        context: context(),
+      },
+      200,
+    );
+  });
+
+  app.openapi(earnPerformanceRoute, async (c) => {
+    const { network, owner, marketId } = c.req.valid("query");
+    const principal = await admit(c);
+    if (principal.kind === "client")
+      throw new ApiError("FORBIDDEN", "Performance needs an API key or a wallet session");
+    requireScope(principal, "positions:read");
+    const address = principal.kind === "session" ? principal.address : owner;
+    if (address === undefined) throw new ApiError("INVALID_REQUEST", "owner is required for an API key");
+    if (principal.kind === "session" && principal.network !== network) {
+      throw new ApiError("NETWORK_MISMATCH", `Session is for ${principal.network}`);
+    }
+
+    const feeds = ["BTC/USD", "STX/USD", "sBTC/USD", "USDC/USD"];
+    const [marketDataList, valuations] = await Promise.all([
+      getEarnPerformanceData(deps.sql, network, address, marketId),
+      latestPriceValuations(deps.sql, network, feeds, { now: now() }),
+    ]);
+
+    const items = marketDataList.map((m) => {
+      const currentUnderlying = m.currentUnderlyingUnits ?? "0";
+      const oracleVal = valuations.find((v) => v.assetId.includes(m.assetId) || m.assetId.includes(v.assetId));
+      const oraclePrice = oracleVal?.price ? { price: oracleVal.price, scale: oracleVal.scale } : null;
+
+      const { attribution, realizedEarnings, accruedEstimate } = attributeCashFlowYield({
+        assetId: m.assetId,
+        currentUnderlyingValue: currentUnderlying,
+        currentShares: m.currentPositionShares,
+        currentShareRate: m.currentShareRate,
+        initialShareRate: m.initialShareRate,
+        cashFlows: m.cashFlows,
+        unclaimedRewards: m.unclaimedRewards,
+        oraclePrice,
+      });
+
+      let rateStatus: ProjectionRateStatus = "verified";
+      if (m.marketSupplyRateBps === null) {
+        rateStatus = "missing";
+      } else if (m.marketRateStale) {
+        rateStatus = "stale";
+      } else if (m.reconciliationStatus === "mismatch") {
+        rateStatus = "disputed";
+      } else if (m.reconciliationStatus === "unavailable") {
+        rateStatus = "unverified";
+      }
+
+      let principalUsd: string | null = null;
+      if (oraclePrice && currentUnderlying !== "0") {
+        principalUsd = mulDiv(
+          parseQuantity(currentUnderlying),
+          parseQuantity(oraclePrice.price),
+          BigInt(10 ** oraclePrice.scale),
+          "down",
+        ).toString(10);
+      }
+
+      const forward30dProjection = evaluateForward30dProjection({
+        principalAmount: currentUnderlying,
+        principalUsd,
+        rateBps: m.marketSupplyRateBps,
+        rateStatus,
+        rateDisagreement: m.reconciliationStatus,
+        isStale: m.marketRateStale,
+      });
+
+      const chart = buildPerformanceChartSeries(m.observations, attribution.costBasis);
+
+      return {
+        marketId: m.marketId,
+        assetId: m.assetId,
+        attribution,
+        realizedEarnings,
+        accruedEstimate,
+        forward30dProjection,
+        chart,
+      };
+    });
+
+    return c.json(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        requestId: c.get("requestId"),
+        network: `stacks:${network}` as const,
+        data: { items },
         context: context(),
       },
       200,

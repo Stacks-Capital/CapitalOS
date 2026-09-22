@@ -186,3 +186,28 @@ export {
   evaluatePortfolioAccounting,
   normalizeCapitalCategory,
 } from "./accounting.ts";
+
+export type {
+  AccruedEstimate,
+  AttributeYieldParams,
+  CanonicalObservation,
+  CanonicalPerformancePoint,
+  CashFlowAttribution,
+  CashFlowEvent,
+  CashFlowKind,
+  EarnedPerformanceBreakdown,
+  Forward30dProjection,
+  Forward30dProjectionParams,
+  PerformanceChartSeries,
+  ProjectionRateStatus,
+  RealizedEarnings,
+  ShareRate,
+  UnclaimedReward,
+} from "./performance.ts";
+export {
+  attributeCashFlowYield,
+  buildPerformanceChartSeries,
+  evaluateForward30dProjection,
+  sharesFromUnderlying,
+  underlyingFromShares,
+} from "./performance.ts";

@@ -178,6 +178,57 @@ describe("reads", () => {
     assert.equal(result.data.state, "CONFIRMING");
     assert.equal(result.context.requestId, "req_1");
   });
+
+  it("reads earn performance attribution and charts", async () => {
+    const performanceData = {
+      items: [
+        {
+          marketId: "zest.sbtc.vault",
+          assetId: "sbtc-token",
+          attribution: {
+            depositsTotal: "100000000",
+            withdrawalsTotal: "0",
+            netDeposits: "100000000",
+            feesTotal: "0",
+            claimedRewardsTotal: "0",
+            costBasis: "100000000",
+            currentValue: "105000000",
+            unattributedInflow: "0",
+            hasUnattributedInflow: false,
+            earnedYield: "5000000",
+            warnings: [],
+          },
+          realizedEarnings: { amount: "0", usdValue: null, assetId: "sbtc-token" },
+          accruedEstimate: {
+            amount: "5000000",
+            usdValue: null,
+            assetId: "sbtc-token",
+            shareAppreciationAmount: "5000000",
+            unclaimedRewards: [],
+          },
+          forward30dProjection: {
+            isProjectionAvailable: true,
+            projected30dAmount: "410958",
+            projected30dUsd: null,
+            rateUsedBps: "500",
+            rateStatus: "verified",
+            unavailableReason: null,
+          },
+          chart: {
+            hasChart: true,
+            points: [],
+            observationCount: 2,
+            reason: null,
+          },
+        },
+      ],
+    };
+    const { client, calls } = build([envelope(performanceData)]);
+    const res = await client.earnPerformance({ owner: "SP1", marketId: "zest.sbtc.vault" });
+    assert.equal(calls[0]?.url, `${BASE}/v1/earn/performance?network=mainnet&owner=SP1&marketId=zest.sbtc.vault`);
+    assert.equal(res.data.items[0]?.attribution.earnedYield, "5000000");
+    assert.equal(res.data.items[0]?.forward30dProjection.rateStatus, "verified");
+  });
 });
 
 describe("sign in", () => {

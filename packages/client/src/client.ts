@@ -13,6 +13,7 @@ import type {
   AssetValuation,
   Challenge,
   EarnOption,
+  EarnPerformanceItemView,
   Market,
   MarketCapability,
   MarketEvidence,
@@ -83,6 +84,10 @@ export type CapitalClient = {
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
   /** Canonical portfolio and debt accounting for one address. */
   portfolio(input?: { owner?: string } & CallOptions): Promise<Result<PortfolioAccountingView>>;
+  /** Earned yield attribution, 3-tier earnings separation, and historical performance charts. */
+  earnPerformance(
+    input?: { owner?: string; marketId?: string } & CallOptions,
+  ): Promise<Result<{ items: EarnPerformanceItemView[] }>>;
   /** Quoting runs on the server, where the provider keys are. */
   quote(
     input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
@@ -267,6 +272,15 @@ export function createClient(options: ClientOptions): CapitalClient {
         method: "GET",
         path: "/v1/portfolio",
         query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    earnPerformance: (call_) =>
+      call<{ items: EarnPerformanceItemView[] }>({
+        method: "GET",
+        path: "/v1/earn/performance",
+        query: { network, owner: call_?.owner, marketId: call_?.marketId },
         signal: call_?.signal,
         retry: true,
       }),

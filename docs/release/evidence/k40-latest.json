@@ -1,6 +1,6 @@
 {
   "task": "K40",
-  "generatedAt": "2026-09-21T17:44:16.303Z",
+  "generatedAt": "2026-09-22T00:58:13.511Z",
   "decision": {
     "production": "no-go",
     "closedEarnPilot": "no-go",
@@ -25,7 +25,11 @@
       "Manual pilot checks M1–M10 recorded with real wallets",
       "Rollback drill passes against the previous release tag"
     ],
-    "p0Gates": ["K38", "K39", "K40"]
+    "p0Gates": [
+      "K38",
+      "K39",
+      "K40"
+    ]
   },
   "pilots": [
     {
@@ -207,7 +211,7 @@
     {
       "id": "launch-decision-doc",
       "ok": true,
-      "detail": "/Users/apple/Desktop/capitalos/CapitalOS/docs/release/launch-decision.md",
+      "detail": "/home/modev/Stacks Ecosystem/CapitalOS/docs/release/launch-decision.md",
       "category": "decision"
     }
   ],

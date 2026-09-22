@@ -4,6 +4,8 @@ import {
   ChallengeRequest,
   ChallengeResponse,
   EarnOptionsResponse,
+  EarnPerformanceQuery,
+  EarnPerformanceResponse,
   ErrorBody,
   ListQuery,
   MarketEvidenceResponse,
@@ -128,6 +130,20 @@ export const earnOptionsRoute = createRoute({
   security: anyCaller,
   request: { query: NetworkQuery },
   responses: { 200: json("What each earn market pays and allows", EarnOptionsResponse), ...errorResponses },
+});
+
+export const earnPerformanceRoute = createRoute({
+  method: "get",
+  path: "/v1/earn/performance",
+  security: keyOrSession,
+  request: { query: EarnPerformanceQuery },
+  responses: {
+    200: json(
+      "Earned yield attribution, three-tier earnings separation, and historical performance",
+      EarnPerformanceResponse,
+    ),
+    ...errorResponses,
+  },
 });
 
 export const pricesRoute = createRoute({

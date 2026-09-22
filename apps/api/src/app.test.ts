@@ -119,6 +119,7 @@ describe("OpenAPI document", () => {
       "/v1/auth/verify",
       "/v1/capabilities",
       "/v1/earn/options",
+      "/v1/earn/performance",
       "/v1/markets",
       "/v1/markets/{id}/evidence",
       "/v1/markets/{id}/risk",

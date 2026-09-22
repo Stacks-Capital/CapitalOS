@@ -124,3 +124,7 @@ export {
   type NetworkName,
   type Page,
 } from "./registry.ts";
+export {
+  type EarnPerformanceMarketData,
+  getEarnPerformanceData,
+} from "./performance.ts";

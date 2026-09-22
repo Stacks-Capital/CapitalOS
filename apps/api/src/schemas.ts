@@ -632,3 +632,102 @@ export const WorkflowSummary = z
   .openapi("WorkflowSummary");
 
 export const WorkflowsResponse = envelope("WorkflowsResponse", pageOf(WorkflowSummary));
+
+export const EarnPerformanceQuery = z.object({
+  network: Network,
+  owner: z.string().max(64).optional(),
+  marketId: z.string().max(64).optional(),
+});
+
+export const CashFlowAttributionSchema = z
+  .object({
+    depositsTotal: z.string(),
+    withdrawalsTotal: z.string(),
+    netDeposits: z.string(),
+    feesTotal: z.string(),
+    claimedRewardsTotal: z.string(),
+    costBasis: z.string(),
+    currentValue: z.string(),
+    unattributedInflow: z.string(),
+    hasUnattributedInflow: z.boolean(),
+    earnedYield: z.string(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("CashFlowAttribution");
+
+export const RealizedEarningsSchema = z
+  .object({
+    amount: z.string(),
+    usdValue: z.string().nullable(),
+    assetId: z.string(),
+  })
+  .openapi("RealizedEarnings");
+
+export const UnclaimedRewardSchema = z
+  .object({
+    assetId: z.string(),
+    amount: z.string(),
+    usdValue: z.string().nullable(),
+    observedAt: z.string(),
+  })
+  .openapi("UnclaimedReward");
+
+export const AccruedEstimateSchema = z
+  .object({
+    amount: z.string(),
+    usdValue: z.string().nullable(),
+    assetId: z.string(),
+    shareAppreciationAmount: z.string(),
+    unclaimedRewards: z.array(UnclaimedRewardSchema),
+  })
+  .openapi("AccruedEstimate");
+
+export const Forward30dProjectionSchema = z
+  .object({
+    isProjectionAvailable: z.boolean(),
+    projected30dAmount: z.string().nullable(),
+    projected30dUsd: z.string().nullable(),
+    rateUsedBps: z.string().nullable(),
+    rateStatus: z.enum(["verified", "unverified", "stale", "disputed", "missing"]),
+    unavailableReason: z.string().nullable(),
+  })
+  .openapi("Forward30dProjection");
+
+export const CanonicalPerformancePointSchema = z
+  .object({
+    timestamp: z.string(),
+    blockHeight: z.number().int().nullable(),
+    blockHash: z.string().nullable(),
+    source: z.string(),
+    shareRate: z.object({ numerator: z.string(), denominator: z.string() }).nullable(),
+    positionShares: z.string().nullable(),
+    underlyingValue: z.string(),
+    cumulativeYield: z.string(),
+  })
+  .openapi("CanonicalPerformancePoint");
+
+export const PerformanceChartSeriesSchema = z
+  .object({
+    hasChart: z.boolean(),
+    points: z.array(CanonicalPerformancePointSchema),
+    observationCount: z.number().int(),
+    reason: z.string().nullable(),
+  })
+  .openapi("PerformanceChartSeries");
+
+export const EarnPerformanceItem = z
+  .object({
+    marketId: z.string(),
+    assetId: z.string(),
+    attribution: CashFlowAttributionSchema,
+    realizedEarnings: RealizedEarningsSchema,
+    accruedEstimate: AccruedEstimateSchema,
+    forward30dProjection: Forward30dProjectionSchema,
+    chart: PerformanceChartSeriesSchema,
+  })
+  .openapi("EarnPerformanceItem");
+
+export const EarnPerformanceResponse = envelope(
+  "EarnPerformanceResponse",
+  z.object({ items: z.array(EarnPerformanceItem) }),
+);

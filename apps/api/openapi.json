@@ -545,6 +545,363 @@
           "isIndependentRead"
         ]
       },
+      "EarnPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EarnPerformanceItem"
+                }
+              }
+            },
+            "required": [
+              "items"
+            ]
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "EarnPerformanceItem": {
+        "type": "object",
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/CashFlowAttribution"
+          },
+          "realizedEarnings": {
+            "$ref": "#/components/schemas/RealizedEarnings"
+          },
+          "accruedEstimate": {
+            "$ref": "#/components/schemas/AccruedEstimate"
+          },
+          "forward30dProjection": {
+            "$ref": "#/components/schemas/Forward30dProjection"
+          },
+          "chart": {
+            "$ref": "#/components/schemas/PerformanceChartSeries"
+          }
+        },
+        "required": [
+          "marketId",
+          "assetId",
+          "attribution",
+          "realizedEarnings",
+          "accruedEstimate",
+          "forward30dProjection",
+          "chart"
+        ]
+      },
+      "CashFlowAttribution": {
+        "type": "object",
+        "properties": {
+          "depositsTotal": {
+            "type": "string"
+          },
+          "withdrawalsTotal": {
+            "type": "string"
+          },
+          "netDeposits": {
+            "type": "string"
+          },
+          "feesTotal": {
+            "type": "string"
+          },
+          "claimedRewardsTotal": {
+            "type": "string"
+          },
+          "costBasis": {
+            "type": "string"
+          },
+          "currentValue": {
+            "type": "string"
+          },
+          "unattributedInflow": {
+            "type": "string"
+          },
+          "hasUnattributedInflow": {
+            "type": "boolean"
+          },
+          "earnedYield": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "depositsTotal",
+          "withdrawalsTotal",
+          "netDeposits",
+          "feesTotal",
+          "claimedRewardsTotal",
+          "costBasis",
+          "currentValue",
+          "unattributedInflow",
+          "hasUnattributedInflow",
+          "earnedYield",
+          "warnings"
+        ]
+      },
+      "RealizedEarnings": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "usdValue",
+          "assetId"
+        ]
+      },
+      "AccruedEstimate": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "shareAppreciationAmount": {
+            "type": "string"
+          },
+          "unclaimedRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnclaimedReward"
+            }
+          }
+        },
+        "required": [
+          "amount",
+          "usdValue",
+          "assetId",
+          "shareAppreciationAmount",
+          "unclaimedRewards"
+        ]
+      },
+      "UnclaimedReward": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "amount",
+          "usdValue",
+          "observedAt"
+        ]
+      },
+      "Forward30dProjection": {
+        "type": "object",
+        "properties": {
+          "isProjectionAvailable": {
+            "type": "boolean"
+          },
+          "projected30dAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projected30dUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateUsedBps": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateStatus": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unverified",
+              "stale",
+              "disputed",
+              "missing"
+            ]
+          },
+          "unavailableReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "isProjectionAvailable",
+          "projected30dAmount",
+          "projected30dUsd",
+          "rateUsedBps",
+          "rateStatus",
+          "unavailableReason"
+        ]
+      },
+      "PerformanceChartSeries": {
+        "type": "object",
+        "properties": {
+          "hasChart": {
+            "type": "boolean"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CanonicalPerformancePoint"
+            }
+          },
+          "observationCount": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "hasChart",
+          "points",
+          "observationCount",
+          "reason"
+        ]
+      },
+      "CanonicalPerformancePoint": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "blockHeight": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "blockHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "shareRate": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "numerator": {
+                "type": "string"
+              },
+              "denominator": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "numerator",
+              "denominator"
+            ]
+          },
+          "positionShares": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "underlyingValue": {
+            "type": "string"
+          },
+          "cumulativeYield": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "blockHeight",
+          "blockHash",
+          "source",
+          "shareRate",
+          "positionShares",
+          "underlyingValue",
+          "cumulativeYield"
+        ]
+      },
       "MarketEvidenceResponse": {
         "type": "object",
         "properties": {
@@ -3208,6 +3565,124 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EarnOptionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/earn/performance": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "marketId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Earned yield attribution, three-tier earnings separation, and historical performance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarnPerformanceResponse"
                 }
               }
             }

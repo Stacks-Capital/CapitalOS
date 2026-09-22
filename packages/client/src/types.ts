@@ -347,3 +347,75 @@ export type WorkflowSummary = {
   updatedAt: string;
   transitionCount: number;
 };
+
+export type CashFlowAttributionView = {
+  depositsTotal: string;
+  withdrawalsTotal: string;
+  netDeposits: string;
+  feesTotal: string;
+  claimedRewardsTotal: string;
+  costBasis: string;
+  currentValue: string;
+  unattributedInflow: string;
+  hasUnattributedInflow: boolean;
+  earnedYield: string;
+  warnings: string[];
+};
+
+export type RealizedEarningsView = {
+  amount: string;
+  usdValue: string | null;
+  assetId: string;
+};
+
+export type UnclaimedRewardView = {
+  assetId: string;
+  amount: string;
+  usdValue: string | null;
+  observedAt: string;
+};
+
+export type AccruedEstimateView = {
+  amount: string;
+  usdValue: string | null;
+  assetId: string;
+  shareAppreciationAmount: string;
+  unclaimedRewards: UnclaimedRewardView[];
+};
+
+export type Forward30dProjectionView = {
+  isProjectionAvailable: boolean;
+  projected30dAmount: string | null;
+  projected30dUsd: string | null;
+  rateUsedBps: string | null;
+  rateStatus: "verified" | "unverified" | "stale" | "disputed" | "missing";
+  unavailableReason: string | null;
+};
+
+export type CanonicalPerformancePointView = {
+  timestamp: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+  source: string;
+  shareRate: { numerator: string; denominator: string } | null;
+  positionShares: string | null;
+  underlyingValue: string;
+  cumulativeYield: string;
+};
+
+export type PerformanceChartSeriesView = {
+  hasChart: boolean;
+  points: CanonicalPerformancePointView[];
+  observationCount: number;
+  reason: string | null;
+};
+
+export type EarnPerformanceItemView = {
+  marketId: string;
+  assetId: string;
+  attribution: CashFlowAttributionView;
+  realizedEarnings: RealizedEarningsView;
+  accruedEstimate: AccruedEstimateView;
+  forward30dProjection: Forward30dProjectionView;
+  chart: PerformanceChartSeriesView;
+};

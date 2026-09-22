@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Generated | 2026-09-21T17:44:16.303Z |
+| Generated | 2026-09-22T00:58:13.511Z |
 | Production | **no-go** |
 | Closed earn pilot | **no-go** |
 | Sandbox certification | **go** |
@@ -48,7 +48,7 @@
 | partner | launch-tests | pass | pass |
 | gates | evidence:k38 | pass | prior evidence pass |
 | gates | evidence:k39 | pass | prior evidence pass |
-| decision | launch-decision-doc | pass | /Users/apple/Desktop/capitalos/CapitalOS/docs/release/launch-decision.md |
+| decision | launch-decision-doc | pass | /home/modev/Stacks Ecosystem/CapitalOS/docs/release/launch-decision.md |
 
 ## Rollback triggers
 
