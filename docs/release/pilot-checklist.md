@@ -7,7 +7,7 @@
 | Owner / reviewer | IBK / kenzman |
 | Depends on | I18 end to end tests, I19 docs and runbooks |
 | Feeds | [K20 pilot and launch decision](launch-decision.md) |
-| Date | 2026-09-18, at commit `0e09f96` |
+| Date | 2026-09-18, at commit `0e09f96`. Blockers rechecked 2026-09-22 at `fae05d5`: B1 still open, B2 narrowed, B7 added. |
 
 Deliverable from the task page: run pilot checklist, classify failures, verify rollback/restore evidence and document outstanding issues for go/no-go.
 
@@ -23,7 +23,7 @@ This document records evidence. It does not make the go/no-go call; that is K20.
 | Release checklist (page 03) | 2 met, 3 partly met, 3 not met |
 | Product definition of done (page 02) | 3 met, 3 partly met, 2 not met |
 | Manual pilot checks | Written, not run yet |
-| Pilot blockers found | 6 (see [Outstanding issues](#outstanding-issues)) |
+| Pilot blockers found | 7 (see [Outstanding issues](#outstanding-issues)) |
 
 ## Automated evidence
 
@@ -89,11 +89,12 @@ Defects use the page 03 severity scale: SEV-0 active loss vector, SEV-1 wrong pl
 | # | Issue | Kind | Effect on pilot | Source |
 |---|---|---|---|---|
 | B1 | Nothing moves a workflow past `SUBMITTED`. Ingestion does not link transactions to workflows | SEV-2 defect | Every action stays "waiting" after it confirms. Users cannot finish without an engineer | `docs/engineering/ingestion.md` |
-| B2 | No BTC to sBTC or sBTC to BTC flow in the app, and no Bitcoin or Emily ingestion | Gap | The main BTC holder journey cannot run | `docs/engineering/ingestion.md`, web app |
+| B2 | No Bitcoin or Emily ingestion. The deposit and withdrawal screens shipped in I33, but nothing watches the L1 side | Gap | A deposit can be started and never observed, so the main BTC holder journey cannot finish | `docs/engineering/ingestion.md`, `apps/web/src/depositBtcScreen.tsx` |
 | B3 | Granite positions cannot be read from the registered contract, and the DIA USDC feed is unset | Gap | Borrow stays blocked (safely) | `docs/engineering/positions.md` finding 3, `docs/discovery/borrow-ux-safety.md` |
 | B4 | Terms, privacy, risk disclosures and support ownership | Gap | Cannot put users on mainnet funds without them | Page 03 release checklist |
 | B5 | On call owner, protocol emergency contacts, a destination for alerts (they print to standard output only) | Gap | Nobody is paged when something breaks | Page 03, `docs/engineering/operations.md` |
 | B6 | Independent address review, and the Bitflow pool principal pinned | Gap | Swap stays on fixture routes | Page 03, `packages/config` |
+| B7 | No metrics surface to build dashboards on. The worker serves `/health`, `/readyz` and `/status` only; there is no exporter, dashboard or alert router in the repository | Gap | The P3 gate "dashboards, alerts, incident/support ownership active" cannot be evidenced. Distinct from B5, which is about who is paged rather than what is measured | `docs/engineering/e2e-accessibility-acceptance-i40.md` section 4.1, `apps/worker/src/health.ts` |
 
 ### Known issues, not blocking a closed pilot
 
