@@ -17,18 +17,25 @@ import {
   WorkflowAnnouncer,
   WorkflowDrawer,
 } from "@stacks-capital/ui";
-import type { WalletId } from "@stacks-capital/wallets";
-import { useMemo, useState } from "react";
+import { type WalletId } from "@stacks-capital/wallets";
+import { useEffect, useMemo, useState } from "react";
 import { Borrow } from "./borrowScreen.tsx";
 import { NETWORKS, testnetNote, type WebConfig } from "./config.ts";
 import { DepositBtcScreen } from "./depositBtcScreen.tsx";
 import { Earn } from "./earnScreen.tsx";
+import { PositionsScreen } from "./positionsScreen.tsx";
 import { Risk } from "./riskScreen.tsx";
 import { Activity, Markets, Portfolio } from "./screens.tsx";
 import { Swap } from "./swapScreen.tsx";
 
-const NAV_TABS = SHELL_NAV_TABS;
-type NavTab = (typeof NAV_TABS)[number] | "Portfolio";
+import {
+  getInitialSession,
+  getInitialTab,
+  NAV_TABS,
+  type NavTab,
+  STORAGE_SESSION_PREFIX,
+  STORAGE_TAB_KEY,
+} from "./navigation.ts";
 
 function AppShell({
   network,
@@ -77,8 +84,14 @@ function AppShell({
   function selectNetwork(next: StacksNetwork) {
     if (next === network) return;
     setNetwork(next);
-    setWallet(null);
-    setSessionToken(null);
+    const sessionForNext = getInitialSession(next);
+    if (sessionForNext) {
+      setWallet({ id: sessionForNext.walletId, address: sessionForNext.address, network: next });
+      setSessionToken(sessionForNext.token);
+    } else {
+      setWallet(null);
+      setSessionToken(null);
+    }
     setProblem(null);
   }
 
@@ -103,6 +116,11 @@ function AppShell({
     setWallet(null);
     setSessionToken(null);
     setProblem(null);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(`${STORAGE_SESSION_PREFIX}${network}`);
+      } catch {}
+    }
   }
 
   const testnet = testnetNote(network);
@@ -156,7 +174,11 @@ function AppShell({
               mode={mode}
               onModeChange={setMode}
             />
-            <Portfolio address={wallet?.address ?? null} signedIn={signedIn} />
+            <Portfolio
+              address={wallet?.address ?? null}
+              signedIn={signedIn}
+              onNavigate={(dest) => setTab(dest as NavTab)}
+            />
             {/* The nav is fixed at the ten wireframe tabs, so the capability table lives under Overview. */}
             <Markets />
           </>
@@ -254,7 +276,7 @@ function AppShell({
               mode={mode}
               onModeChange={setMode}
             />
-            <PositionsSummary signedIn={signedIn} />
+            <PositionsScreen wallet={wallet} signedIn={signedIn} onNavigate={(dest) => setTab(dest as NavTab)} />
           </>
         )}
 
@@ -289,12 +311,42 @@ function AppShell({
 }
 
 export function App({ config }: { config: WebConfig }) {
-  const [tab, setTab] = useState<NavTab>("Overview");
+  const [tab, setTabState] = useState<NavTab>(() => getInitialTab());
   const [network, setNetwork] = useState<StacksNetwork>(config.network);
-  const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const initialSession = useMemo(() => getInitialSession(config.network), [config.network]);
+  const [wallet, setWallet] = useState<ConnectedWallet | null>(
+    initialSession ? { id: initialSession.walletId, address: initialSession.address, network: config.network } : null,
+  );
+  const [sessionToken, setSessionToken] = useState<string | null>(initialSession?.token ?? null);
   const [problem, setProblem] = useState<CapitalError | Error | null>(null);
   const wallets = useMemo(() => installedWallets(), []);
+
+  const setTab = (nextTab: NavTab) => {
+    setTabState(nextTab);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(STORAGE_TAB_KEY, nextTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", nextTab);
+        window.history.replaceState({}, "", url.toString());
+      } catch {}
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (sessionToken && wallet) {
+          window.localStorage.setItem(
+            `${STORAGE_SESSION_PREFIX}${network}`,
+            JSON.stringify({ address: wallet.address, token: sessionToken, walletId: wallet.id }),
+          );
+        } else if (sessionToken === null) {
+          window.localStorage.removeItem(`${STORAGE_SESSION_PREFIX}${network}`);
+        }
+      } catch {}
+    }
+  }, [network, wallet, sessionToken]);
 
   const base = useMemo(
     () => createClient({ baseUrl: config.apiBaseUrl, network, clientId: config.clientId }),

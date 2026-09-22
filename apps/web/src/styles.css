@@ -829,3 +829,196 @@ th {
 .warn {
   color: var(--warning-text);
 }
+
+/* =========================================================================
+   Overview & Positions Screen Styles (I32)
+   ========================================================================= */
+
+.portfolio-kpi-grid,
+.positions-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.kpi-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.kpi-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.category-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.category-pill-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.performance-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.health-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.health-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.health-card-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.health-card-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.health-card-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.badge-neutral,
+.badge-success,
+.badge-warning,
+.badge-danger,
+.badge-info {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badge-neutral {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.badge-success {
+  background: rgba(35, 134, 54, 0.2);
+  color: var(--success-text);
+  border: 1px solid var(--success);
+}
+
+.badge-warning {
+  background: rgba(158, 106, 3, 0.2);
+  color: var(--warning-text);
+  border: 1px solid var(--warning);
+}
+
+.badge-danger {
+  background: rgba(218, 54, 51, 0.2);
+  color: var(--danger-text);
+  border: 1px solid var(--danger);
+}
+
+.badge-info {
+  background: rgba(255, 85, 51, 0.15);
+  color: var(--accent);
+  border: 1px solid var(--border-focus);
+}
+
+.table-row-receipt {
+  opacity: 0.85;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn-sm {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+}
+
+.disclosure-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.85rem 1.2rem;
+  margin-top: 1.5rem;
+}
+
+.disclosure-box p {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.empty-state-card {
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 6px;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}

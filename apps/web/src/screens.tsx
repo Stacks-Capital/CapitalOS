@@ -1,12 +1,9 @@
-import { useCapabilities, useMarkets, usePositions, useWorkflow } from "@stacks-capital/react";
+import { useCapabilities, useEarnPerformance, useMarkets, usePortfolio, useWorkflow } from "@stacks-capital/react";
 import { useState } from "react";
 import {
   Amount,
-  buildPortfolio,
   EmptyStateView,
-  excludedFrom,
   LoadingStateView,
-  type HoldingPosition as Position,
   Panel,
   panelState,
   PartialStateView,
@@ -16,74 +13,278 @@ import {
   Unavailable,
 } from "@stacks-capital/ui";
 
-export function Portfolio({ address, signedIn }: { address: string | null; signedIn: boolean }) {
+export function Portfolio({
+  address,
+  signedIn,
+  onNavigate,
+}: {
+  address: string | null;
+  signedIn: boolean;
+  onNavigate?: (tab: string, opts?: { marketId?: string; action?: string }) => void;
+}) {
   const markets = useMarkets({ limit: 100 });
-  // Positions belong to a signed in address. Asking before sign in is refused, and says so loudly.
-  const positions = usePositions({ enabled: signedIn });
-  const state = panelState(markets, markets.data?.context);
-  const positionsState = panelState(positions, positions.data?.context);
+  const portfolio = usePortfolio({ enabled: signedIn });
+  const earnPerformance = useEarnPerformance({ enabled: signedIn });
 
-  // Positions come from the worker's projections (I11). Wallet balances still have no endpoint.
-  const held: Position[] = (positions.data?.data.items ?? [])
-    .filter((position) => position.kind === "supplied" || position.kind === "debt" || position.kind === "collateral")
-    .map((position) => ({
-      marketId: position.marketId,
-      kind: position.kind as Position["kind"],
-      assetId: position.assetId,
-      quantity: position.quantity,
-      stale: position.stale,
-      warnings: position.warnings,
-    }));
-  const portfolio = buildPortfolio({ balances: [], positions: held, markets: markets.data?.items ?? [] });
-  const excluded = excludedFrom(portfolio);
-  const totalsLine = portfolio.totals.map((total) => `${total.quantity ?? "unknown"} ${total.assetId}`).join(", ");
+  if (address === null) {
+    return (
+      <Panel title="Portfolio & Holdings">
+        <EmptyStateView state={{ kind: "empty", instruction: "Connect a wallet to see what it holds." }} />
+      </Panel>
+    );
+  }
+
+  if (!signedIn) {
+    return (
+      <Panel title="Portfolio & Holdings">
+        <Unavailable reason={UNAVAILABLE.balances} />
+        <EmptyStateView
+          state={{
+            kind: "empty",
+            instruction: "Sign in to see your positions and portfolio accounting.",
+          }}
+        />
+      </Panel>
+    );
+  }
+
+  const marketsState = panelState(markets, markets.data?.context);
+  const portfolioState = panelState(portfolio, portfolio.data?.context);
+  const performanceState = panelState(earnPerformance, earnPerformance.data?.context);
+
+  if (portfolioState.kind === "loading") {
+    return (
+      <Panel title="Portfolio & Holdings">
+        <LoadingStateView
+          state={{
+            kind: "loading",
+            what: "your portfolio accounting and yield",
+            canRetry: true,
+            onRetry: () => {
+              void portfolio.refresh();
+              void earnPerformance.refresh();
+            },
+          }}
+        />
+      </Panel>
+    );
+  }
+
+  const data = portfolio.data?.data;
+  const coverage = data?.coverage;
+  const perfItems = earnPerformance.data?.data.items ?? [];
+  const entries = data?.entries ?? [];
 
   return (
     <>
-      <Panel title="Holdings">
-        {address === null ? (
-          <EmptyStateView state={{ kind: "empty", instruction: "Connect a wallet to see what it holds." }} />
+      <StateNote
+        state={portfolioState}
+        onRetry={() => {
+          void portfolio.refresh();
+          void earnPerformance.refresh();
+        }}
+      />
+
+      {/* KPI Cards: Assets, Debt, Net Worth, Coverage */}
+      {data && (
+        <section className="portfolio-kpi-grid" aria-label="Portfolio Summary">
+          <div className="kpi-card">
+            <span className="kpi-title">Gross Assets</span>
+            <span className="kpi-value">
+              {data.grossAssetsUsd ? `$${Number(data.grossAssetsUsd).toLocaleString()}` : "N/A"}
+            </span>
+            <span className="kpi-subtext">
+              {data.byCategory["wallet"]?.count ?? 0} wallet +{" "}
+              {(data.byCategory["supplied"]?.count ?? 0) + (data.byCategory["collateral"]?.count ?? 0)} protocol
+            </span>
+          </div>
+          <div className="kpi-card">
+            <span className="kpi-title">Debt Liabilities</span>
+            <span className="kpi-value debt">
+              {data.grossDebtUsd ? `$${Number(data.grossDebtUsd).toLocaleString()}` : "$0.00"}
+            </span>
+            <span className="kpi-subtext">
+              {data.byCategory["debt"]?.count ?? 0} debt{" "}
+              {data.byCategory["debt"]?.count === 1 ? "position" : "positions"}
+            </span>
+          </div>
+          <div className="kpi-card highlight">
+            <span className="kpi-title">Net Subtotal</span>
+            <span className="kpi-value">
+              {data.netWorthUsd ? `$${Number(data.netWorthUsd).toLocaleString()}` : "N/A"}
+            </span>
+            <span className="kpi-subtext">Verified Assets − Debt</span>
+          </div>
+          <div className="kpi-card">
+            <span className="kpi-title">Valuation Coverage</span>
+            <span className="kpi-value">
+              {coverage?.coverageBps !== null && coverage?.coverageBps !== undefined
+                ? `${(coverage.coverageBps / 100).toFixed(1)}%`
+                : "100%"}
+            </span>
+            <span className="kpi-subtext">
+              {coverage?.isComplete ? "Fully valued" : `${coverage?.unvaluedAssets.length ?? 0} unvalued`}
+            </span>
+          </div>
+        </section>
+      )}
+
+      {/* Partial State Disclosure if unvalued positions exist */}
+      {coverage && !coverage.isComplete && (
+        <aside className="panel-notice panel-notice-warn" aria-label="Coverage Warning">
+          <PartialStateView
+            state={{
+              kind: "partial",
+              verifiedSubtotal: data?.netWorthUsd ? `$${Number(data.netWorthUsd).toLocaleString()} USD` : "N/A",
+              excludedPositions: coverage.unvaluedAssets.map((item) => ({
+                name: item.assetId,
+                reason: item.reason || "Oracle price feed unverified or missing",
+              })),
+              notice: "Net subtotal reflects only assets with verified price feeds.",
+            }}
+          />
+        </aside>
+      )}
+
+      {/* Capital Deployment by Category */}
+      {data && Object.keys(data.byCategory).length > 0 && (
+        <Panel title="Capital Deployment by Category">
+          <div className="category-pill-grid">
+            {Object.entries(data.byCategory).map(([catKey, catVal]) => (
+              <div key={catKey} className="category-pill-card">
+                <span className="category-pill-name">{catKey.toUpperCase()}</span>
+                <span className="category-pill-usd">
+                  {catVal.totalUsd ? `$${Number(catVal.totalUsd).toLocaleString()}` : "Unvalued"}
+                </span>
+                <span className="category-pill-count">
+                  {catVal.count} {catVal.count === 1 ? "position" : "positions"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
+      {/* Earned Yield & Performance Attribution (I27) */}
+      {perfItems.length > 0 && (
+        <Panel title="Earned Yield & Performance Attribution">
+          <StateNote state={performanceState} onRetry={() => void earnPerformance.refresh()} />
+          <div className="performance-grid">
+            {perfItems.map((item) => (
+              <div key={item.marketId} className="performance-card">
+                <div className="performance-header">
+                  <strong>{item.marketId}</strong>
+                  <span className="badge badge-info">{item.assetId}</span>
+                </div>
+                <div className="performance-body">
+                  <p>
+                    <strong>Realized Earnings:</strong> {item.realizedEarnings.amount} {item.realizedEarnings.assetId}
+                    {item.realizedEarnings.usdValue && (
+                      <span className="muted"> (${Number(item.realizedEarnings.usdValue).toLocaleString()})</span>
+                    )}
+                    <span className="muted"> (closed gains + claimed rewards)</span>
+                  </p>
+                  <p>
+                    <strong>Accrued Yield Estimate:</strong> {item.accruedEstimate.amount}{" "}
+                    {item.accruedEstimate.assetId}
+                    {item.accruedEstimate.usdValue && (
+                      <span className="muted"> (${Number(item.accruedEstimate.usdValue).toLocaleString()})</span>
+                    )}
+                    <span className="muted"> (share appreciation + accruals)</span>
+                  </p>
+                  <p>
+                    <strong>30-Day Forward Projection:</strong>{" "}
+                    {item.forward30dProjection.isProjectionAvailable ? (
+                      <span className="success-text">
+                        {item.forward30dProjection.projected30dAmount} {item.assetId}
+                        {item.forward30dProjection.rateUsedBps && (
+                          <span className="muted">
+                            {" "}
+                            (at {(Number(item.forward30dProjection.rateUsedBps) / 100).toFixed(2)}% APY)
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="muted">
+                        Unavailable: {item.forward30dProjection.unavailableReason ?? "Rate unverified"}
+                      </span>
+                    )}
+                  </p>
+                  {item.attribution.hasUnattributedInflow && (
+                    <aside className="panel-notice panel-notice-warn">
+                      <p className="warn">
+                        <strong>Notice:</strong> Balance increase of {item.attribution.unattributedInflow} has no
+                        cash-flow attribution; classified as unattributed inflow and excluded from earned yield.
+                      </p>
+                    </aside>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
+      {/* Holdings & Positions Table with Non-Double Counting Receipt Disclosure */}
+      <Panel
+        title="Holdings & Protocol Positions"
+        action={
+          onNavigate && (
+            <button type="button" onClick={() => onNavigate("Positions")}>
+              Manage Positions
+            </button>
+          )
+        }
+      >
+        {entries.length === 0 ? (
+          <p className="muted">No protocol positions or wallet holdings recorded.</p>
         ) : (
-          <>
-            <Unavailable reason={UNAVAILABLE.balances} />
-            {!signedIn ? (
-              <EmptyStateView state={{ kind: "empty", instruction: "Sign in to see your positions." }} />
-            ) : positionsState.kind === "loading" ? (
-              <LoadingStateView
-                state={{
-                  kind: "loading",
-                  what: "your positions",
-                  canRetry: true,
-                  onRetry: () => void positions.refresh(),
-                }}
-              />
-            ) : (
-              <StateNote state={positionsState} onRetry={() => void positions.refresh()} />
-            )}
-            {/* A subtotal that quietly drops rows reads as a complete balance, so the drops are named. */}
-            {signedIn && portfolio.totals.length > 0 && excluded.length > 0 ? (
-              <PartialStateView
-                state={{ kind: "partial", verifiedSubtotal: totalsLine, excludedPositions: excluded }}
-              />
-            ) : portfolio.totals.length > 0 ? (
-              <p>Total {totalsLine}</p>
-            ) : null}
-            {portfolio.rows.length > 0 ? (
-              <ResponsiveTable
-                rows={portfolio.rows}
-                rowKey={(row) => row.key}
-                columns={[
-                  { header: "Kind", cell: (row) => row.kind },
-                  { header: "Asset", cell: (row) => row.assetId },
-                  { header: "Quantity", cell: (row) => <Amount quantity={row.quantity} unknown="unknown" /> },
-                  { header: "Counted", cell: (row) => (row.countsTowardTotal ? "counted" : "not counted") },
-                ]}
-              />
-            ) : null}
-          </>
+          <ResponsiveTable
+            rows={entries}
+            rowKey={(e) => `${e.category}-${e.assetId}-${e.marketId ?? ""}-${e.id}`}
+            columns={[
+              { header: "Category", cell: (e) => <span className="badge">{e.category}</span> },
+              {
+                header: "Asset / Market",
+                cell: (e) => (
+                  <div>
+                    <strong>{e.assetId}</strong>
+                    {e.marketId && <span className="muted"> ({e.marketId})</span>}
+                  </div>
+                ),
+              },
+              {
+                header: "Quantity",
+                cell: (e) => <Amount quantity={e.quantity} unknown="unknown" />,
+              },
+              {
+                header: "Status",
+                cell: (e) => (
+                  <span className={`badge ${e.stale ? "badge-warning" : "badge-success"}`}>
+                    {e.stale ? "Stale reading" : "Verified"}
+                  </span>
+                ),
+              },
+              {
+                header: "Net Worth Accounting",
+                cell: (e) =>
+                  e.countsTowardTotal ? (
+                    <span className="badge badge-success">Counted</span>
+                  ) : (
+                    <div>
+                      <span className="badge badge-neutral">Receipt claim</span>
+                      <div className="muted font-small">
+                        {e.isReceipt ? "Excluded to prevent double-counting" : "Excluded from net total"}
+                      </div>
+                    </div>
+                  ),
+              },
+            ]}
+          />
         )}
       </Panel>
 
+      {/* Available markets table */}
       <Panel
         title="Available markets"
         action={
@@ -92,7 +293,7 @@ export function Portfolio({ address, signedIn }: { address: string | null; signe
           </button>
         }
       >
-        <StateNote state={state} onRetry={() => void markets.refresh()} />
+        <StateNote state={marketsState} onRetry={() => void markets.refresh()} />
         <ul>
           {(markets.data?.items ?? []).map((market) => (
             <li key={market.id}>
