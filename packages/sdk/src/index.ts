@@ -79,6 +79,7 @@ export type {
   AssetId,
   AssetValuation,
   CapitalError,
+  ClarityValue,
   ErrorCode,
   ErrorClass,
   FormatUnitsOptions,

@@ -11,7 +11,7 @@ import {
   makeContractCall,
   type ClarityValue as StacksClarity,
 } from "@stacks/transactions";
-import { capitalError, parseAssetId, type ClarityValue, type PlanWire, type StacksNetwork } from "@stacks-capital/core";
+import { capitalError, parseAssetId, type ClarityValue, type PlanWire, type StacksNetwork } from "@stacks-capital/sdk";
 
 const STX_ACCOUNT_PATH = "m/44'/5757'/0'/0/0";
 

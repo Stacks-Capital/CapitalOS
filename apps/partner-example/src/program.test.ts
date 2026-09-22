@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
-import { after, before, describe, it } from "node:test";
-import { MAINNET_OWNER } from "@stacks-capital/fixtures";
+import { after, before, beforeEach, describe, it } from "node:test";
 import { createCapitalOS } from "@stacks-capital/sdk";
-import { DISPOSABLE_TEST_MNEMONIC } from "./disposable-test-account.ts";
 import { startDemoCapitalApi, type DemoServer } from "./demo-server.ts";
+import {
+  DISPOSABLE_TEST_MNEMONIC,
+  FALLBACK_SANDBOX_OWNER,
+  getDisposableMnemonic,
+  isCredentialRevoked,
+  resetDisposableCredentials,
+  revokeDisposableCredentials,
+} from "./disposable-test-account.ts";
 import { ownerFromMnemonic, signUnsignedPlan } from "./host-sign.ts";
-import { runZestSupply, stakingIsDisabled } from "./program.ts";
+import { runZestSupply, runZestWithdrawSupply, stakingIsDisabled } from "./program.ts";
 
 function isCode(error: unknown, code: string): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === code;
@@ -26,18 +32,41 @@ describe("partner example", () => {
     await demo.close();
   });
 
-  it("quotes Zest through HTTP, then validates and stops at AWAITING_SIGNATURE with the SDK", async () => {
+  beforeEach(() => {
+    resetDisposableCredentials();
+  });
+
+  it("completes sandbox entry (supply) through HTTP, validates and halts at AWAITING_SIGNATURE", async () => {
     const result = await runZestSupply({
       apiBase: demo.url,
       network: "mainnet",
-      owner: MAINNET_OWNER,
+      owner: FALLBACK_SANDBOX_OWNER,
     });
+    assert.equal(result.action, "supply");
     assert.equal(result.quote.executable, true);
     assert.equal(result.quote.action, "supply");
     assert.match(result.receiptAsset, /:zft$/);
     assert.equal(result.plan.steps[0]?.payload.kind, "stacks_contract_call");
     assert.equal(result.workflowState, "AWAITING_SIGNATURE");
     assert.equal(stakingIsDisabled(), true);
+  });
+
+  it("completes sandbox exit (withdraw_supply / redeem) through HTTP, validates and halts at AWAITING_SIGNATURE", async () => {
+    const result = await runZestWithdrawSupply({
+      apiBase: demo.url,
+      network: "mainnet",
+      owner: FALLBACK_SANDBOX_OWNER,
+    });
+    assert.equal(result.action, "withdraw_supply");
+    assert.equal(result.quote.executable, true);
+    assert.equal(result.quote.action, "withdraw_supply");
+    assert.match(result.outputAsset, /:sbtc-token$/);
+    assert.equal(result.plan.steps[0]?.payload.kind, "stacks_contract_call");
+    const payload = result.plan.steps[0]?.payload;
+    if (payload?.kind === "stacks_contract_call") {
+      assert.equal(payload.functionName, "redeem");
+    }
+    assert.equal(result.workflowState, "AWAITING_SIGNATURE");
   });
 
   it("derives the disposable mnemonic, signs the unsigned plan, and does not broadcast", {
@@ -67,6 +96,18 @@ describe("partner example", () => {
     assert.ok(signed.transaction.length > 100);
   });
 
+  it("supports isolated revocable test credentials and blocks usage when revoked", () => {
+    assert.equal(isCredentialRevoked(), false);
+    assert.equal(getDisposableMnemonic("test test test"), "test test test");
+
+    revokeDisposableCredentials();
+    assert.equal(isCredentialRevoked(), true);
+    assert.throws(() => getDisposableMnemonic("test test test"), /CREDENTIAL_REVOKED/);
+
+    resetDisposableCredentials();
+    assert.equal(isCredentialRevoked(), false);
+  });
+
   it("rejects an invalid mnemonic before touching the API", () => {
     assert.throws(
       () => ownerFromMnemonic("not a mnemonic", "mainnet"),
@@ -78,7 +119,7 @@ describe("partner example", () => {
     const result = await runZestSupply({
       apiBase: demo.url,
       network: "mainnet",
-      owner: MAINNET_OWNER,
+      owner: FALLBACK_SANDBOX_OWNER,
     });
     await assert.rejects(
       () => signUnsignedPlan(result.plan, DISPOSABLE_TEST_MNEMONIC, "mainnet"),
@@ -92,7 +133,7 @@ describe("partner example", () => {
         runZestSupply({
           apiBase: "http://127.0.0.1:1",
           network: "mainnet",
-          owner: MAINNET_OWNER,
+          owner: FALLBACK_SANDBOX_OWNER,
         }),
       /fetch failed|ECONNREFUSED|unexpected/i,
     );

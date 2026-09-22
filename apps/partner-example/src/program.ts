@@ -19,10 +19,15 @@ export type PartnerOptions = {
 };
 
 export type PartnerSuccess = {
+  action: "supply" | "withdraw_supply";
   quote: QuoteWire;
   plan: PlanWire;
   workflowState: "AWAITING_SIGNATURE";
+  outputQuantity: string;
+  outputAsset: string;
+  /** Preserved for backwards compatibility with supply-only callers. */
   shares: string;
+  /** Preserved for backwards compatibility with supply-only callers. */
   receiptAsset: string;
 };
 
@@ -55,8 +60,9 @@ async function postJson<T>(options: PartnerOptions, path: string, body: unknown)
 }
 
 /**
- * Partner write path: Capital API mints the quote and plan; the SDK only validates
- * and holds local workflow state. The host wallet broadcasts.
+ * Partner write path (entry): Capital API mints the supply quote and plan;
+ * the SDK validates against active registry and transitions workflow to AWAITING_SIGNATURE.
+ * The host wallet signs and broadcasts.
  */
 export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuccess> {
   requireNetwork(options.network);
@@ -73,7 +79,7 @@ export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuc
   const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender: options.owner });
   if (!checked.ok) throw new Error(`SDK rejected the plan: ${checked.reasons.join("; ")}`);
 
-  let flow = os.startWorkflow({ id: "partner-example", idempotencyKey: "partner-example-zest-supply" });
+  let flow = os.startWorkflow({ id: "partner-example-supply", idempotencyKey: "partner-example-zest-supply" });
   flow = os.recordQuote(flow, parseQuote(quote));
   flow = os.recordPlan(flow, parsePlan(plan), parseQuote(quote), { sender: options.owner });
   if (flow.state !== "AWAITING_SIGNATURE" || !canSubmitWrite(flow.state)) {
@@ -92,13 +98,68 @@ export async function runZestSupply(options: PartnerOptions): Promise<PartnerSuc
   const receipt = quote.expectedOutput[0];
   if (receipt === undefined) throw new Error("quote has no expected output");
   return {
+    action: "supply",
     quote,
     plan,
     workflowState: "AWAITING_SIGNATURE",
+    outputQuantity: receipt.quantity,
+    outputAsset: receipt.asset,
     shares: receipt.quantity,
     receiptAsset: receipt.asset,
   };
 }
+
+/**
+ * Partner write path (exit): Capital API mints the withdraw_supply / redeem quote and plan;
+ * the SDK validates and transitions workflow to AWAITING_SIGNATURE.
+ * The host wallet signs and broadcasts.
+ */
+export async function runZestWithdrawSupply(options: PartnerOptions, amount = "50000000"): Promise<PartnerSuccess> {
+  requireNetwork(options.network);
+  const os = createCapitalOS({ network: options.network });
+  const intent = { action: "withdraw_supply" as const, marketId: "zest.sbtc.vault", amount };
+
+  const minted = await postJson<{ quote: QuoteWire; plan: PlanWire }>(options, "/v1/quotes", {
+    network: options.network,
+    owner: options.owner,
+    ...intent,
+  });
+  const { quote, plan } = minted;
+
+  const checked = os.validate(parsePlan(plan), parseQuote(quote), { sender: options.owner });
+  if (!checked.ok) throw new Error(`SDK rejected the exit plan: ${checked.reasons.join("; ")}`);
+
+  let flow = os.startWorkflow({ id: "partner-example-exit", idempotencyKey: "partner-example-zest-withdraw" });
+  flow = os.recordQuote(flow, parseQuote(quote));
+  flow = os.recordPlan(flow, parsePlan(plan), parseQuote(quote), { sender: options.owner });
+  if (flow.state !== "AWAITING_SIGNATURE" || !canSubmitWrite(flow.state)) {
+    throw new Error(`workflow stopped at ${flow.state}, not AWAITING_SIGNATURE`);
+  }
+
+  let submitRefused = false;
+  try {
+    os.submit();
+  } catch (error) {
+    submitRefused = codeOf(error) === "UNSUPPORTED_ACTION";
+    if (!submitRefused) throw error;
+  }
+  if (!submitRefused) throw new Error("SDK submit() must throw");
+
+  const output = quote.expectedOutput[0];
+  if (output === undefined) throw new Error("quote has no expected output");
+  return {
+    action: "withdraw_supply",
+    quote,
+    plan,
+    workflowState: "AWAITING_SIGNATURE",
+    outputQuantity: output.quantity,
+    outputAsset: output.asset,
+    shares: output.quantity,
+    receiptAsset: output.asset,
+  };
+}
+
+export const runZestExit = runZestWithdrawSupply;
 
 export function stakingIsDisabled(): boolean {
   return executable("stake", "mainnet") === false;

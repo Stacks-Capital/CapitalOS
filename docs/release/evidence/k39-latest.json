@@ -1,6 +1,6 @@
 {
   "task": "K39",
-  "generatedAt": "2026-09-22T14:51:42.805Z",
+  "generatedAt": "2026-09-22T15:08:29.221Z",
   "releaseCandidate": "0.1.0",
   "environment": {
     "node": "v24.21.0",
@@ -96,43 +96,43 @@
     {
       "id": "pack:@stacks-capital/core",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-core-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-core-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/config",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-config-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-config-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/wallets",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-wallets-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-wallets-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/sdk",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-sdk-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-sdk-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/client",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-client-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-client-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/react",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-react-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-react-0.1.0.tgz",
       "category": "pack"
     },
     {
       "id": "pack:@stacks-capital/ui",
       "ok": true,
-      "detail": "/tmp/capitalos-k39-pack-PWBp5z/stacks-capital-ui-0.1.0.tgz",
+      "detail": "/tmp/capitalos-k39-pack-4RIQCZ/stacks-capital-ui-0.1.0.tgz",
       "category": "pack"
     },
     {
