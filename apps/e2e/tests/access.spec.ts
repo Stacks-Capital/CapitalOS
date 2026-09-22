@@ -103,13 +103,15 @@ test("workflow drawer manages focus, traps Tab, and dismisses on Escape", async 
 test("canonical states render appropriately across views", async ({ page }) => {
   await page.goto("/");
 
-  // 1. Signed-out Empty state on Overview and Swap
+  // 1. Signed-out Empty state on Overview, Swap, and Deposit BTC
   await expect(page.getByText("Connect a wallet to see what it holds.")).toBeVisible();
   await page.getByRole("navigation").getByRole("button", { name: "Swap", exact: true }).click();
   await expect(page.getByText("Connect a wallet and sign in to swap.")).toBeVisible();
+  await page.getByRole("navigation").getByRole("button", { name: "Deposit BTC", exact: true }).click();
+  await expect(page.getByText("Connect a wallet and sign in to deposit or withdraw Bitcoin.")).toBeVisible();
 
-  // 2. Unsupported state on unbuilt tabs
-  for (const tab of ["Deposit BTC", "Liquidity", "Staking"]) {
+  // 2. Unsupported state on remaining unbuilt tabs
+  for (const tab of ["Liquidity", "Staking"]) {
     await page.getByRole("navigation").getByRole("button", { name: tab, exact: true }).click();
     await expect(page.getByText("Unsupported capability")).toBeVisible();
     await expect(page.getByText("Executable controls remain disabled")).toBeVisible();

@@ -862,6 +862,7 @@ export function createApp(deps: AppDependencies) {
         action: input.action,
         amount: input.amount,
         owner,
+        recipient: input.recipient,
         slippageBps: input.slippageBps,
         maxFee: input.maxFee,
       },

@@ -219,7 +219,15 @@ export type CapitalClient = {
    * @throws {CapitalTransportError} If network or timeout fails.
    */
   quote(
-    input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
+    input: {
+      marketId: string;
+      action: string;
+      amount: string;
+      owner?: string;
+      slippageBps?: string;
+      maxFee?: string;
+      recipient?: string;
+    },
     options?: CallOptions,
   ): Promise<Result<QuotedPlan>>;
 
