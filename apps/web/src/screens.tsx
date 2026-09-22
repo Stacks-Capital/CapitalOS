@@ -1,5 +1,4 @@
-import { useCapabilities, useEarnPerformance, useMarkets, usePortfolio, useWorkflow } from "@stacks-capital/react";
-import { useState } from "react";
+import { useCapabilities, useEarnPerformance, useMarkets, usePortfolio } from "@stacks-capital/react";
 import {
   Amount,
   EmptyStateView,
@@ -330,44 +329,4 @@ export function Markets() {
   );
 }
 
-export function Activity({ signedIn }: { signedIn: boolean }) {
-  const [input, setInput] = useState("");
-  const [id, setId] = useState<string | null>(null);
-  const workflow = useWorkflow(id);
-  const state = panelState(workflow, workflow.data?.context);
-
-  return (
-    <Panel title="Workflow">
-      {signedIn ? null : <p className="muted">Sign in to read your own workflows.</p>}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          setId(input.trim() === "" ? null : input.trim());
-        }}
-      >
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="wf_…"
-          aria-label="Workflow id"
-        />
-        <button type="submit">Look up</button>
-      </form>
-      {id === null ? null : <StateNote state={state} onRetry={() => void workflow.refresh()} />}
-      {workflow.data === undefined ? null : (
-        <>
-          <p>
-            <strong>{workflow.data.data.state}</strong> next: {workflow.data.data.nextAction}
-          </p>
-          <ol>
-            {workflow.data.data.transitions.map((move) => (
-              <li key={move.sequence}>
-                {move.from} to {move.to}: {move.reason} <span className="muted">({move.actor})</span>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
-    </Panel>
-  );
-}
+export { ActivityScreen as Activity } from "./activityScreen.tsx";

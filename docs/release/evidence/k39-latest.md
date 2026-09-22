@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Generated | 2026-09-22T11:58:42.132Z |
+| Generated | 2026-09-22T14:51:42.805Z |
 | Release candidate | 0.1.0 |
 | Node | v24.21.0 |
 | Result | **PASS** |
@@ -22,13 +22,13 @@
 | matrix | node-major | pass | running v24.21.0; supported 22,24 |
 | matrix | wallet:leather | pass | reject=USER_REJECTED; unsupported=UNSUPPORTED_WALLET |
 | matrix | wallet:xverse | pass | reject=USER_REJECTED; unsupported=UNSUPPORTED_WALLET |
-| pack | pack:@stacks-capital/core | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-core-0.1.0.tgz |
-| pack | pack:@stacks-capital/config | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-config-0.1.0.tgz |
-| pack | pack:@stacks-capital/wallets | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-wallets-0.1.0.tgz |
-| pack | pack:@stacks-capital/sdk | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-sdk-0.1.0.tgz |
-| pack | pack:@stacks-capital/client | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-client-0.1.0.tgz |
-| pack | pack:@stacks-capital/react | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-react-0.1.0.tgz |
-| pack | pack:@stacks-capital/ui | pass | /tmp/capitalos-k39-pack-ZJhPsR/stacks-capital-ui-0.1.0.tgz |
+| pack | pack:@stacks-capital/core | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-core-0.1.0.tgz |
+| pack | pack:@stacks-capital/config | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-config-0.1.0.tgz |
+| pack | pack:@stacks-capital/wallets | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-wallets-0.1.0.tgz |
+| pack | pack:@stacks-capital/sdk | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-sdk-0.1.0.tgz |
+| pack | pack:@stacks-capital/client | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-client-0.1.0.tgz |
+| pack | pack:@stacks-capital/react | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-react-0.1.0.tgz |
+| pack | pack:@stacks-capital/ui | pass | /tmp/capitalos-k39-pack-PWBp5z/stacks-capital-ui-0.1.0.tgz |
 | install | clean-install | pass | pnpm install from packed tarballs (extracted workspace) |
 | install | clean-import-smoke | pass | k39-consumer-ok 0.1.0 1.0 |
 | partner | partner:example | pass | pass |

@@ -17,7 +17,7 @@ import {
   WorkflowAnnouncer,
   WorkflowDrawer,
 } from "@stacks-capital/ui";
-import { type WalletId } from "@stacks-capital/wallets";
+import type { WalletId } from "@stacks-capital/wallets";
 import { useEffect, useMemo, useState } from "react";
 import { Borrow } from "./borrowScreen.tsx";
 import { NETWORKS, testnetNote, type WebConfig } from "./config.ts";
@@ -278,7 +278,7 @@ function AppShell({
               mode={mode}
               onModeChange={setMode}
             />
-            <Risk wallet={wallet} signedIn={signedIn} />
+            <Risk wallet={wallet} signedIn={signedIn} mode={mode} />
           </>
         )}
 
@@ -290,7 +290,7 @@ function AppShell({
               mode={mode}
               onModeChange={setMode}
             />
-            <Activity signedIn={signedIn} />
+            <Activity signedIn={signedIn} wallet={wallet} network={network} />
           </>
         )}
       </main>
