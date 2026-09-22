@@ -1,6 +1,6 @@
 {
   "task": "K38",
-  "generatedAt": "2026-09-22T10:53:57.046Z",
+  "generatedAt": "2026-09-22T11:05:55.502Z",
   "mode": "sandbox",
   "environment": {
     "node": "v24.21.0",
@@ -59,9 +59,7 @@
       "mismatches": [],
       "observed": [],
       "expected": [],
-      "limitations": [
-        "Protocol principal identity is reconciled against the signed registry, not user balances."
-      ],
+      "limitations": ["Protocol principal identity is reconciled against the signed registry, not user balances."],
       "registryVersion": "0.1.0",
       "source": "signed-registry"
     },
@@ -71,9 +69,7 @@
       "mismatches": [],
       "observed": [],
       "expected": [],
-      "limitations": [
-        "Protocol principal identity is reconciled against the signed registry."
-      ],
+      "limitations": ["Protocol principal identity is reconciled against the signed registry."],
       "registryVersion": "0.1.0",
       "source": "signed-registry"
     }
