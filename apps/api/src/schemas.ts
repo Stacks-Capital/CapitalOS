@@ -340,10 +340,29 @@ export const PositionQuery = z.object({
   owner: z.string().max(64).optional().openapi({ description: "Required for an API key, ignored for a session." }),
 });
 
+export const LinkedCollateral = z
+  .object({
+    marketId: z.string(),
+    assetId: z.string(),
+    protocolKey: z.string().optional(),
+    quantity: z.string().nullable().optional(),
+  })
+  .openapi("LinkedCollateral");
+
 export const Position = z
   .object({
     marketId: z.string(),
-    kind: z.enum(["wallet", "supplied", "debt", "collateral", "pending_deposit", "pending_withdrawal", "staked"]),
+    kind: z.enum([
+      "wallet",
+      "supplied",
+      "lp",
+      "collateral",
+      "debt",
+      "locked",
+      "pending_deposit",
+      "pending_withdrawal",
+      "staked",
+    ]),
     protocolKey: z.string(),
     assetId: z.string(),
     quantity: z.string().nullable().openapi({ description: "Null when unknown. Zero is a real balance." }),
@@ -355,6 +374,7 @@ export const Position = z
     rewardScale: z.number().int().nullable(),
     adapterVersion: z.string(),
     calculationVersion: z.string(),
+    linkedCollateral: LinkedCollateral.nullable().optional(),
   })
   .openapi("Position");
 
@@ -520,6 +540,45 @@ export const PortfolioValuation = z
 
 export const PortfolioValuationResponse = envelope("PortfolioValuationResponse", PortfolioValuation);
 export const ValuationsResponse = envelope("ValuationsResponse", z.object({ items: z.array(AssetValuation) }));
+
+export const AccountingEntrySchema = z
+  .object({
+    id: z.string(),
+    category: z.enum(["wallet", "supplied", "lp", "collateral", "debt", "locked"]),
+    assetId: z.string(),
+    quantity: z.string().nullable(),
+    marketId: z.string().nullable(),
+    protocolKey: z.string().nullable(),
+    isReceipt: z.boolean(),
+    countsTowardTotal: z.boolean(),
+    linkedCollateral: LinkedCollateral.nullable(),
+    stale: z.boolean(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("AccountingEntry");
+
+export const CategoryAccountingSummarySchema = z
+  .object({
+    totalUsd: z.string().nullable(),
+    count: z.number().int(),
+    items: z.array(ValuedHoldingItem),
+  })
+  .openapi("CategoryAccountingSummary");
+
+export const PortfolioAccounting = z
+  .object({
+    grossAssetsUsd: z.string().nullable(),
+    grossDebtUsd: z.string().nullable(),
+    netWorthUsd: z.string().nullable(),
+    coverage: PortfolioCoverage,
+    entries: z.array(AccountingEntrySchema),
+    byCategory: z.record(z.string(), CategoryAccountingSummarySchema),
+    incomplete: z.boolean(),
+    warnings: z.array(z.string()),
+  })
+  .openapi("PortfolioAccounting");
+
+export const PortfolioAccountingResponse = envelope("PortfolioAccountingResponse", PortfolioAccounting);
 
 export const MarketRisk = z
   .object({

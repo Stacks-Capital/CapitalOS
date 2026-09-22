@@ -123,6 +123,35 @@ export async function latestPositions(
   `;
 }
 
+export type WalletBalanceRow = {
+  network: NetworkName;
+  address: string;
+  assetId: string;
+  quantity: string | null;
+  stale: boolean;
+  warnings: string[];
+  source: string;
+  observedAt: Date;
+  blockHeight: number | null;
+  blockHash: string | null;
+};
+
+/** The latest wallet balances per asset for an address. */
+export async function latestWalletBalances(
+  sql: Sql,
+  input: { network: NetworkName; address: string },
+): Promise<WalletBalanceRow[]> {
+  return sql<WalletBalanceRow[]>`
+    SELECT DISTINCT ON (asset_id)
+           network, address, asset_id AS "assetId", quantity::text AS quantity,
+           stale, warnings, source, observed_at AS "observedAt",
+           block_height::int AS "blockHeight", block_hash AS "blockHash"
+    FROM wallet_balance_snapshots
+    WHERE network = ${input.network} AND address = ${input.address}
+    ORDER BY asset_id, observed_at DESC, id DESC
+  `;
+}
+
 export type PriceRow = {
   feedKey: string;
   price: string | null;

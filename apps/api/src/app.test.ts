@@ -123,6 +123,7 @@ describe("OpenAPI document", () => {
       "/v1/markets/{id}/evidence",
       "/v1/markets/{id}/risk",
       "/v1/plans",
+      "/v1/portfolio",
       "/v1/positions",
       "/v1/prices",
       "/v1/prices/valuations",

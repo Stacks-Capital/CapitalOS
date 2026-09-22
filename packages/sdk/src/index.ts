@@ -60,6 +60,8 @@ export {
   assertOracleQuorum,
   evaluatePortfolioValuation,
   reconcilePriceQuorum,
+  evaluatePortfolioAccounting,
+  normalizeCapitalCategory,
 } from "@stacks-capital/core";
 export type {
   AssetValuation,
@@ -69,6 +71,11 @@ export type {
   QuorumOptions,
   ValuationStatus,
   ValuedHoldingItem,
+  AccountingEntry,
+  CapitalCategory,
+  CategoryAccountingSummary,
+  LinkedCollateralRef,
+  PortfolioAccountingSummary,
 } from "@stacks-capital/core";
 
 export type { WalletId } from "@stacks-capital/wallets";

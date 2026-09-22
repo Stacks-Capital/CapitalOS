@@ -15,6 +15,7 @@ import {
   QuoteRequest,
   QuoteResponse,
   PositionQuery,
+  PortfolioAccountingResponse,
   PricesResponse,
   PositionsResponse,
   SessionResponse,
@@ -181,6 +182,17 @@ export const positionsRoute = createRoute({
   security: keyOrSession,
   request: { query: PositionQuery },
   responses: { 200: json("Positions for one address", PositionsResponse), ...errorResponses },
+});
+
+export const portfolioRoute = createRoute({
+  method: "get",
+  path: "/v1/portfolio",
+  security: keyOrSession,
+  request: { query: PositionQuery },
+  responses: {
+    200: json("Canonical portfolio and debt accounting for one address", PortfolioAccountingResponse),
+    ...errorResponses,
+  },
 });
 
 export const workflowsRoute = createRoute({

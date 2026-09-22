@@ -1236,8 +1236,10 @@
             "enum": [
               "wallet",
               "supplied",
-              "debt",
+              "lp",
               "collateral",
+              "debt",
+              "locked",
               "pending_deposit",
               "pending_withdrawal",
               "staked"
@@ -1292,6 +1294,9 @@
           },
           "calculationVersion": {
             "type": "string"
+          },
+          "linkedCollateral": {
+            "$ref": "#/components/schemas/LinkedCollateral"
           }
         },
         "required": [
@@ -1308,6 +1313,344 @@
           "rewardScale",
           "adapterVersion",
           "calculationVersion"
+        ]
+      },
+      "LinkedCollateral": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "marketId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "protocolKey": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "marketId",
+          "assetId"
+        ]
+      },
+      "PortfolioAccountingResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "stacks:mainnet",
+              "stacks:testnet"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/PortfolioAccounting"
+          },
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "network",
+          "data",
+          "context"
+        ]
+      },
+      "PortfolioAccounting": {
+        "type": "object",
+        "properties": {
+          "grossAssetsUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossDebtUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netWorthUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/PortfolioCoverage"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountingEntry"
+            }
+          },
+          "byCategory": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryAccountingSummary"
+            }
+          },
+          "incomplete": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "grossAssetsUsd",
+          "grossDebtUsd",
+          "netWorthUsd",
+          "coverage",
+          "entries",
+          "byCategory",
+          "incomplete",
+          "warnings"
+        ]
+      },
+      "PortfolioCoverage": {
+        "type": "object",
+        "properties": {
+          "isComplete": {
+            "type": "boolean"
+          },
+          "valuedCount": {
+            "type": "integer"
+          },
+          "unvaluedCount": {
+            "type": "integer"
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "coverageBps": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "valuedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unvaluedAssets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assetId": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "assetId",
+                "reason",
+                "quantity"
+              ]
+            }
+          }
+        },
+        "required": [
+          "isComplete",
+          "valuedCount",
+          "unvaluedCount",
+          "totalCount",
+          "coverageBps",
+          "valuedAssets",
+          "unvaluedAssets"
+        ]
+      },
+      "AccountingEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "wallet",
+              "supplied",
+              "lp",
+              "collateral",
+              "debt",
+              "locked"
+            ]
+          },
+          "assetId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marketId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "protocolKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isReceipt": {
+            "type": "boolean"
+          },
+          "countsTowardTotal": {
+            "type": "boolean"
+          },
+          "linkedCollateral": {
+            "$ref": "#/components/schemas/LinkedCollateral"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "assetId",
+          "quantity",
+          "marketId",
+          "protocolKey",
+          "isReceipt",
+          "countsTowardTotal",
+          "linkedCollateral",
+          "stale",
+          "warnings"
+        ]
+      },
+      "CategoryAccountingSummary": {
+        "type": "object",
+        "properties": {
+          "totalUsd": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuedHoldingItem"
+            }
+          }
+        },
+        "required": [
+          "totalUsd",
+          "count",
+          "items"
+        ]
+      },
+      "ValuedHoldingItem": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "usdValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valued",
+              "unsupported",
+              "stale",
+              "disputed",
+              "missing_quantity"
+            ]
+          },
+          "unvaluedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valuation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetValuation"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "assetId",
+          "quantity",
+          "decimals",
+          "usdValue",
+          "status",
+          "unvaluedReason",
+          "valuation"
         ]
       },
       "ChallengeResponse": {
@@ -3436,6 +3779,117 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PositionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or network mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials do not allow this request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached. Retry after the number of seconds in retryAfter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/portfolio": {
+      "get": {
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "walletSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ],
+              "description": "Required on every request. There is no default network."
+            },
+            "required": true,
+            "description": "Required on every request. There is no default network.",
+            "name": "network",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "Required for an API key, ignored for a session."
+            },
+            "required": false,
+            "description": "Required for an API key, ignored for a session.",
+            "name": "owner",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canonical portfolio and debt accounting for one address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioAccountingResponse"
                 }
               }
             }

@@ -6,6 +6,7 @@ import {
   GOLDEN_FIXTURE_OWNER,
   reconcileFixtureGoldenAddresses,
   reconcileGoldenPositions,
+  reconcileGoldenPortfolioAccounting,
 } from "./goldenAddresses.ts";
 
 describe("K38 golden-address reconciliation", () => {
@@ -34,5 +35,22 @@ describe("K38 golden-address reconciliation", () => {
     assert.equal(zest?.address, contract("zest", "v0-vault-sbtc", "mainnet").contractId);
     assert.equal(zest?.address.startsWith("SP"), true);
     assert.ok(FIXTURE_GOLDEN_ADDRESSES.some((row) => row.address === GOLDEN_FIXTURE_OWNER));
+  });
+
+  it("I26 reconciles golden address portfolio against explorer and protocol reads", () => {
+    const portfolioReports = reconcileGoldenPortfolioAccounting();
+    assert.ok(portfolioReports.length > 0);
+    for (const report of portfolioReports) {
+      assert.equal(report.matched, true, report.mismatches.join("; "));
+      assert.equal(report.explorerBalanceMatched, true);
+      assert.equal(report.protocolPositionsMatched, true);
+      assert.equal(report.linkedCollateralMatched, true);
+      assert.ok(report.netWorthUsd !== null);
+      assert.ok(report.grossAssetsUsd !== null);
+      assert.ok(report.grossDebtUsd !== null);
+      if (report.netWorthUsd && report.grossAssetsUsd && report.grossDebtUsd) {
+        assert.equal(BigInt(report.netWorthUsd) === BigInt(report.grossAssetsUsd) - BigInt(report.grossDebtUsd), true);
+      }
+    }
   });
 });

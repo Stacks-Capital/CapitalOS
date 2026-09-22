@@ -121,5 +121,11 @@ export {
   GOLDEN_FIXTURE_POSITION,
   reconcileFixtureGoldenAddresses,
   reconcileGoldenPositions,
+  reconcileGoldenPortfolioAccounting,
 } from "./goldenAddresses.ts";
-export type { GoldenAddress, GoldenPositionExpectation, GoldenReconcileResult } from "./goldenAddresses.ts";
+export type {
+  GoldenAddress,
+  GoldenPositionExpectation,
+  GoldenReconcileResult,
+  GoldenPortfolioAccountingReport,
+} from "./goldenAddresses.ts";

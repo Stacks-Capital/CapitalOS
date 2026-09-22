@@ -20,6 +20,7 @@ import type {
   OracleQuoteView,
   Page,
   Position,
+  PortfolioAccountingView,
   QuotedPlan,
   Result,
   Session,
@@ -80,6 +81,8 @@ export type CapitalClient = {
   marketEvidence(marketId: string, options?: CallOptions): Promise<Result<MarketEvidence>>;
   /** Positions for one address. A session reads its own; a key names the owner. */
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
+  /** Canonical portfolio and debt accounting for one address. */
+  portfolio(input?: { owner?: string } & CallOptions): Promise<Result<PortfolioAccountingView>>;
   /** Quoting runs on the server, where the provider keys are. */
   quote(
     input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
@@ -254,6 +257,15 @@ export function createClient(options: ClientOptions): CapitalClient {
       call<{ items: Position[] }>({
         method: "GET",
         path: "/v1/positions",
+        query: { network, owner: call_?.owner },
+        signal: call_?.signal,
+        retry: true,
+      }),
+
+    portfolio: (call_) =>
+      call<PortfolioAccountingView>({
+        method: "GET",
+        path: "/v1/portfolio",
         query: { network, owner: call_?.owner },
         signal: call_?.signal,
         retry: true,

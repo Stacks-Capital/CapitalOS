@@ -173,3 +173,16 @@ export {
   evaluatePortfolioValuation,
   reconcilePriceQuorum,
 } from "./valuation.ts";
+
+export type {
+  AccountingEntry,
+  CapitalCategory,
+  CategoryAccountingSummary,
+  LinkedCollateralRef,
+  PortfolioAccountingSummary,
+} from "./accounting.ts";
+export {
+  CAPITAL_CATEGORIES,
+  evaluatePortfolioAccounting,
+  normalizeCapitalCategory,
+} from "./accounting.ts";

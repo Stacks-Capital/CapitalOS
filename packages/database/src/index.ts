@@ -104,6 +104,7 @@ export {
   latestPrices,
   latestPriceObservations,
   latestPriceValuations,
+  latestWalletBalances,
   listKnownOwners,
   listMarketAssets,
   type MarketAssets,
@@ -112,6 +113,7 @@ export {
   type PositionSnapshotRow,
   type PriceRow,
   type RewardSnapshotRow,
+  type WalletBalanceRow,
 } from "./positions.ts";
 export {
   type CapabilityRecord,

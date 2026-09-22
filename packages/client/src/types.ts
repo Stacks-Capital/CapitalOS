@@ -120,11 +120,20 @@ export type SignatureOutcome = {
   txid: string | null;
 };
 
+export type LinkedCollateral = {
+  marketId: string;
+  assetId: string;
+  protocolKey?: string;
+  quantity?: string | null;
+};
+
 export type PositionKind =
   | "wallet"
   | "supplied"
-  | "debt"
+  | "lp"
   | "collateral"
+  | "debt"
+  | "locked"
   | "pending_deposit"
   | "pending_withdrawal"
   | "staked";
@@ -144,6 +153,7 @@ export type Position = {
   rewardScale: number | null;
   adapterVersion: string;
   calculationVersion: string;
+  linkedCollateral?: LinkedCollateral | null;
 };
 
 export type EarnOptionEvidence = {
@@ -274,6 +284,39 @@ export type PortfolioValuation = {
   totalUsd: string | null;
   coverage: PortfolioCoverage;
   items: ValuedHoldingItem[];
+  warnings: string[];
+};
+
+export type CapitalCategory = "wallet" | "supplied" | "lp" | "collateral" | "debt" | "locked";
+
+export type AccountingEntryView = {
+  id: string;
+  category: CapitalCategory;
+  assetId: string;
+  quantity: string | null;
+  marketId: string | null;
+  protocolKey: string | null;
+  isReceipt: boolean;
+  countsTowardTotal: boolean;
+  linkedCollateral: LinkedCollateral | null;
+  stale: boolean;
+  warnings: string[];
+};
+
+export type CategoryAccountingSummaryView = {
+  totalUsd: string | null;
+  count: number;
+  items: ValuedHoldingItem[];
+};
+
+export type PortfolioAccountingView = {
+  grossAssetsUsd: string | null;
+  grossDebtUsd: string | null;
+  netWorthUsd: string | null;
+  coverage: PortfolioCoverage;
+  entries: AccountingEntryView[];
+  byCategory: Record<string, CategoryAccountingSummaryView>;
+  incomplete: boolean;
   warnings: string[];
 };
 
