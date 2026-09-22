@@ -22,6 +22,7 @@ export async function recordOpsEvent(sql: Sql, event: OpsEvent): Promise<void> {
 
 export type IngestionHealth = {
   checkpointHeight: number | null;
+  checkpointHash: string | null;
   checkpointAt: Date | null;
   /** Blocks behind the tip at the last successful tick. Null when no tick has run. */
   blocksBehind: number | null;
@@ -64,8 +65,8 @@ export async function metricsSnapshot(
   const since = new Date(input.at.getTime() - input.windowSeconds * 1000);
   const stuckSeconds = input.stuckSeconds ?? DEFAULT_STUCK_SECONDS;
 
-  const [checkpoint] = await sql<{ height: number; updatedAt: Date }[]>`
-    SELECT height::int, updated_at AS "updatedAt" FROM ingestion_checkpoints
+  const [checkpoint] = await sql<{ height: number; hash: string; updatedAt: Date }[]>`
+    SELECT height::int, hash, updated_at AS "updatedAt" FROM ingestion_checkpoints
     WHERE chain = 'stacks' AND network = ${input.network}
   `;
   const [tick] = await sql<{ value: string | null; at: Date }[]>`
@@ -110,6 +111,7 @@ export async function metricsSnapshot(
     at: input.at,
     ingestion: {
       checkpointHeight: checkpoint?.height ?? null,
+      checkpointHash: checkpoint?.hash ?? null,
       checkpointAt: checkpoint?.updatedAt ?? null,
       blocksBehind: tick?.value === null || tick === undefined ? null : Number(tick.value),
       lastTickAt: tick?.at ?? null,
@@ -228,4 +230,27 @@ export async function effectiveCapability(
     WHERE network = ${input.network} AND market_id = ${input.marketId} AND action = ${input.action}
   `;
   return row ?? null;
+}
+
+/**
+ * Tries to acquire a session-level advisory lock for a worker process on a network.
+ * Returns true if the lock was acquired, false if another worker process is already running.
+ */
+export async function tryAcquireWorkerLock(sql: Sql, processName: string, network: NetworkName): Promise<boolean> {
+  const lockKey = `capitalos:worker:${processName}:${network}`;
+  const [row] = await sql<{ acquired: boolean }[]>`
+    SELECT pg_try_advisory_lock(hashtext(${lockKey})) AS acquired
+  `;
+  return row?.acquired ?? false;
+}
+
+/**
+ * Releases the session-level advisory lock for a worker process on a network.
+ */
+export async function releaseWorkerLock(sql: Sql, processName: string, network: NetworkName): Promise<boolean> {
+  const lockKey = `capitalos:worker:${processName}:${network}`;
+  const [row] = await sql<{ released: boolean }[]>`
+    SELECT pg_advisory_unlock(hashtext(${lockKey})) AS released
+  `;
+  return row?.released ?? false;
 }

@@ -12,6 +12,7 @@ function snapshot(overrides: Partial<MetricsSnapshot> = {}): MetricsSnapshot {
     at: AT,
     ingestion: {
       checkpointHeight: 9012515,
+      checkpointHash: "0x9012515hash",
       checkpointAt: minutesAgo(1),
       blocksBehind: 2,
       lastTickAt: minutesAgo(1),

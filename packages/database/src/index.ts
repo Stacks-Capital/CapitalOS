@@ -86,10 +86,12 @@ export {
   type QuoteHealth,
   raiseAlert,
   recordOpsEvent,
+  releaseWorkerLock,
   resolveAlert,
   setCapabilityOverride,
   type StuckThresholds,
   type StuckWorkflow,
+  tryAcquireWorkerLock,
 } from "./ops.ts";
 export {
   insertPositionSnapshot,

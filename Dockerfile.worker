@@ -1,0 +1,46 @@
+# Multi-stage target-agnostic worker container for Stacks Capital OS
+FROM node:24-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+# Stage 1: Install workspace dependencies
+FROM base AS dependencies
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/core/package.json ./packages/core/
+COPY packages/config/package.json ./packages/config/
+COPY packages/database/package.json ./packages/database/
+COPY apps/worker/package.json ./apps/worker/
+
+# Install dependencies using pnpm store cache
+RUN pnpm install --frozen-lockfile
+
+# Stage 2: Production runner
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV WORKER_PROCESS=all
+ENV WORKER_NETWORK=mainnet
+ENV WORKER_INTERVAL_MS=60000
+ENV WORKER_HEALTH_PORT=3001
+
+COPY --from=dependencies /app ./
+
+# Copy full source trees required by the worker and its workspace dependencies
+COPY package.json pnpm-workspace.yaml ./
+COPY packages/core ./packages/core
+COPY packages/config ./packages/config
+COPY packages/database ./packages/database
+COPY apps/worker ./apps/worker
+
+USER node
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+  CMD node --experimental-strip-types apps/worker/src/health.ts --cli || exit 1
+
+ENTRYPOINT ["node", "--experimental-strip-types", "apps/worker/src/run.ts"]
