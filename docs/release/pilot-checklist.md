@@ -7,7 +7,7 @@
 | Owner / reviewer | IBK / kenzman |
 | Depends on | I18 end to end tests, I19 docs and runbooks |
 | Feeds | [K20 pilot and launch decision](launch-decision.md) |
-| Date | 2026-09-18, at commit `0e09f96`. Blockers rechecked 2026-09-22 at `fae05d5`: B1 still open, B2 narrowed, B7 added. |
+| Date | 2026-09-18, at commit `0e09f96`. Blockers rechecked 2026-09-22 at `fae05d5`: B1 still open, B2 narrowed, B7 added. Rechecked 2026-09-23 at `166d1c1`: B1 narrowed after PR #25, still open. |
 
 Deliverable from the task page: run pilot checklist, classify failures, verify rollback/restore evidence and document outstanding issues for go/no-go.
 
@@ -58,7 +58,7 @@ This document records evidence. It does not make the go/no-go call; that is K20.
 | Borrower completes collateral, borrow, repay, withdraw collateral | Partly | Screens and fail closed rules exist (I13, K15). Granite positions cannot be read from the registered contract, and the DIA USDC feed is unset, so borrow is blocked in practice |
 | Swap enforces minimum output and handles expiry | Met | I14 and K13 unit tests. No browser journey. Live pool not pinned (see above) |
 | Portfolio values reconcile and avoid claim double counting | Met | I09, I11, `buildPortfolio` tests |
-| Workflow resumes after reload, wallet rejection, broadcast uncertainty and provider delay | Partly | Reload, rejection and broadcast unknown are covered in browser tests. Nothing moves a workflow past `SUBMITTED`, so a confirmed transaction is never recorded as confirmed |
+| Workflow resumes after reload, wallet rejection, broadcast uncertainty and provider delay | Partly | Reload, rejection and broadcast unknown are covered in browser tests. A confirmed transaction is now recorded as confirmed (PR #25), but nothing reconciles it to `COMPLETED`, so the journey still has no success state (B1) |
 | Every opportunity shows exact asset, source, timestamp, liquidity and risk | Met | I12 earn comparison, I15 risk panel |
 | External partner example reproduces a journey using the public SDK only | Partly | Earn comparison, positions and activity reproduce. Borrow and swap widgets are not exported |
 | Pilot users complete entry and exit without engineer intervention | Not met | Blocked by the workflow progress gap. Manual check M1 confirms it |
@@ -88,7 +88,7 @@ Defects use the page 03 severity scale: SEV-0 active loss vector, SEV-1 wrong pl
 
 | # | Issue | Kind | Effect on pilot | Source |
 |---|---|---|---|---|
-| B1 | Nothing moves a workflow past `SUBMITTED`. Ingestion does not link transactions to workflows | SEV-2 defect | Every action stays "waiting" after it confirms. Users cannot finish without an engineer | `docs/engineering/ingestion.md` |
+| B1 | Nothing reconciles a workflow to `COMPLETED`. Confirmation was fixed in PR #25: the worker now walks `SUBMITTED` to `CONFIRMING` to `STEP_CONFIRMED` from canonical chain evidence, and ingested activity is attributed to the workflow that broadcast it. The step after that is missing. Nothing calls `beginReconciling` or `completeFromReconciliation` outside the SDK surface and its tests, so every workflow stops at `STEP_CONFIRMED` | SEV-2 defect, narrowed | Every action still shows "waiting" after it confirms, because the screens map `STEP_CONFIRMED` and `RECONCILING` to the same confirming stage as `SUBMITTED`. No workflow reaches a success state, so users cannot finish without an engineer | `apps/worker/src/confirmations.ts`, `packages/core/src/workflow.ts`, `packages/ui/src/earn.ts`, `docs/engineering/ingestion.md` |
 | B2 | No Bitcoin or Emily ingestion. The deposit and withdrawal screens shipped in I33, but nothing watches the L1 side | Gap | A deposit can be started and never observed, so the main BTC holder journey cannot finish | `docs/engineering/ingestion.md`, `apps/web/src/depositBtcScreen.tsx` |
 | B3 | Granite positions cannot be read from the registered contract, and the DIA USDC feed is unset | Gap | Borrow stays blocked (safely) | `docs/engineering/positions.md` finding 3, `docs/discovery/borrow-ux-safety.md` |
 | B4 | Terms, privacy, risk disclosures and support ownership | Gap | Cannot put users on mainnet funds without them | Page 03 release checklist |
