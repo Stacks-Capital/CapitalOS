@@ -1,6 +1,6 @@
 {
   "task": "K40",
-  "generatedAt": "2026-09-22T11:05:58.309Z",
+  "generatedAt": "2026-09-22T11:19:08.424Z",
   "decision": {
     "production": "no-go",
     "closedEarnPilot": "no-go",
@@ -25,7 +25,11 @@
       "Manual pilot checks M1–M10 recorded with real wallets",
       "Rollback drill passes against the previous release tag"
     ],
-    "p0Gates": ["K38", "K39", "K40"]
+    "p0Gates": [
+      "K38",
+      "K39",
+      "K40"
+    ]
   },
   "pilots": [
     {
