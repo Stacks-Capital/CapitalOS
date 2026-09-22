@@ -1,4 +1,4 @@
-import type { Plan, Quote, Transition, Workflow } from "@stacks-capital/core";
+import type { Plan, Quote, Transition, Workflow, WorkflowState } from "@stacks-capital/core";
 import { toJson } from "./json.ts";
 import type postgres from "postgres";
 import type { Sql } from "./lib.ts";
@@ -157,6 +157,95 @@ export async function findAttempt(
     ORDER BY id DESC LIMIT 1
   `;
   return row ?? null;
+}
+
+/**
+ * A workflow that broadcast a transaction and is waiting on chain evidence, with the transaction id
+ * the worker needs in order to look it up. `findAttempt` only searches the other way, by workflow
+ * and step, which is why nothing ever read a confirmation back to its workflow (pilot blocker B1).
+ */
+export type AwaitingConfirmation = {
+  workflowId: string;
+  network: NetworkName;
+  state: WorkflowState;
+  stepId: string;
+  txid: string;
+  /** How many transitions the workflow already has, so appended ones keep the sequence. */
+  transitionCount: number;
+  /** True when no later step is waiting, so a confirmed step ends the signing sequence. */
+  isFinalStep: boolean;
+};
+
+export async function listWorkflowsAwaitingConfirmation(
+  sql: Sql,
+  input: { network: NetworkName; limit: number },
+): Promise<AwaitingConfirmation[]> {
+  return sql<AwaitingConfirmation[]>`
+    SELECT w.id AS "workflowId",
+           w.network,
+           w.state,
+           substr(a.step_id, char_length(w.id) + 2) AS "stepId",
+           a.txid,
+           (SELECT count(*)::int FROM state_transitions t WHERE t.workflow_id = w.id) AS "transitionCount",
+           NOT EXISTS (
+             SELECT 1 FROM workflow_steps later
+             WHERE later.workflow_id = w.id AND later.ordinal > s.ordinal
+           ) AS "isFinalStep"
+    FROM workflows w
+    JOIN LATERAL (
+      SELECT step_id, txid FROM transaction_attempts
+      WHERE workflow_id = w.id AND outcome = 'BROADCAST' AND txid IS NOT NULL
+      ORDER BY id DESC LIMIT 1
+    ) a ON true
+    JOIN workflow_steps s ON s.workflow_id = w.id AND s.id = a.step_id
+    WHERE w.network = ${input.network}
+      AND w.state IN ('SUBMITTED', 'CONFIRMING')
+    ORDER BY w.updated_at ASC
+    LIMIT ${input.limit}
+  `;
+}
+
+/** The workflow and step that broadcast this transaction, so observed activity can be attributed. */
+export async function findWorkflowByTxid(
+  sql: Sql,
+  input: { network: NetworkName; txid: string },
+): Promise<{ workflowId: string; stepId: string } | null> {
+  const [row] = await sql<{ workflowId: string; stepId: string }[]>`
+    SELECT a.workflow_id AS "workflowId", substr(a.step_id, char_length(a.workflow_id) + 2) AS "stepId"
+    FROM transaction_attempts a
+    WHERE a.network = ${input.network} AND a.txid = ${input.txid}
+    ORDER BY a.id DESC LIMIT 1
+  `;
+  return row ?? null;
+}
+
+/**
+ * Appends the transitions a chain reading produced and moves the workflow, both or neither.
+ *
+ * `expectedTransitionCount` is the count this decision was made against. A concurrent writer that
+ * moved the workflow first leaves the count stale, the update matches no row, and this returns
+ * false rather than writing a transition that starts from a state the workflow has already left.
+ */
+export async function advanceWorkflowFromChain(
+  sql: Sql,
+  input: { workflow: Workflow; moves: Transition[]; expectedTransitionCount: number; at: Date },
+): Promise<boolean> {
+  if (input.moves.length === 0) return false;
+  return sql.begin(async (tx) => {
+    const [claimed] = await tx<{ id: string }[]>`
+      UPDATE workflows
+      SET state = ${input.workflow.state}, next_action = ${input.workflow.nextAction}, updated_at = ${input.at}
+      WHERE id = ${input.workflow.id}
+        AND (SELECT count(*)::int FROM state_transitions t WHERE t.workflow_id = workflows.id)
+            = ${input.expectedTransitionCount}
+      RETURNING id
+    `;
+    if (claimed === undefined) return false;
+    for (const [index, move] of input.moves.entries()) {
+      await insertTransition(tx, input.workflow.id, move, input.expectedTransitionCount + index + 1);
+    }
+    return true;
+  });
 }
 
 export type WorkflowStepKind = "bitcoin_deposit" | "stacks_contract_call";

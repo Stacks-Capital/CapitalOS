@@ -29,10 +29,14 @@ export {
   type WorkflowSummary,
 } from "./identity.ts";
 export {
+  advanceWorkflowFromChain,
   type AttemptInsert,
+  type AwaitingConfirmation,
   createWorkflowRow,
   findAttempt,
+  findWorkflowByTxid,
   findWorkflowStepKind,
+  listWorkflowsAwaitingConfirmation,
   findStoredQuote,
   insertPlan,
   insertQuote,
