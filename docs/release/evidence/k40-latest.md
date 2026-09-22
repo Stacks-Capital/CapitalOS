@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Generated | 2026-09-22T15:08:33.292Z |
+| Generated | 2026-09-22T16:17:59.981Z |
 | Production | **no-go** |
 | Closed earn pilot | **no-go** |
 | Sandbox certification | **go** |

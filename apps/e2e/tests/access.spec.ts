@@ -32,7 +32,10 @@ test("every screen passes an accessibility scan with no serious or critical issu
       (violation) => violation.impact === "serious" || violation.impact === "critical",
     );
     expect(
-      serious.map((violation) => `${tab}: ${violation.id} (${violation.nodes.length})`),
+      serious.map(
+        (violation) =>
+          `${tab}: ${violation.id} - ${violation.nodes.map((n) => n.html + " => " + n.failureSummary).join("; ")}`,
+      ),
       `${tab} should have no serious accessibility issues`,
     ).toEqual([]);
   }
@@ -67,7 +70,9 @@ test("the whole app can be driven from the keyboard", async ({ page, isMobile })
   }
   expect(await page.evaluate(() => document.activeElement?.textContent)).toBe("Earn");
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "Compare and review" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Earn marketplace|Verified Protocol Yield Marketplace/ }),
+  ).toBeVisible();
 
   // Focus lands somewhere visible after each press, so a keyboard user can always see where they are.
   await page.keyboard.press("Tab");
@@ -110,12 +115,20 @@ test("canonical states render appropriately across views", async ({ page }) => {
   await page.getByRole("navigation").getByRole("button", { name: "Deposit BTC", exact: true }).click();
   await expect(page.getByText("Connect a wallet and sign in to deposit or withdraw Bitcoin.")).toBeVisible();
 
-  // 2. Unsupported state on remaining unbuilt tabs
-  for (const tab of ["Liquidity", "Staking"]) {
-    await page.getByRole("navigation").getByRole("button", { name: tab, exact: true }).click();
-    await expect(page.getByText("Unsupported capability")).toBeVisible();
-    await expect(page.getByText("Executable controls remain disabled")).toBeVisible();
-  }
+  // 2. Verified canonical screen headers across new screens
+  await page.getByRole("navigation").getByRole("button", { name: "Liquidity", exact: true }).click();
+  await expect(page.getByText("Connect a wallet and sign in to manage your liquidity positions.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Liquidity provision" })).toBeVisible();
+
+  await page.getByRole("navigation").getByRole("button", { name: "Staking", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Bitcoin Staking" })).toBeVisible();
+  await expect(page.getByText("Connect a wallet and sign in to view staking options.")).toBeVisible();
+
+  await page.getByRole("navigation").getByRole("button", { name: "Risk", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Risk & Scenarios" })).toBeVisible();
+
+  await page.getByRole("navigation").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Activity & Workflows" })).toBeVisible();
 });
 
 test("no screen scrolls sideways on a phone", async ({ page, isMobile }) => {
