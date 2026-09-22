@@ -3,7 +3,13 @@ import { cvToJSON, hexToCV } from "@stacks/transactions";
 
 export type HiroBlock = { height: number; hash: string; parentHash: string; blockTime: string };
 export type HiroContractEvent = { txId: string; eventIndex: number; payloadHex: string; contractId: string };
-export type HiroTransaction = { blockHeight: number; blockHash: string; canonical: boolean };
+/** A pending transaction has no block yet, so height and hash stay null until it lands. */
+export type HiroTransaction = {
+  status: string;
+  blockHeight: number | null;
+  blockHash: string | null;
+  canonical: boolean;
+};
 
 export type HiroOptions = {
   apiBase: string;
@@ -77,8 +83,21 @@ export function createHiro(options: HiroOptions) {
     },
 
     async transaction(txId: string): Promise<HiroTransaction> {
-      const tx = await get<{ block_height: number; block_hash: string; canonical: boolean }>(`/extended/v1/tx/${txId}`);
-      return { blockHeight: tx.block_height, blockHash: tx.block_hash, canonical: tx.canonical };
+      const tx = await get<{
+        tx_status?: string;
+        block_height?: number | null;
+        block_hash?: string | null;
+        canonical?: boolean;
+      }>(`/extended/v1/tx/${txId}`);
+      // A mempool transaction reports no block. Zero is Hiro's placeholder for that, and treating it
+      // as height zero would read as "older than every checkpoint", which is the opposite of the truth.
+      const height = tx.block_height ?? null;
+      return {
+        status: tx.tx_status ?? "pending",
+        blockHeight: height === null || height <= 0 ? null : height,
+        blockHash: tx.block_hash ?? null,
+        canonical: tx.canonical ?? false,
+      };
     },
 
     async callRead(contractId: string, fn: string, args: string[], sender: string): Promise<string> {
