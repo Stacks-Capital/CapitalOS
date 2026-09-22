@@ -522,15 +522,15 @@ export function Earn({
                   </span>
                 </div>
 
-                {simulationResult.warnings.map((warn, i) => (
-                  <p key={i} className="warn font-small">
+                {simulationResult.warnings.map((warn) => (
+                  <p key={warn} className="warn font-small">
                     <strong>Notice:</strong> {warn}
                   </p>
                 ))}
 
                 <ul className="muted font-small">
-                  {simulationResult.disclosures.map((disc, i) => (
-                    <li key={i}>{disc}</li>
+                  {simulationResult.disclosures.map((disc) => (
+                    <li key={disc}>{disc}</li>
                   ))}
                 </ul>
 

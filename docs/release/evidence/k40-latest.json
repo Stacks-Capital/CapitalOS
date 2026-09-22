@@ -25,11 +25,7 @@
       "Manual pilot checks M1–M10 recorded with real wallets",
       "Rollback drill passes against the previous release tag"
     ],
-    "p0Gates": [
-      "K38",
-      "K39",
-      "K40"
-    ]
+    "p0Gates": ["K38", "K39", "K40"]
   },
   "pilots": [
     {

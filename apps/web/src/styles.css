@@ -1867,7 +1867,9 @@ th {
   height: 100%;
   background: var(--accent);
   border-radius: 4px;
-  transition: left 0.3s ease, width 0.3s ease;
+  transition:
+    left 0.3s ease,
+    width 0.3s ease;
 }
 
 .lp-range-values {
@@ -2123,7 +2125,9 @@ th {
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .staking-action-button:hover:not(:disabled) {
@@ -2534,4 +2538,3 @@ th {
   color: var(--on-danger, #ffffff);
   border: 1px solid var(--danger-border);
 }
-

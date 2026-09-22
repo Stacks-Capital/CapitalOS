@@ -343,8 +343,8 @@ export function Borrow({
               <div className="oracle-provenance-box">
                 <strong>Oracle Price Telemetry & Quorum Verification</strong>
                 <ul>
-                  {oracleProvenance(riskData).map((line, i) => (
-                    <li key={i} className="muted font-small">
+                  {oracleProvenance(riskData).map((line) => (
+                    <li key={line} className="muted font-small">
                       {line}
                     </li>
                   ))}

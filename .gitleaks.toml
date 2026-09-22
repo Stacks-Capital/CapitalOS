@@ -8,3 +8,9 @@ description = "Public Stacks USDCx contract principal used as a fixture identifi
 regexes = [
   '''SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE\.usdcx''',
 ]
+
+[[allowlists]]
+description = "Example idempotency keys in documentation"
+regexes = [
+  '''withdraw-sbtc-001''',
+]
