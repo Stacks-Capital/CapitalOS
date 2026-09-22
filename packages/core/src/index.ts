@@ -25,17 +25,22 @@ export {
   stacksNative,
 } from "./ids.ts";
 
-export type { AssetAmount, Rounding } from "./amounts.ts";
+export type { AssetAmount, FormatUnitsOptions, Rounding } from "./amounts.ts";
 export {
   addAmounts,
   amount,
   assertFinancialInt,
   assertPositive,
   formatQuantity,
+  formatUnits,
   jsonAmount,
   mulDiv,
   parseAmount,
+  parseFinancialJson,
   parseQuantity,
+  parseUnits,
+  safeBigIntReplacer,
+  serializeFinancialJson,
 } from "./amounts.ts";
 export type { QuoteWire, PlanWire } from "./wire.ts";
 export { parsePlan, parseQuote, serializePlan, serializeQuote } from "./wire.ts";
@@ -44,7 +49,17 @@ export type { DataPoint } from "./datapoint.ts";
 export { dataPoint, requireFresh, unknownPoint } from "./datapoint.ts";
 
 export type { CapitalError, ErrorClass, ErrorCode } from "./errors.ts";
-export { allowsWriteRetry, capitalError, ERROR_CLASS, isCapitalError, isRetryableRead } from "./errors.ts";
+export {
+  allowsWriteRetry,
+  capitalError,
+  ERROR_CLASS,
+  isCapitalError,
+  isFinancialError,
+  isInvestigationError,
+  isRequoteError,
+  isRetryableRead,
+  isUserActionError,
+} from "./errors.ts";
 
 export type { Action, Fee, FeeKind, Intent, Quote } from "./quote.ts";
 export { ACTIONS, quoteExpired } from "./quote.ts";

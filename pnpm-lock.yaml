@@ -462,6 +462,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@stacks-capital/client':
+        specifier: workspace:*
+        version: link:../client
       '@stacks-capital/config':
         specifier: workspace:*
         version: link:../config

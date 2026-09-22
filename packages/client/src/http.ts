@@ -1,5 +1,12 @@
 import type { StacksNetwork } from "@stacks-capital/core";
-import { type ApiErrorCode, CapitalApiError, CapitalTransportError, isRetryable } from "./errors.ts";
+import {
+  type ApiErrorCode,
+  CapitalApiError,
+  CapitalFinancialError,
+  CapitalTransportError,
+  isFinancialErrorCode,
+  isRetryable,
+} from "./errors.ts";
 import type { ResponseContext } from "./types.ts";
 import { SCHEMA_VERSION } from "./types.ts";
 
@@ -81,16 +88,35 @@ function readContext(body: Record<string, unknown>): ResponseContext {
 }
 
 function toApiError(status: number, requestId: string, body: unknown): CapitalApiError | CapitalTransportError {
-  const error = (body as { error?: { code?: unknown; message?: unknown; retryAfter?: unknown } } | null)?.error;
+  const error = (
+    body as { error?: { code?: unknown; message?: unknown; retryAfter?: unknown; action?: unknown } } | null
+  )?.error;
   if (error === undefined || typeof error.code !== "string") {
     return new CapitalTransportError("protocol", `HTTP ${status} without an error body`);
   }
+  const code = error.code as ApiErrorCode;
+  const message = typeof error.message === "string" ? error.message : `HTTP ${status}`;
+  const retryAfter = typeof error.retryAfter === "number" ? error.retryAfter : undefined;
+  const action = typeof error.action === "string" ? error.action : undefined;
+
+  if (isFinancialErrorCode(code)) {
+    return new CapitalFinancialError({
+      code,
+      message,
+      status,
+      requestId,
+      retryAfter,
+      action,
+    });
+  }
+
   return new CapitalApiError({
-    code: error.code as ApiErrorCode,
-    message: typeof error.message === "string" ? error.message : `HTTP ${status}`,
+    code,
+    message,
     status,
     requestId,
-    ...(typeof error.retryAfter === "number" ? { retryAfter: error.retryAfter } : {}),
+    retryAfter,
+    action,
   });
 }
 

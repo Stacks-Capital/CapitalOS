@@ -43,38 +43,138 @@ export type CapitalOSOptions = {
 
 export type SigningInput = Omit<SigningContext, "network" | "registryVersion" | "now"> & { now?: Date };
 
+/**
+ * Local client for orchestration, plan validation, workflow progression, and wallet classification.
+ * Runs in both browser and server environments without depending on Node built-ins or server internals.
+ */
 export type CapitalOS = {
+  /** Target Stacks network. */
   network: StacksNetwork;
+
+  /** Active protocol contract registry version. */
   registryVersion: string;
-  validate(plan: Plan, quote: Quote, signing?: SigningInput): PlanValidation;
-  /** Throws unless the plan is safe to present to a wallet. */
-  assertReadyToSign(plan: Plan, quote: Quote, signing?: SigningInput): void;
-  startWorkflow(input: { id: string; idempotencyKey: string }): Workflow;
-  recordQuote(workflow: Workflow, quote: Quote): Workflow;
+
   /**
-   * Advances to AWAITING_SIGNATURE only after local plan validation passes.
-   * The wallet must not open for a plan that fails this gate.
+   * Validates an unsigned execution plan against a quote and signing context.
+   * Evidence: Verifies post-conditions, contract principals, expiry, network, and quote parameter bindings.
+   * @returns PlanValidation containing valid flag and reasons list.
+   * @throws {CapitalError} With code NETWORK_MISMATCH if plan or quote network does not match SDK network.
+   */
+  validate(plan: Plan, quote: Quote, signing?: SigningInput): PlanValidation;
+
+  /**
+   * Hard signing boundary gate. Validates the plan and throws immediately if any check fails.
+   * A wallet must never be presented with a plan that fails this assertion.
+   * @throws {CapitalError} With code PLAN_INVALID, NETWORK_MISMATCH, or UNSUPPORTED_ACTION.
+   */
+  assertReadyToSign(plan: Plan, quote: Quote, signing?: SigningInput): void;
+
+  /**
+   * Initializes a new execution workflow in CREATED state bound by an idempotency key.
+   * @throws {CapitalError} If input is invalid.
+   */
+  startWorkflow(input: { id: string; idempotencyKey: string }): Workflow;
+
+  /**
+   * Records quote binding evidence on the workflow and transitions to QUOTED state.
+   * @throws {CapitalError} With code NETWORK_MISMATCH if quote network does not match SDK network.
+   */
+  recordQuote(workflow: Workflow, quote: Quote): Workflow;
+
+  /**
+   * Validates local plan against registered contracts and advances workflow to AWAITING_SIGNATURE.
+   * Evidence: Checks allow/deny post-condition modes, expiry, and parameter bindings.
+   * @throws {CapitalError} If validation fails or network mismatch is detected.
    */
   recordPlan(workflow: Workflow, plan: Plan, quote: Quote, signing?: SigningInput): Workflow;
-  /** User declined in the wallet — nothing was broadcast. */
+
+  /**
+   * Records that the user explicitly declined or cancelled the transaction in the wallet.
+   * Transitions to REJECTED. Nothing was broadcast to the network.
+   */
   recordRejection(workflow: Workflow, evidence?: string): Workflow;
-  /** Wallet returned a txid. Never call this for an empty or missing txid. */
+
+  /**
+   * Records a confirmed wallet broadcast returning a valid transaction ID.
+   * Transitions to SUBMITTED. Never call with an empty or missing txid.
+   * @throws {CapitalError} If txid is missing or workflow state forbids broadcast.
+   */
   recordBroadcast(workflow: Workflow, txid: string): Workflow;
-  /** Wallet answer did not prove whether a write landed — read, do not rewrite. */
+
+  /**
+   * Records that wallet broadcast result was indeterminate (e.g. connection dropped, unknown txid).
+   * Transitions to UNKNOWN_BROADCAST and fails closed to prevent double-execution.
+   */
   recordUnknownBroadcast(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Resolves an unknown broadcast after manual or background investigation confirms landing or omission.
+   */
   resolveUnknownBroadcast(workflow: Workflow, resolution: UnknownBroadcastResolution): Workflow;
+
+  /**
+   * Transitions workflow to CONFIRMING state with block hash / height evidence.
+   */
   beginConfirming(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Marks a specific workflow step as confirmed on-chain.
+   */
   markStepConfirmed(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Transitions workflow to RECONCILING state once on-chain execution has finished.
+   */
   beginReconciling(workflow: Workflow, evidence: string): Workflow;
-  /** Completes only when canonical reconciliation matched. */
+
+  /**
+   * Completes a workflow only when canonical reconciliation matches expected state changes.
+   * Transitions to COMPLETED or RECONCILIATION_MISMATCH.
+   */
   completeFromReconciliation(workflow: Workflow, result: ReconciliationResult): Workflow;
+
+  /**
+   * Records an upstream provider outage and suspends workflow execution.
+   */
   recordProviderOutage(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Records a detected chain reorg affecting workflow transactions without deleting audit records.
+   */
   applyReorg(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Resumes an affected workflow safely after chain reorganization.
+   */
   resumeAfterReorg(workflow: Workflow, evidence: string): Workflow;
+
+  /**
+   * Computes deterministic resume hints (action, reason, actor) for UI/partner consumption.
+   */
   resumeHint(workflow: Workflow): ResumeHint;
+
+  /**
+   * Parses and classifies a raw wallet return value into a typed WalletOutcome.
+   */
   inspectWalletResult(result: unknown): WalletOutcome;
+
+  /**
+   * Maps wallet-specific error structures (Leather, Xverse) to canonical CapitalOS ErrorCodes.
+   */
   classifyWalletError(wallet: WalletId, error: unknown): ErrorCode;
+
+  /**
+   * Validates address formatting and network affinity before wallet interaction.
+   * Returns CapitalError on mismatch, or null if addresses are valid for the active network.
+   */
   networkGuard(addresses: { stx?: string; btc?: string[] }): CapitalError | null;
+
+  /**
+   * Strictly forbidden in the SDK.
+   * Failure Semantics: Always throws UNSUPPORTED_ACTION to enforce non-custodial architecture.
+   * The host application or wallet must broadcast transactions.
+   * @throws {CapitalError} Always throws UNSUPPORTED_ACTION.
+   */
   submit(): never;
 };
 

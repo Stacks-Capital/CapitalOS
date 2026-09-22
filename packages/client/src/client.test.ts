@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { type CapitalClient, CLIENT_ID_HEADER, type ClientOptions, createClient } from "./client.ts";
-import { CapitalApiError, CapitalConfigError, CapitalTransportError, errorClassOf, isRetryable } from "./errors.ts";
+import {
+  CapitalApiError,
+  CapitalConfigError,
+  CapitalFinancialError,
+  CapitalTransportError,
+  errorClassOf,
+  isCapitalApiError,
+  isCapitalFinancialError,
+  isRetryable,
+} from "./errors.ts";
 
 const BASE = "https://api.example";
 const MARKET = {
@@ -312,6 +321,20 @@ describe("errors", () => {
     assert.equal(errorClassOf("UNAUTHORIZED"), "user_action");
     assert.equal(errorClassOf("TEMPORARY_UNAVAILABLE"), "retryable_read");
     assert.equal(errorClassOf("SOMETHING_NEW"), "investigation");
+  });
+
+  it("instantiates CapitalFinancialError for financial core codes with classification predicates", async () => {
+    const { client } = build([apiError(400, "QUOTE_EXPIRED", { action: "deposit" })]);
+    await assert.rejects(client.quote({ marketId: "m1", action: "deposit", amount: "100" }), (error: unknown) => {
+      assert.ok(isCapitalApiError(error));
+      assert.ok(isCapitalFinancialError(error));
+      assert.equal(error.action, "deposit");
+      assert.equal(error.isRequote(), true);
+      assert.equal(error.isUserAction(), false);
+      assert.equal(error.isInvestigation(), false);
+      assert.equal(error.isRetryableRead(), false);
+      return true;
+    });
   });
 
   it("report a response that is not our contract as a protocol error", async () => {

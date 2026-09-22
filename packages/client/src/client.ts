@@ -58,61 +58,225 @@ function isBrowser(): boolean {
   return typeof globalThis === "object" && "window" in globalThis && "document" in globalThis;
 }
 
+/**
+ * Primary HTTP API client for CapitalOS.
+ * Works seamlessly across browser and server environments.
+ * Every query returns both the response payload and canonical telemetry context
+ * (requestId, network, observedAt, blockHeight, blockHash, staleness, and warnings).
+ */
 export type CapitalClient = {
+  /** The target Stacks network (mainnet or testnet). */
   readonly network: StacksNetwork;
+
+  /** True if the client is authenticated with a user session token. */
   readonly hasSession: boolean;
+
+  /**
+   * Lists available money markets with pagination.
+   * Evidence: Returns telemetry context and current block height.
+   * Retries automatically up to configured retry attempts on network or 5xx failures.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   markets(options?: PageOptions): Promise<Page<Market>>;
+
+  /**
+   * Fetches all pages of money markets up to maxPages.
+   * Evidence: Aggregates verified markets across paginated endpoints.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalConfigError} If market pages exceed maxPages limit.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   allMarkets(options?: CallOptions & { maxPages?: number }): Promise<Market[]>;
+
+  /**
+   * Lists supported protocol capabilities (deposit, borrow, repay, withdraw) per market.
+   * Evidence: Telemetry and pause state per capability.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   capabilities(options?: PageOptions): Promise<Page<MarketCapability>>;
+
+  /**
+   * Fetches state, transitions, and step confirmation details for a specific workflow.
+   * Evidence: Carries complete state audit trail, confirmed steps, and resume hints.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If workflow is not found or request is invalid.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   workflow(id: string, options?: CallOptions): Promise<Result<Workflow>>;
+
+  /**
+   * Issues a cryptographic challenge for wallet authentication.
+   * Never retried automatically.
+   * @throws {CapitalApiError} If challenge generation fails.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   challenge(input: { address: string }, options?: CallOptions): Promise<Result<Challenge>>;
+
+  /**
+   * Verifies a signed wallet challenge and exchanges it for an authenticated session token.
+   * Never retried automatically because challenges are single-use.
+   * @throws {CapitalApiError} If the signature is invalid or expired.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   verify(
     input: { nonceId: string; publicKey: string; signature: string },
     options?: CallOptions,
   ): Promise<Result<Session>>;
-  /** What each earn market pays and allows, as facts. Ranking is the caller's decision. */
+
+  /**
+   * What each earn market pays and allows, as verified factual observations. Ranking is the caller's decision.
+   * Evidence: Carries observed APYs, contract addresses, and risk parameters.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   earnOptions(options?: CallOptions): Promise<Result<{ items: EarnOption[] }>>;
-  /** The caller's workflows, newest first. */
+
+  /**
+   * Lists the caller's workflows, newest first, with pagination.
+   * Evidence: Returns verified workflow summaries and current execution states.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   workflows(options?: PageOptions & { owner?: string }): Promise<Page<WorkflowSummary>>;
-  /** Latest price for each feed the platform reads. */
+
+  /**
+   * Latest oracle prices for each feed monitored by the platform.
+   * Evidence: Carries feed publisher, publication timestamp, and observation age.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   prices(options?: CallOptions): Promise<Result<{ items: OracleQuoteView[] }>>;
-  /** Reconciled price quorum valuations for supported assets. */
+
+  /**
+   * Reconciled multi-source price quorum valuations for supported assets.
+   * Evidence: Carries individual source readings, spread, and staleness flags.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the server rejects the request.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   priceValuations(options?: CallOptions): Promise<Result<{ items: AssetValuation[] }>>;
-  /** Risk parameters, prices and the caller's position for one market. */
+
+  /**
+   * Risk parameters, liquidation thresholds, collateral factors, and user position for a market.
+   * Evidence: Health factor calculation, oracle timestamps, and borrow caps.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalFinancialError} If oracle is stale or risk evaluation fails.
+   * @throws {CapitalApiError} If the market is not found.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   marketRisk(marketId: string, options?: CallOptions & { owner?: string }): Promise<Result<MarketRisk>>;
-  /** Full source-tagged evidence, telemetry age, confidence and disagreement for one market. */
+
+  /**
+   * Full source-tagged evidence, telemetry age, confidence, and quorum disagreement for one market.
+   * Evidence: Granular oracle and protocol telemetry.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If the market is not found.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   marketEvidence(marketId: string, options?: CallOptions): Promise<Result<MarketEvidence>>;
-  /** Positions for one address. A session reads its own; a key names the owner. */
+
+  /**
+   * Positions for an address. A session reads its own; an API key can specify an owner.
+   * Evidence: Collateral and debt balances verified against on-chain protocol contracts.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If query fails or owner is missing.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   positions(input?: { owner?: string } & CallOptions): Promise<Result<{ items: Position[] }>>;
-  /** Canonical portfolio and debt accounting for one address. */
+
+  /**
+   * Canonical portfolio and debt accounting for an address, segregated into capital categories.
+   * Evidence: Total assets, debt liabilities, net worth, and risk-weighted collateral valuations.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If query fails.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   portfolio(input?: { owner?: string } & CallOptions): Promise<Result<PortfolioAccountingView>>;
-  /** Earned yield attribution, 3-tier earnings separation, and historical performance charts. */
+
+  /**
+   * Earned yield attribution, 3-tier earnings separation (realized, claimed, accrued), and historical performance.
+   * Evidence: Verified cash flows and non-synthetic canonical observation points.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If query fails.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   earnPerformance(
     input?: { owner?: string; marketId?: string } & CallOptions,
   ): Promise<Result<{ items: EarnPerformanceItemView[] }>>;
-  /** Quoting runs on the server, where the provider keys are. */
+
+  /**
+   * Requests a server-verified quote and execution plan for an intent.
+   * Failure Semantics: Never auto-retried to avoid submitting non-idempotent writes.
+   * @throws {CapitalFinancialError} If quote expired, caps reached, oracle stale, or insufficient balance.
+   * @throws {CapitalApiError} If parameters or action are invalid.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   quote(
     input: { marketId: string; action: string; amount: string; owner?: string; slippageBps?: string; maxFee?: string },
     options?: CallOptions,
   ): Promise<Result<QuotedPlan>>;
-  /** The same idempotency key always names the same workflow, so a retry never starts a second one. */
+
+  /**
+   * Initiates an execution workflow bound to an existing quote.
+   * Failure Semantics: Uses idempotencyKey to guarantee exactly-once workflow creation. Never auto-retried.
+   * @throws {CapitalFinancialError} If quote expired or plan is invalid.
+   * @throws {CapitalApiError} If quote is not found or request is malformed.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   startWorkflow(
     input: { quoteId: string; idempotencyKey: string; ownerAddress?: string },
     options?: CallOptions,
   ): Promise<Result<StartedWorkflow>>;
-  /** Reports exactly what the wallet answered. A result without a txid is recorded, never retried. */
+
+  /**
+   * Reports the raw outcome of a wallet signature attempt for a workflow step.
+   * Failure Semantics: Records broadcast txid or wallet rejection. An unknown broadcast is recorded
+   * and never retried blindly to prevent double-execution.
+   * @throws {CapitalFinancialError} If step cannot be signed or workflow state forbids transition.
+   * @throws {CapitalApiError} If workflow or step does not exist.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   recordSignature(
     workflowId: string,
     input: { stepId: string; walletResult: unknown },
     options?: CallOptions,
   ): Promise<Result<SignatureOutcome>>;
-  /** Create a new signed webhook endpoint. */
+
+  /**
+   * Creates a new signed webhook endpoint for receiving async event notifications.
+   * Server-only method requiring tenant authentication.
+   * @throws {CapitalApiError} If URL is invalid or tenant is unauthorized.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   createWebhookEndpoint(input: CreateWebhookEndpointInput, options?: CallOptions): Promise<Result<WebhookEndpoint>>;
-  /** List active webhook endpoints for this tenant. */
+
+  /**
+   * Lists active webhook endpoints registered for the authenticated tenant.
+   * Retries automatically on transient read errors.
+   * @throws {CapitalApiError} If tenant is unauthorized.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   webhookEndpoints(options?: CallOptions): Promise<Result<{ items: WebhookEndpoint[] }>>;
-  /** Deactivate a webhook endpoint by ID. */
+
+  /**
+   * Deactivates and deletes a webhook endpoint by ID.
+   * Never retried automatically.
+   * @throws {CapitalApiError} If endpoint does not exist or tenant is unauthorized.
+   * @throws {CapitalTransportError} If network or timeout fails.
+   */
   deleteWebhookEndpoint(id: string, options?: CallOptions): Promise<Result<{ deleted: boolean }>>;
-  /** A client bound to a wallet session. The original is unchanged. */
+
+  /**
+   * Returns a new client clone bound to the specified wallet session token.
+   * The original client instance remains unmodified.
+   */
   withSession(sessionToken: string): CapitalClient;
 };
 

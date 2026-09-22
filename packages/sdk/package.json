@@ -14,6 +14,7 @@
     "test": "node --test --experimental-strip-types src/*.test.ts"
   },
   "dependencies": {
+    "@stacks-capital/client": "workspace:*",
     "@stacks-capital/config": "workspace:*",
     "@stacks-capital/core": "workspace:*",
     "@stacks-capital/wallets": "workspace:*"
