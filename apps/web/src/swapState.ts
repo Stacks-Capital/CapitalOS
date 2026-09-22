@@ -1,4 +1,4 @@
-import type { PlanWire, QuoteWire, StacksNetwork } from "@stacks-capital/sdk";
+import { parseAssetId, type PlanWire, type QuoteWire, type StacksNetwork } from "@stacks-capital/sdk";
 
 export const REFRESH_MARGIN_SECONDS = 15;
 
@@ -17,29 +17,41 @@ export type SwapViewLike = {
   warnings: string[];
 };
 
+/*
+ * Contract principals and asset names below are copied from the signed registry
+ * (ASSETS in packages/config/src/deployments.ts). apps/web may not import config,
+ * so scripts/checks/web-registry-assets.test.ts pins these values against it.
+ * Change the registry first, then this table, or that check fails.
+ */
 export const CANONICAL_SWAP_ASSETS = {
   sbtc: {
     symbol: "sBTC",
     name: "Stacks Bitcoin",
     decimals: 8,
+    native: false,
     mainnetContract: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
-    testnetContract: "SN3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+    testnetContract: "SN3VMHXEN64ZZF71JQ5VESXDWTR301XTTXGF4J8F1.sbtc-token",
+    assetName: "sbtc-token",
     feedKey: "BTC/USD",
   },
   usdcx: {
     symbol: "USDCx",
     name: "Bridged USDC",
     decimals: 6,
-    mainnetContract: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token",
-    testnetContract: "ST120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token",
+    native: false,
+    mainnetContract: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
+    testnetContract: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+    assetName: "usdcx-token",
     feedKey: "USDC/USD",
   },
   stx: {
     symbol: "STX",
     name: "Stacks Token",
     decimals: 6,
+    native: true,
     mainnetContract: "native:stacks:stx",
     testnetContract: "native:stacks:stx",
+    assetName: "stx",
     feedKey: "STX/USD",
   },
 } as const;
@@ -94,6 +106,54 @@ export type AssetReconciliationResult = {
   reason?: string;
 };
 
+type CanonicalSwapAsset = (typeof CANONICAL_SWAP_ASSETS)[SwapAssetKey];
+
+/**
+ * Compares one asset identifier from the quote against its canonical definition.
+ * A substring match is not enough here: "SP...usdcx" is a substring of "SP...usdcx-token",
+ * so the principal, asset name and network are each compared whole.
+ * Returns null when they agree, or the reason they do not.
+ */
+function deploymentMismatch(
+  assetId: string,
+  info: CanonicalSwapAsset,
+  network: StacksNetwork,
+  side: "Input" | "Output",
+): string | null {
+  let parsed: ReturnType<typeof parseAssetId>;
+  try {
+    parsed = parseAssetId(assetId);
+  } catch {
+    return `${side} asset "${assetId}" is not a canonical asset identifier.`;
+  }
+
+  if (parsed.network !== network) {
+    return `${side} asset "${assetId}" is on ${parsed.network}, but this session is on ${network}.`;
+  }
+
+  if (info.native) {
+    if (parsed.identity.kind !== "native" || parsed.identity.symbol !== info.assetName) {
+      return `${side} asset "${assetId}" does not match the canonical native ${info.symbol} asset.`;
+    }
+    return null;
+  }
+
+  if (parsed.identity.kind !== "contract") {
+    return `${side} asset "${assetId}" is a native asset, but ${info.symbol} is a contract asset.`;
+  }
+
+  const expectedPrincipal = network === "mainnet" ? info.mainnetContract : info.testnetContract;
+  if (parsed.identity.principal !== expectedPrincipal) {
+    return `${side} asset contract "${parsed.identity.principal}" does not match canonical deployment "${expectedPrincipal}" for ${network}.`;
+  }
+
+  if (parsed.identity.assetName !== info.assetName) {
+    return `${side} asset name "${parsed.identity.assetName}" does not match canonical asset name "${info.assetName}".`;
+  }
+
+  return null;
+}
+
 /**
  * Reconciles swap input and output asset identifiers and decimal precision against canonical definitions.
  * Acceptance Evidence 3: Asset identifiers and decimals reconcile exactly.
@@ -141,29 +201,19 @@ export function reconcileSwapAssets(
     };
   }
 
-  // Network contract verification
-  const expectedSentContract = network === "mainnet" ? sentInfo.mainnetContract : sentInfo.testnetContract;
-  const expectedReceivedContract = network === "mainnet" ? receivedInfo.mainnetContract : receivedInfo.testnetContract;
+  // Network and deployment verification, by exact identity rather than substring.
+  const sentMismatch = deploymentMismatch(input.asset, sentInfo, network, "Input");
+  const receivedMismatch = deploymentMismatch(output.asset, receivedInfo, network, "Output");
+  const mismatch = sentMismatch ?? receivedMismatch;
 
-  if (!input.asset.includes(expectedSentContract) && !expectedSentContract.includes("native")) {
+  if (mismatch !== null) {
     return {
       reconciled: false,
       sentSymbol: sentInfo.symbol,
       sentDecimals: sentInfo.decimals,
       receivedSymbol: receivedInfo.symbol,
       receivedDecimals: receivedInfo.decimals,
-      reason: `Input asset contract "${input.asset}" does not match canonical deployment "${expectedSentContract}" for ${network}.`,
-    };
-  }
-
-  if (!output.asset.includes(expectedReceivedContract) && !expectedReceivedContract.includes("native")) {
-    return {
-      reconciled: false,
-      sentSymbol: sentInfo.symbol,
-      sentDecimals: sentInfo.decimals,
-      receivedSymbol: receivedInfo.symbol,
-      receivedDecimals: receivedInfo.decimals,
-      reason: `Output asset contract "${output.asset}" does not match canonical deployment "${expectedReceivedContract}" for ${network}.`,
+      reason: mismatch,
     };
   }
 

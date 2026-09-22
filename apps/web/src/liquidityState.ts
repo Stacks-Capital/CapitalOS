@@ -26,6 +26,11 @@ export type LpAssetDef = {
   feedKey: string;
 };
 
+/*
+ * Mainnet principals, copied from the signed registry (ASSETS in
+ * packages/config/src/deployments.ts). apps/web may not import config, so
+ * scripts/checks/web-registry-assets.test.ts pins these against it.
+ */
 export const SBTC_DEF: LpAssetDef = {
   symbol: "sBTC",
   name: "Stacks Bitcoin",
@@ -38,7 +43,7 @@ export const USDCX_DEF: LpAssetDef = {
   symbol: "USDCx",
   name: "Bridged USDC",
   decimals: 6,
-  contractId: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx-token",
+  contractId: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
   feedKey: "USDC/USD",
 };
 
