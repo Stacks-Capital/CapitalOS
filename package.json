@@ -39,6 +39,8 @@
     "dev": "node --experimental-strip-types scripts/dev.ts",
     "embed:dev": "pnpm --filter @stacks-capital/embed-example dev",
     "web:dev": "pnpm --filter @stacks-capital/web dev",
+    "landing:dev": "pnpm --filter @stacks-capital/landing dev",
+    "landing:preview": "pnpm --filter @stacks-capital/landing build && pnpm --filter @stacks-capital/landing preview",
     "api:dev": "node --experimental-strip-types --env-file-if-exists=.env.local apps/api/src/server.ts",
     "services:up": "docker compose $([ -f .env.local ] && echo --env-file .env.local) up -d --wait postgres redis",
     "services:down": "docker compose $([ -f .env.local ] && echo --env-file .env.local) down",
