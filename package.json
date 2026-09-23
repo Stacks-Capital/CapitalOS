@@ -50,6 +50,7 @@
     "changeset:status": "changeset status --since=origin/main",
     "ci": "pnpm lint && pnpm boundaries && pnpm test && pnpm build && pnpm openapi:check && pnpm docs:errors:check",
     "probe:contracts": "node --experimental-strip-types scripts/contracts/probe.ts",
+    "capture:events": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/contracts/captureEvents.ts",
     "sdk:check": "node --experimental-strip-types scripts/sdk/check.ts",
     "sdk:check:live": "node --experimental-strip-types scripts/sdk/check.ts --live",
     "sdk:compat": "node --experimental-strip-types scripts/sdk/compat.ts",

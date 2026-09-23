@@ -37,6 +37,8 @@ export {
   findWorkflowByTxid,
   findWorkflowStepKind,
   listWorkflowsAwaitingConfirmation,
+  listWorkflowsAwaitingReconciliation,
+  type AwaitingReconciliation,
   findStoredQuote,
   insertPlan,
   insertQuote,
@@ -47,6 +49,7 @@ export {
   type WorkflowStepKind,
 } from "./execution.ts";
 export {
+  type ActivityEffectRow,
   type ActivityRow,
   type BlockRow,
   type ChainName,
@@ -69,7 +72,9 @@ export {
   type Provenance,
   readCheckpoint,
   type ReconciliationRow,
+  listWorkflowEffects,
   recordActivity,
+  type StoredEffect,
   rawEventExists,
   recordBlock,
   recordReconciliation,
