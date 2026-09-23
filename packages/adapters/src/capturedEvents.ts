@@ -7,6 +7,8 @@
 // entry contracts emit nothing of their own, so their events come from the pool core and the
 // sBTC registry instead.
 
+import type { DecodedField } from "@stacks-capital/core";
+
 export type CapturedEvent = {
   protocol: string;
   /** The `action` field for Zest, Granite and Bitflow; the `topic` field for sBTC. */
@@ -20,6 +22,12 @@ export type CapturedEvent = {
   repr: string;
   /** Field names only, so a renamed or dropped field shows as a diff but an amount does not. */
   shape: string;
+  /**
+   * The payload decoded into the shape an adapter receives, so certification can feed a decoder
+   * exactly what ingestion would hand it. Decoded by the worker at capture time, because adapters
+   * have no Clarity library of their own.
+   */
+  fields: Readonly<Record<string, DecodedField>>;
 };
 
 export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
@@ -27,25 +35,87 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
     protocol: "bitflow",
     action: "swap-x-for-y",
     contractId: "SP1PFR4V08H1RAZXREBGFFQ59WB739XM8VVGTFSEA.dlmm-core-v-1-1",
-    txid: "0x727b2d35c2b23676ee1d0c45643dd7614c7e9e33618317ff1dbf2e9af19d3180",
-    eventIndex: 221,
+    txid: "0xf9f9ab09290f41c63fec726aa3375303ac3da33cc0dd1931f495e10f7f4ba04c",
+    eventIndex: 19,
     payloadHex:
-      "0x0c0000000306616374696f6e0d0000000c737761702d782d666f722d790663616c6c657206169ddcca106e8dfd8be04ee1aaa884e937bde8cca1136172622d726f757465722d7661756c742d763204646174610c000000180d6163746976652d62696e2d696400ffffffffffffffffffffffffffffffe40662696e2d696400ffffffffffffffffffffffffffffffe40962696e2d70726963650100000000000000000000000000009b630862696e2d73746570010000000000000000000000000000000f026478010000000000000000000000000008357502647901000000000000000000000000000000d61a696e697469616c2d62696e2d62616c616e6365732d656d707479040d696e697469616c2d7072696365010000000000000000000000000000a20d0d706f6f6c2d636f6e747261637406145f3ec2bf9733ae379dbfe5579d65d6cbf58865961d646c6d6d2d706f6f6c2d7374782d736274632d762d312d6270732d313507706f6f6c2d6964010000000000000000000000000000000609706f6f6c2d6e616d650d0000000b5354582d734254432d4c5012737761702d6665652d6578656d7074696f6e040f756e7369676e65642d62696e2d696401000000000000000000000000000001d815757064617465642d6163746976652d62696e2d696400ffffffffffffffffffffffffffffffe414757064617465642d6d61782d782d616d6f756e74010000000000000000000000000021bb9310757064617465642d782d616d6f756e74010000000000000000000000000008400411757064617465642d782d62616c616e63650100000000000000000000000080192acc11757064617465642d792d62616c616e6365010000000000000000000000000000029508782d616d6f756e74010000000000000000000000000008400416782d616d6f756e742d666565732d70726f746f636f6c010000000000000000000000000000054716782d616d6f756e742d666565732d70726f7669646572010000000000000000000000000000054816782d616d6f756e742d666565732d7661726961626c65010000000000000000000000000000000007782d746f6b656e06144e91b0982dbe4ae49bb9394b1f339fb7144beee60f746f6b656e2d7374782d762d312d3207792d746f6b656e0614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e",
-    repr: "(tuple (action \"swap-x-for-y\") (caller 'SP2EXSJGGDT6ZV2Z09VGTNA44X4VVVT6CM7F66E7P.arb-router-vault-v2) (data (tuple (active-bin-id -28) (bin-id -28) (bin-price u39779) (bin-step u15) (dx u537973) (dy u214) (initial-bin-balances-empty false) (initial-price u41485) (pool-contract 'SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-stx-sbtc-v-1-bps-15) (pool-id u6) (pool-name \"STX-sBTC-LP\") (swap-fee-exemption false) (unsigned-bin-id u472) (updated-active-bin-id -28) (updated-max-x-amount u2210707) (updated-x-amount u540676) (updated-x-balance u2149133004) (updated-y-balance u661) (x-amount u540676) (x-amount-fees-protocol u1351) (x-amount-fees-provider u1352) (x-amount-fees-variable u0) (x-token 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2) (y-token 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token))))",
+      "0x0c0000000306616374696f6e0d0000000c737761702d782d666f722d790663616c6c6572051657dc7540f98f459a030bec1c145fe9617d7ca00204646174610c000000180d6163746976652d62696e2d6964000000000000000000000000000000010a0662696e2d6964000000000000000000000000000000010a0962696e2d7072696365010000000000000000000000141b255efe0862696e2d73746570010000000000000000000000000000000a026478010000000000000000000000000008b9e2026479010000000000000000000000001d6f68961a696e697469616c2d62696e2d62616c616e6365732d656d707479040d696e697469616c2d70726963650100000000000000000000000f697f99140d706f6f6c2d636f6e747261637406145f3ec2bf9733ae379dbfe5579d65d6cbf58865961f646c6d6d2d706f6f6c2d736274632d75736463782d762d312d6270732d313007706f6f6c2d6964010000000000000000000000000000000109706f6f6c2d6e616d650d0000000d734254432d55534443782d4c5012737761702d6665652d6578656d7074696f6e040f756e7369676e65642d62696e2d696401000000000000000000000000000002fe15757064617465642d6163746976652d62696e2d6964000000000000000000000000000000010a14757064617465642d6d61782d782d616d6f756e7401000000000000000000000000000fd37010757064617465642d782d616d6f756e74010000000000000000000000000008c51b11757064617465642d782d62616c616e6365010000000000000000000000000008bf7f11757064617465642d792d62616c616e63650100000000000000000000000017aeb4a608782d616d6f756e74010000000000000000000000000008c51b16782d616d6f756e742d666565732d70726f746f636f6c010000000000000000000000000000059c16782d616d6f756e742d666565732d70726f7669646572010000000000000000000000000000059d16782d616d6f756e742d666565732d7661726961626c65010000000000000000000000000000000007782d746f6b656e0614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e07792d746f6b656e0616440caf0bbc800a33993ea85c2392aeb53696608b057573646378",
+    repr: "(tuple (action \"swap-x-for-y\") (caller 'SP1BXRXA0Z67MB6G31FP1R52ZX5GQTZ5008KZG77A) (data (tuple (active-bin-id 266) (bin-id 266) (bin-price u86354779902) (bin-step u10) (dx u571874) (dy u493840534) (initial-bin-balances-empty false) (initial-price u66194479380) (pool-contract 'SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-sbtc-usdcx-v-1-bps-10) (pool-id u1) (pool-name \"sBTC-USDCx-LP\") (swap-fee-exemption false) (unsigned-bin-id u766) (updated-active-bin-id 266) (updated-max-x-amount u1037168) (updated-x-amount u574747) (updated-x-balance u573311) (updated-y-balance u397325478) (x-amount u574747) (x-amount-fees-protocol u1436) (x-amount-fees-provider u1437) (x-amount-fees-variable u0) (x-token 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (y-token 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx))))",
     shape:
       "action active-bin-id bin-id bin-price bin-step caller data dx dy initial-bin-balances-empty initial-price pool-contract pool-id pool-name swap-fee-exemption unsigned-bin-id updated-active-bin-id updated-max-x-amount updated-x-amount updated-x-balance updated-y-balance x-amount x-amount-fees-protocol x-amount-fees-provider x-amount-fees-variable x-token y-token",
+    fields: {
+      action: { kind: "string", value: "swap-x-for-y" },
+      caller: { kind: "principal", value: "SP1BXRXA0Z67MB6G31FP1R52ZX5GQTZ5008KZG77A" },
+      "active-bin-id": { kind: "integer", value: 266n },
+      "bin-id": { kind: "integer", value: 266n },
+      "bin-price": { kind: "integer", value: 86354779902n },
+      "bin-step": { kind: "integer", value: 10n },
+      dx: { kind: "integer", value: 571874n },
+      dy: { kind: "integer", value: 493840534n },
+      "initial-bin-balances-empty": { kind: "other", repr: "bool" },
+      "initial-price": { kind: "integer", value: 66194479380n },
+      "pool-contract": {
+        kind: "principal",
+        value: "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-sbtc-usdcx-v-1-bps-10",
+      },
+      "pool-id": { kind: "integer", value: 1n },
+      "pool-name": { kind: "string", value: "sBTC-USDCx-LP" },
+      "swap-fee-exemption": { kind: "other", repr: "bool" },
+      "unsigned-bin-id": { kind: "integer", value: 766n },
+      "updated-active-bin-id": { kind: "integer", value: 266n },
+      "updated-max-x-amount": { kind: "integer", value: 1037168n },
+      "updated-x-amount": { kind: "integer", value: 574747n },
+      "updated-x-balance": { kind: "integer", value: 573311n },
+      "updated-y-balance": { kind: "integer", value: 397325478n },
+      "x-amount": { kind: "integer", value: 574747n },
+      "x-amount-fees-protocol": { kind: "integer", value: 1436n },
+      "x-amount-fees-provider": { kind: "integer", value: 1437n },
+      "x-amount-fees-variable": { kind: "integer", value: 0n },
+      "x-token": { kind: "principal", value: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token" },
+      "y-token": { kind: "principal", value: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx" },
+    },
   },
   {
     protocol: "bitflow",
     action: "swap-y-for-x",
     contractId: "SP1PFR4V08H1RAZXREBGFFQ59WB739XM8VVGTFSEA.dlmm-core-v-1-1",
-    txid: "0x727b2d35c2b23676ee1d0c45643dd7614c7e9e33618317ff1dbf2e9af19d3180",
-    eventIndex: 202,
+    txid: "0x394ecb5374f672e6b04ba96c4ba13bb2e0a53fbbbfa47229204c8bc06c935906",
+    eventIndex: 8,
     payloadHex:
-      "0x0c0000000306616374696f6e0d0000000c737761702d792d666f722d780663616c6c657206169ddcca106e8dfd8be04ee1aaa884e937bde8cca1136172622d726f757465722d7661756c742d763204646174610c000000180d6163746976652d62696e2d6964000000000000000000000000000000000a0662696e2d6964000000000000000000000000000000000a0962696e2d70726963650100000000000000000000000005f767cd0862696e2d73746570010000000000000000000000000000000102647801000000000000000000000000001f439d02647901000000000000000000000000001f4b9f1a696e697469616c2d62696e2d62616c616e6365732d656d707479040d696e697469616c2d70726963650100000000000000000000000005f5e1000d706f6f6c2d636f6e747261637406145f3ec2bf9733ae379dbfe5579d65d6cbf588659620646c6d6d2d706f6f6c2d6165757364632d75736463782d762d312d6270732d3107706f6f6c2d6964010000000000000000000000000000000709706f6f6c2d6e616d650d0000000f6165555344432d55534443782d4c5012737761702d6665652d6578656d7074696f6e040f756e7369676e65642d62696e2d696401000000000000000000000000000001fe15757064617465642d6163746976652d62696e2d6964000000000000000000000000000000000a14757064617465642d6d61782d792d616d6f756e7401000000000000000000000000154f4cbb11757064617465642d782d62616c616e6365010000000000000000000000001527dbbf10757064617465642d792d616d6f756e7401000000000000000000000000001f4fa111757064617465642d792d62616c616e63650100000000000000000000000015df7f5f07782d746f6b656e0616fc2fe628b1da502c1b5eb3d08727ee6022503b5a0c746f6b656e2d61657573646308792d616d6f756e7401000000000000000000000000001f4fa116792d616d6f756e742d666565732d70726f746f636f6c010000000000000000000000000000019a16792d616d6f756e742d666565732d70726f7669646572010000000000000000000000000000026816792d616d6f756e742d666565732d7661726961626c65010000000000000000000000000000000007792d746f6b656e0616440caf0bbc800a33993ea85c2392aeb53696608b057573646378",
-    repr: "(tuple (action \"swap-y-for-x\") (caller 'SP2EXSJGGDT6ZV2Z09VGTNA44X4VVVT6CM7F66E7P.arb-router-vault-v2) (data (tuple (active-bin-id 10) (bin-id 10) (bin-price u100100045) (bin-step u1) (dx u2048925) (dy u2050975) (initial-bin-balances-empty false) (initial-price u100000000) (pool-contract 'SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-aeusdc-usdcx-v-1-bps-1) (pool-id u7) (pool-name \"aeUSDC-USDCx-LP\") (swap-fee-exemption false) (unsigned-bin-id u510) (updated-active-bin-id 10) (updated-max-y-amount u357518523) (updated-x-balance u354933695) (updated-y-amount u2052001) (updated-y-balance u366968671) (x-token 'SP3Y2ZSH8P7D50B0VBTSX11S7XSG24M1VB9YFQA4K.token-aeusdc) (y-amount u2052001) (y-amount-fees-protocol u410) (y-amount-fees-provider u616) (y-amount-fees-variable u0) (y-token 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx))))",
+      "0x0c0000000306616374696f6e0d0000000c737761702d792d666f722d780663616c6c65720616a26392d8d7f66f70a6981f4c1e0d87dc4fb0b1a7046d69737304646174610c000000180d6163746976652d62696e2d696400ffffffffffffffffffffffffffffffd80662696e2d696400ffffffffffffffffffffffffffffffd80962696e2d7072696365010000000000000000000000000000989e0862696e2d73746570010000000000000000000000000000000f0264780100000000000000000000000000290bfb026479010000000000000000000000000000041b1a696e697469616c2d62696e2d62616c616e6365732d656d707479040d696e697469616c2d7072696365010000000000000000000000000000a20d0d706f6f6c2d636f6e747261637406145f3ec2bf9733ae379dbfe5579d65d6cbf58865961d646c6d6d2d706f6f6c2d7374782d736274632d762d312d6270732d313507706f6f6c2d6964010000000000000000000000000000000609706f6f6c2d6e616d650d0000000b5354582d734254432d4c5012737761702d6665652d6578656d7074696f6e040f756e7369676e65642d62696e2d696401000000000000000000000000000001cc15757064617465642d6163746976652d62696e2d696400ffffffffffffffffffffffffffffffd814757064617465642d6d61782d792d616d6f756e740100000000000000000000000000067cd111757064617465642d782d62616c616e6365010000000000000000000000004060e6a410757064617465642d792d616d6f756e74010000000000000000000000000000042011757064617465642d792d62616c616e6365010000000000000000000000000005d4bf07782d746f6b656e06144e91b0982dbe4ae49bb9394b1f339fb7144beee60f746f6b656e2d7374782d762d312d3208792d616d6f756e74010000000000000000000000000000042016792d616d6f756e742d666565732d70726f746f636f6c010000000000000000000000000000000216792d616d6f756e742d666565732d70726f7669646572010000000000000000000000000000000316792d616d6f756e742d666565732d7661726961626c65010000000000000000000000000000000007792d746f6b656e0614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e",
+    repr: "(tuple (action \"swap-y-for-x\") (caller 'SP2H674PRTZV6YW56K0FMR7GDGZE4ZC5HMYZ3CDEV.miss) (data (tuple (active-bin-id -40) (bin-id -40) (bin-price u39070) (bin-step u15) (dx u2690043) (dy u1051) (initial-bin-balances-empty false) (initial-price u41485) (pool-contract 'SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-stx-sbtc-v-1-bps-15) (pool-id u6) (pool-name \"STX-sBTC-LP\") (swap-fee-exemption false) (unsigned-bin-id u460) (updated-active-bin-id -40) (updated-max-y-amount u425169) (updated-x-balance u1080092324) (updated-y-amount u1056) (updated-y-balance u382143) (x-token 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2) (y-amount u1056) (y-amount-fees-protocol u2) (y-amount-fees-provider u3) (y-amount-fees-variable u0) (y-token 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token))))",
     shape:
       "action active-bin-id bin-id bin-price bin-step caller data dx dy initial-bin-balances-empty initial-price pool-contract pool-id pool-name swap-fee-exemption unsigned-bin-id updated-active-bin-id updated-max-y-amount updated-x-balance updated-y-amount updated-y-balance x-token y-amount y-amount-fees-protocol y-amount-fees-provider y-amount-fees-variable y-token",
+    fields: {
+      action: { kind: "string", value: "swap-y-for-x" },
+      caller: { kind: "principal", value: "SP2H674PRTZV6YW56K0FMR7GDGZE4ZC5HMYZ3CDEV.miss" },
+      "active-bin-id": { kind: "integer", value: -40n },
+      "bin-id": { kind: "integer", value: -40n },
+      "bin-price": { kind: "integer", value: 39070n },
+      "bin-step": { kind: "integer", value: 15n },
+      dx: { kind: "integer", value: 2690043n },
+      dy: { kind: "integer", value: 1051n },
+      "initial-bin-balances-empty": { kind: "other", repr: "bool" },
+      "initial-price": { kind: "integer", value: 41485n },
+      "pool-contract": {
+        kind: "principal",
+        value: "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-stx-sbtc-v-1-bps-15",
+      },
+      "pool-id": { kind: "integer", value: 6n },
+      "pool-name": { kind: "string", value: "STX-sBTC-LP" },
+      "swap-fee-exemption": { kind: "other", repr: "bool" },
+      "unsigned-bin-id": { kind: "integer", value: 460n },
+      "updated-active-bin-id": { kind: "integer", value: -40n },
+      "updated-max-y-amount": { kind: "integer", value: 425169n },
+      "updated-x-balance": { kind: "integer", value: 1080092324n },
+      "updated-y-amount": { kind: "integer", value: 1056n },
+      "updated-y-balance": { kind: "integer", value: 382143n },
+      "x-token": { kind: "principal", value: "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2" },
+      "y-amount": { kind: "integer", value: 1056n },
+      "y-amount-fees-protocol": { kind: "integer", value: 2n },
+      "y-amount-fees-provider": { kind: "integer", value: 3n },
+      "y-amount-fees-variable": { kind: "integer", value: 0n },
+      "y-token": { kind: "principal", value: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token" },
+    },
   },
   {
     protocol: "granite",
@@ -58,6 +128,19 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
     repr: "(tuple (action \"borrow\") (caller 'SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S) (data (tuple (account 'SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S) (amount u10000000000) (asset-addr 'SPN5AKG35QZSK2M8GAMR4AFX45659RJHDW353HSG.usdh-token-v1) (asset-id u8) (borrow-index u1010122867994) (position-collateral-usd u90907006126) (position-debt-usd u10000000000) (receiver 'SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S) (scaled-debt-added u9899785776))))",
     shape:
       "account action amount asset-addr asset-id borrow-index caller data position-collateral-usd position-debt-usd receiver scaled-debt-added",
+    fields: {
+      action: { kind: "string", value: "borrow" },
+      caller: { kind: "principal", value: "SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S" },
+      account: { kind: "principal", value: "SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S" },
+      amount: { kind: "integer", value: 10000000000n },
+      "asset-addr": { kind: "principal", value: "SPN5AKG35QZSK2M8GAMR4AFX45659RJHDW353HSG.usdh-token-v1" },
+      "asset-id": { kind: "integer", value: 8n },
+      "borrow-index": { kind: "integer", value: 1010122867994n },
+      "position-collateral-usd": { kind: "integer", value: 90907006126n },
+      "position-debt-usd": { kind: "integer", value: 10000000000n },
+      receiver: { kind: "principal", value: "SP3DYX83AXCQCRBV13B0R37N3TEYFA9J2D1JGGZ3S" },
+      "scaled-debt-added": { kind: "integer", value: 9899785776n },
+    },
   },
   {
     protocol: "granite",
@@ -69,6 +152,15 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c0000000306616374696f6e0d0000000e636f6c6c61746572616c2d6164640663616c6c65720516c9410a7f6ec9af5fee55020eb126d7f01817872b04646174610c00000005076163636f756e740516c9410a7f6ec9af5fee55020eb126d7f01817872b06616d6f756e740100000000000000000000000000250c590a61737365742d6164647206165423cdfe275d8bb19862b0cf342c616a7a18c8421176302d7661756c742d73747374786274630861737365742d6964010000000000000000000000000000000b19757064617465642d636f6c6c61746572616c2d616d6f756e7401000000000000000000000004d3d02480",
     repr: "(tuple (action \"collateral-add\") (caller 'SP34M22KZDV4TYQZEAM10XC96TZR1G5W75FRHG3KA) (data (tuple (account 'SP34M22KZDV4TYQZEAM10XC96TZR1G5W75FRHG3KA) (amount u2427993) (asset-addr 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-ststxbtc) (asset-id u11) (updated-collateral-amount u20733502592))))",
     shape: "account action amount asset-addr asset-id caller data updated-collateral-amount",
+    fields: {
+      action: { kind: "string", value: "collateral-add" },
+      caller: { kind: "principal", value: "SP34M22KZDV4TYQZEAM10XC96TZR1G5W75FRHG3KA" },
+      account: { kind: "principal", value: "SP34M22KZDV4TYQZEAM10XC96TZR1G5W75FRHG3KA" },
+      amount: { kind: "integer", value: 2427993n },
+      "asset-addr": { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-ststxbtc" },
+      "asset-id": { kind: "integer", value: 11n },
+      "updated-collateral-amount": { kind: "integer", value: 20733502592n },
+    },
   },
   {
     protocol: "granite",
@@ -81,6 +173,18 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
     repr: "(tuple (action \"collateral-remove\") (caller 'SP2FY8MV3EZVRTG2Q9J1KMMRVKC86DQ00BGGCQJXQ) (data (tuple (account 'SP2FY8MV3EZVRTG2Q9J1KMMRVKC86DQ00BGGCQJXQ) (amount u509574592) (asset-addr 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-stx) (asset-id u1) (position-collateral-usd u67725171636) (position-debt-usd u26086321291) (receiver 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market) (updated-collateral-amount u1475835390))))",
     shape:
       "account action amount asset-addr asset-id caller data position-collateral-usd position-debt-usd receiver updated-collateral-amount",
+    fields: {
+      action: { kind: "string", value: "collateral-remove" },
+      caller: { kind: "principal", value: "SP2FY8MV3EZVRTG2Q9J1KMMRVKC86DQ00BGGCQJXQ" },
+      account: { kind: "principal", value: "SP2FY8MV3EZVRTG2Q9J1KMMRVKC86DQ00BGGCQJXQ" },
+      amount: { kind: "integer", value: 509574592n },
+      "asset-addr": { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-vault-stx" },
+      "asset-id": { kind: "integer", value: 1n },
+      "position-collateral-usd": { kind: "integer", value: 67725171636n },
+      "position-debt-usd": { kind: "integer", value: 26086321291n },
+      receiver: { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market" },
+      "updated-collateral-amount": { kind: "integer", value: 1475835390n },
+    },
   },
   {
     protocol: "granite",
@@ -93,6 +197,18 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
     repr: "(tuple (action \"repay\") (caller 'SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE) (data (tuple (account 'SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE) (amount-repaid u2178058721722) (amount-requested u340282366920938463463374607431768211455) (asset-addr 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.wstx) (asset-id u0) (borrow-index u1022149165979) (payer 'SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE) (scaled-debt-removed u2130861907651))))",
     shape:
       "account action amount-repaid amount-requested asset-addr asset-id borrow-index caller data payer scaled-debt-removed",
+    fields: {
+      action: { kind: "string", value: "repay" },
+      caller: { kind: "principal", value: "SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE" },
+      account: { kind: "principal", value: "SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE" },
+      "amount-repaid": { kind: "integer", value: 2178058721722n },
+      "amount-requested": { kind: "integer", value: 340282366920938463463374607431768211455n },
+      "asset-addr": { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.wstx" },
+      "asset-id": { kind: "integer", value: 0n },
+      "borrow-index": { kind: "integer", value: 1022149165979n },
+      payer: { kind: "principal", value: "SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE" },
+      "scaled-debt-removed": { kind: "integer", value: 2130861907651n },
+    },
   },
   {
     protocol: "sbtc",
@@ -104,6 +220,15 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c0000000706616d6f756e7401000000000000000000000000000123bf0c626974636f696e2d747869640200000020549b64f001b9f661f7c92b9c9eb93b3a9efe6ce068f5c05fad56326efc2a52db096275726e2d6861736802000000200000000000000000000079b48f847b413cebc85d0078915226db00046137de2f0b6275726e2d68656967687401000000000000000000000000000ec60a0c6f75747075742d696e64657801000000000000000000000000000000010a73776565702d7478696402000000206689aaaac8d59b345d15ca231da9db22f28b343556aa386a69063a73ed1bd2c205746f7069630d00000011636f6d706c657465642d6465706f736974",
     repr: '(tuple (amount u74687) (bitcoin-txid 0x549b64f001b9f661f7c92b9c9eb93b3a9efe6ce068f5c05fad56326efc2a52db) (burn-hash 0x0000000000000000000079b48f847b413cebc85d0078915226db00046137de2f) (burn-height u968202) (output-index u1) (sweep-txid 0x6689aaaac8d59b345d15ca231da9db22f28b343556aa386a69063a73ed1bd2c2) (topic "completed-deposit"))',
     shape: "amount bitcoin-txid burn-hash burn-height output-index sweep-txid topic",
+    fields: {
+      amount: { kind: "integer", value: 74687n },
+      "bitcoin-txid": { kind: "buffer", hex: "0x549b64f001b9f661f7c92b9c9eb93b3a9efe6ce068f5c05fad56326efc2a52db" },
+      "burn-hash": { kind: "buffer", hex: "0x0000000000000000000079b48f847b413cebc85d0078915226db00046137de2f" },
+      "burn-height": { kind: "integer", value: 968202n },
+      "output-index": { kind: "integer", value: 1n },
+      "sweep-txid": { kind: "buffer", hex: "0x6689aaaac8d59b345d15ca231da9db22f28b343556aa386a69063a73ed1bd2c2" },
+      topic: { kind: "string", value: "completed-deposit" },
+    },
   },
   {
     protocol: "sbtc",
@@ -115,6 +240,17 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c000000090c626974636f696e2d74786964020000002036586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a812096275726e2d6861736802000000200000000000000000000037d4b9d8505c8d65f85e9bcbe65d834ccb88f3a9f7770b6275726e2d68656967687401000000000000000000000000000ec6050366656501000000000000000000000000000000960c6f75747075742d696e64657801000000000000000000000000000000020a726571756573742d69640100000000000000000000000000000d490d7369676e65722d6269746d617001000000000000000000000000000000000a73776565702d74786964020000002036586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a81205746f7069630d000000117769746864726177616c2d616363657074",
     repr: '(tuple (bitcoin-txid 0x36586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a812) (burn-hash 0x0000000000000000000037d4b9d8505c8d65f85e9bcbe65d834ccb88f3a9f777) (burn-height u968197) (fee u150) (output-index u2) (request-id u3401) (signer-bitmap u0) (sweep-txid 0x36586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a812) (topic "withdrawal-accept"))',
     shape: "bitcoin-txid burn-hash burn-height fee output-index request-id signer-bitmap sweep-txid topic",
+    fields: {
+      "bitcoin-txid": { kind: "buffer", hex: "0x36586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a812" },
+      "burn-hash": { kind: "buffer", hex: "0x0000000000000000000037d4b9d8505c8d65f85e9bcbe65d834ccb88f3a9f777" },
+      "burn-height": { kind: "integer", value: 968197n },
+      fee: { kind: "integer", value: 150n },
+      "output-index": { kind: "integer", value: 2n },
+      "request-id": { kind: "integer", value: 3401n },
+      "signer-bitmap": { kind: "integer", value: 0n },
+      "sweep-txid": { kind: "buffer", hex: "0x36586cc113dea3664eda9a30a11480db31643ed53b396f50cf5402e46537a812" },
+      topic: { kind: "string", value: "withdrawal-accept" },
+    },
   },
   {
     protocol: "sbtc",
@@ -126,6 +262,15 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c0000000706616d6f756e74010000000000000000000000000201be4a0c626c6f636b2d68656967687401000000000000000000000000000ec5fe076d61782d666565010000000000000000000000000000087009726563697069656e740c000000020968617368627974657302000000202655c5c22e1a2131f92537afd40e04d157f61c8574621d9840780444ba5fc48b0776657273696f6e0200000001060a726571756573742d69640100000000000000000000000000000d490673656e64657205169b0e9eb44db8c6bd4fef7cc062093adb19681c8105746f7069630d000000117769746864726177616c2d637265617465",
     repr: '(tuple (amount u33668682) (block-height u968190) (max-fee u2160) (recipient (tuple (hashbytes 0x2655c5c22e1a2131f92537afd40e04d157f61c8574621d9840780444ba5fc48b) (version 0x06))) (request-id u3401) (sender \'SP2DGX7NM9PWCDFAFXXYC0RG97BDHJT0WG41HPGBJ) (topic "withdrawal-create"))',
     shape: "amount block-height hashbytes max-fee recipient request-id sender topic version",
+    fields: {
+      amount: { kind: "integer", value: 33668682n },
+      "block-height": { kind: "integer", value: 968190n },
+      "max-fee": { kind: "integer", value: 2160n },
+      recipient: { kind: "other", repr: "(tuple (hashbytes (buff 32)) (version (buff 1)))" },
+      "request-id": { kind: "integer", value: 3401n },
+      sender: { kind: "principal", value: "SP2DGX7NM9PWCDFAFXXYC0RG97BDHJT0WG41HPGBJ" },
+      topic: { kind: "string", value: "withdrawal-create" },
+    },
   },
   {
     protocol: "sbtc",
@@ -137,6 +282,11 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c000000030a726571756573742d69640100000000000000000000000000000d260d7369676e65722d6269746d6170010000000000000000000000000000000005746f7069630d000000117769746864726177616c2d72656a656374",
     repr: '(tuple (request-id u3366) (signer-bitmap u0) (topic "withdrawal-reject"))',
     shape: "request-id signer-bitmap topic",
+    fields: {
+      "request-id": { kind: "integer", value: 3366n },
+      "signer-bitmap": { kind: "integer", value: 0n },
+      topic: { kind: "string", value: "withdrawal-reject" },
+    },
   },
   {
     protocol: "zest",
@@ -148,6 +298,15 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c0000000306616374696f6e0d000000076465706f7369740663616c6c657206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b657404646174610c0000000506616d6f756e7401000000000000000000000000000c1dec066173736574730100000000000000000000000f67f2842d096465706f7369746f7206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b657409726563697069656e740516af0a76220cdedea536e5567f9f95ba45ae3d4e630d7368617265732d6d696e74656401000000000000000000000000000c1c2b",
     repr: "(tuple (action \"deposit\") (caller 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market) (data (tuple (amount u794092) (assets u66168456237) (depositor 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market) (recipient 'SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE) (shares-minted u793643))))",
     shape: "action amount assets caller data depositor recipient shares-minted",
+    fields: {
+      action: { kind: "string", value: "deposit" },
+      caller: { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market" },
+      amount: { kind: "integer", value: 794092n },
+      assets: { kind: "integer", value: 66168456237n },
+      depositor: { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market" },
+      recipient: { kind: "principal", value: "SP2QGMXH21KFDX99PWNB7Z7WNQ92TWFAECEEK10GE" },
+      "shares-minted": { kind: "integer", value: 793643n },
+    },
   },
   {
     protocol: "zest",
@@ -159,5 +318,14 @@ export const CAPTURED_MAINNET_EVENTS: readonly CapturedEvent[] = [
       "0x0c0000000306616374696f6e0d0000000672656465656d0663616c6c657206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b657404646174610c000000050f616d6f756e742d72656365697665640100000000000000000000000001312cff066173736574730100000000000000000000000f315bd2de09726563697069656e740516bc82047ef462ef1fbbda7e9ae632654be22b76510872656465656d657206165423cdfe275d8bb19862b0cf342c616a7a18c8420b76302d382d6d61726b65740d7368617265732d6275726e656401000000000000000000000000013100e3",
     repr: "(tuple (action \"redeem\") (caller 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market) (data (tuple (amount-received u19999999) (assets u65252610782) (recipient 'SP2Y8413YYHHEY7XVV9Z9NSHJCN5Y4AVPA70P11FJ) (redeemer 'SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market) (shares-burned u19988707))))",
     shape: "action amount-received assets caller data recipient redeemer shares-burned",
+    fields: {
+      action: { kind: "string", value: "redeem" },
+      caller: { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market" },
+      "amount-received": { kind: "integer", value: 19999999n },
+      assets: { kind: "integer", value: 65252610782n },
+      recipient: { kind: "principal", value: "SP2Y8413YYHHEY7XVV9Z9NSHJCN5Y4AVPA70P11FJ" },
+      redeemer: { kind: "principal", value: "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7.v0-8-market" },
+      "shares-burned": { kind: "integer", value: 19988707n },
+    },
   },
 ] as const;

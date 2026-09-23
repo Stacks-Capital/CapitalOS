@@ -350,6 +350,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@stacks-capital/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@stacks-capital/config':
         specifier: workspace:*
         version: link:../../packages/config
